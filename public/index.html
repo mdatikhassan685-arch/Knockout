@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knockout - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-blue-900 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-8 rounded-lg shadow-2xl w-96">
+        <div class="text-center mb-6">
+            <i class="fa-solid fa-gamepad text-6xl text-blue-600"></i>
+            <h1 class="text-3xl font-bold text-gray-800 mt-2">Knockout</h1>
+            <p class="text-gray-500 text-sm">Esports Tournament Platform</p>
+        </div>
+
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="email" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" id="password" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            
+            <p id="errorMsg" class="text-red-500 text-sm text-center hidden"></p>
+
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-bold">
+                Login
+            </button>
+        </form>
+
+        <p class="text-center text-sm text-gray-600 mt-4">
+            Don't have an account? <a href="signup.html" class="text-blue-600 hover:underline">Sign Up</a>
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+            const btn = e.target.querySelector('button');
+
+            // লোডিং স্টেট
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Logging in...';
+            btn.disabled = true;
+            errorMsg.classList.add('hidden');
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    // সফল হলে লোকাল স্টোরেজে ডেটা রাখা
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    // রোল চেক করে রিডাইরেক্ট
+                    if (data.user.role === 'admin') {
+                        window.location.href = '/admin/dashboard.html';
+                    } else {
+                        window.location.href = '/home.html';
+                    }
+                } else {
+                    errorMsg.innerText = data.error || 'Login failed';
+                    errorMsg.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorMsg.innerText = 'Server error. Please try again.';
+                errorMsg.classList.remove('hidden');
+            } finally {
+                btn.innerHTML = 'Login';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
