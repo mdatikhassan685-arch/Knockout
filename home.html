@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Knockout</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-gray-100 pb-20">
+
+    <!-- Header -->
+    <div class="bg-blue-900 p-4 text-white flex justify-between items-center shadow-lg sticky top-0 z-50">
+        <h1 class="text-xl font-bold italic">KNOCKOUT</h1>
+        <div class="flex gap-4 items-center">
+            <div class="relative">
+                <i class="fa-solid fa-bell text-xl"></i>
+                <span id="notifCount" class="absolute -top-2 -right-2 bg-red-500 text-xs rounded-full px-1 hidden">0</span>
+            </div>
+            <div class="bg-white text-blue-900 px-3 py-1 rounded-full font-bold text-sm flex items-center gap-1">
+                <i class="fa-solid fa-coins text-yellow-500"></i>
+                <span id="balance">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Banner -->
+    <div id="bannerArea" class="p-4">
+        <div class="bg-gray-300 h-40 rounded-xl animate-pulse flex items-center justify-center text-gray-500">Loading...</div>
+    </div>
+
+    <!-- Tournaments -->
+    <div class="px-4">
+        <h2 class="font-bold text-gray-700 mb-2 border-l-4 border-blue-600 pl-2">Available Tournaments</h2>
+        <div id="tournamentList" class="space-y-4">
+            <!-- Dynamic Content -->
+        </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="fixed bottom-0 w-full bg-white border-t flex justify-around p-3 text-gray-500 text-xs font-bold">
+        <div class="text-blue-600 flex flex-col items-center"><i class="fa-solid fa-home text-xl mb-1"></i>Home</div>
+        <div class="flex flex-col items-center"><i class="fa-solid fa-wallet text-xl mb-1"></i>Wallet</div>
+        <div class="flex flex-col items-center"><i class="fa-solid fa-user text-xl mb-1"></i>Profile</div>
+    </div>
+
+    <script>
+        async function loadHomeData() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/user/home', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user.id })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    document.getElementById('balance').innerText = data.user.wallet_balance;
+                    
+                    if (data.unread_notif > 0) {
+                        const badge = document.getElementById('notifCount');
+                        badge.innerText = data.unread_notif;
+                        badge.classList.remove('hidden');
+                    }
+
+                    // Banner
+                    const bannerArea = document.getElementById('bannerArea');
+                    if (data.banners.length > 0) {
+                        bannerArea.innerHTML = `<img src="${data.banners[0].image}" class="w-full h-40 object-cover rounded-xl shadow-md">`;
+                    } else {
+                        bannerArea.innerHTML = `<div class="bg-blue-100 h-40 rounded-xl flex items-center justify-center text-blue-500 font-bold">Welcome to Knockout!</div>`;
+                    }
+
+                    // Tournaments
+                    const list = document.getElementById('tournamentList');
+                    list.innerHTML = '';
+                    data.tournaments.forEach(t => {
+                        list.innerHTML += `
+                            <div class="bg-white p-4 rounded-xl shadow-md border border-gray-100">
+                                <img src="${t.image || 'https://via.placeholder.com/300x150'}" class="w-full h-32 object-cover rounded-lg mb-3">
+                                <h3 class="font-bold text-lg">${t.title}</h3>
+                                <div class="flex justify-between text-sm text-gray-600 mt-2">
+                                    <span>Entry: <b class="text-green-600">৳${t.entry_fee}</b></span>
+                                    <span>Prize: <b class="text-yellow-600">৳${t.prize_pool}</b></span>
+                                </div>
+                                <button class="w-full bg-blue-600 text-white py-2 rounded-lg mt-3 font-bold">Join Now</button>
+                            </div>
+                        `;
+                    });
+                }
+
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        loadHomeData();
+    </script>
+</body>
+</html>
