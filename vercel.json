@@ -1,9 +1,10 @@
 {
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" },
-    { "source": "/", "destination": "/public/index.html" },
-    { "source": "/login", "destination": "/public/index.html" },
-    { "source": "/signup", "destination": "/public/signup.html" },
-    { "source": "/home", "destination": "/public/home.html" }
+    { "source": "/tournament-details", "destination": "/tournament-details.html" },
+    { "source": "/register-team", "destination": "/register-team.html" },
+    { "source": "/home", "destination": "/home.html" },
+    { "source": "/signup", "destination": "/signup.html" },
+    { "source": "/", "destination": "/index.html" }
   ]
 }
