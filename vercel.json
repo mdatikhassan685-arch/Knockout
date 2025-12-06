@@ -1,8 +1,9 @@
 {
+  "version": 2,
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" },
-    { "source": "/", "destination": "/public/index.html" },
-    { "source": "/signup", "destination": "/public/signup.html" },
-    { "source": "/(.*)", "destination": "/public/$1" }
+    { "source": "/signup", "destination": "/signup.html" },
+    { "source": "/signup.html", "destination": "/signup.html" },
+    { "source": "/", "destination": "/public/index.html" }
   ]
 }
