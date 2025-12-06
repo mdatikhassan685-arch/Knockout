@@ -1,7 +1,8 @@
-const db = require('../db');
+const pool = require('../../db');
+const bcrypt = require('bcryptjs'); // লাইব্রেরি ইমপোর্ট
 
 module.exports = async (req, res) => {
-    // CORS
+    // ... (CORS Headers আগের মতোই) ...
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -16,27 +17,30 @@ module.exports = async (req, res) => {
     }
 
     try {
-        // ইমেইল চেক করা (আগে আছে কিনা)
-        const [existing] = await db.execute('SELECT id FROM users WHERE email = ?', [email]);
+        // ইমেইল চেক
+        const [existing] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
         if (existing.length > 0) {
             return res.status(409).json({ error: 'Email already registered' });
         }
 
-        // ইউজার তৈরি করা
-        // নোট: পাসওয়ার্ড প্লেইন টেক্সট হিসেবে রাখা হচ্ছে (পরে bcrypt যোগ করতে পারেন)
-        const [result] = await db.execute(
+        // ১. পাসওয়ার্ড হ্যাশ করা (লবণ ছিটিয়ে ১০ বার ঘুরানো!)
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // ২. হ্যাশ করা পাসওয়ার্ড সেভ করা
+        const [result] = await pool.execute(
             'INSERT INTO users (username, email, password, role, wallet_balance, status, is_verified) VALUES (?, ?, ?, "user", 0, "active", 1)',
-            [username, email, password]
+            [username, email, hashedPassword] // এখানে প্লেইন পাসওয়ার্ডের বদলে hashedPassword যাবে
         );
 
         return res.status(201).json({
             success: true,
-            message: 'Registration successful',
+            message: 'User created successfully',
             userId: result.insertId
         });
 
     } catch (error) {
-        console.error('Signup Error:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        console.error(error);
+        return res.status(500).json({ error: error.message });
     }
 };
