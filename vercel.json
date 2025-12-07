@@ -3,8 +3,8 @@
     { "source": "/api/:path*", "destination": "/api/:path*" },
     
     { "source": "/admin/dashboard", "destination": "/admin-dashboard.html" },
-    { "source": "/admin/deposits", "destination": "/admin-deposits.html" },
-    { "source": "/api/admin/payments", "destination": "/api/admin/payments.js" },
+    { "source": "/admin/payments", "destination": "/admin-payments.html" }
+    { "source": "/admin/payments", "destination": "/admin-payments.html" }
     
     { "source": "/wallet", "destination": "/wallet.html" },
     { "source": "/profile", "destination": "/profile.html" },
