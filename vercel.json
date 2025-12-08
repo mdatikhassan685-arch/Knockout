@@ -5,13 +5,13 @@
     { "source": "/admin/dashboard", "destination": "/admin-dashboard.html" },
     { "source": "/admin/deposits", "destination": "/admin-deposits.html" },
     { "source": "/admin/users", "destination": "/admin-users.html" },
-    { "source": "/admin/categories", "destination": "/admin-categories.html" }
+    { "source": "/admin/categories", "destination": "/admin-categories.html" },
     
     { "source": "/wallet", "destination": "/wallet.html" },
     { "source": "/tournament-details", "destination": "/tournament-details.html" },
     { "source": "/register-team", "destination": "/register-team.html" },
     { "source": "/home", "destination": "/home.html" },
     { "source": "/signup", "destination": "/signup.html" },
-    { "source": "/", "destination": "/index.html" },
+    { "source": "/", "destination": "/index.html" }
   ]
 }
