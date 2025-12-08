@@ -3,72 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knockout - Esports</title>
+    <title>Knockout - Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Rajdhani', sans-serif; }
-        .glass { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(10px); }
-        .card-gradient { background: linear-gradient(145deg, #1e293b, #0f172a); }
+        .glass {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .card-gradient {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+        }
+        .neon-text {
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+        }
     </style>
 </head>
 <body class="bg-slate-900 text-white min-h-screen pb-24">
 
     <!-- Header -->
-    <div class="glass fixed top-0 w-full z-50 px-4 py-3 flex justify-between items-center shadow-lg">
+    <div class="glass fixed top-0 w-full z-50 px-4 py-3 flex justify-between items-center shadow-lg transition-all duration-300">
         <div class="flex items-center gap-2">
-            <i class="fa-solid fa-gamepad text-3xl text-blue-500"></i>
-            <h1 class="text-2xl font-bold tracking-wider">KNOCKOUT</h1>
-        </div>
-        <div class="flex gap-4 items-center">
-            <div onclick="window.location.href='/wallet'" class="bg-slate-800 border border-slate-700 px-3 py-1 rounded-full flex items-center gap-2 shadow-md cursor-pointer">
-                <i class="fa-solid fa-coins text-yellow-400"></i>
-                <span id="balance" class="font-bold text-yellow-100">0</span>
+            <div class="bg-blue-600 p-1.5 rounded-lg shadow-lg shadow-blue-500/30">
+                <i class="fa-solid fa-gamepad text-xl text-white"></i>
             </div>
-            <i class="fa-regular fa-bell text-xl hover:text-blue-400 transition cursor-pointer"></i>
+            <h1 class="text-xl font-bold tracking-wider text-white">KNOCKOUT</h1>
+        </div>
+        <div class="flex gap-3 items-center">
+            <!-- Balance -->
+            <div class="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-inner cursor-pointer hover:bg-slate-750 transition" onclick="window.location.href='/wallet'">
+                <i class="fa-solid fa-coins text-yellow-400 text-sm"></i>
+                <span id="balance" class="font-bold text-sm text-yellow-100">0</span>
+            </div>
+            <!-- Notification -->
+            <div class="relative cursor-pointer p-1" onclick="window.location.href='/notifications'">
+                <i class="fa-regular fa-bell text-xl text-gray-300 hover:text-white transition"></i>
+                <span id="notifCount" class="absolute top-0 right-0 bg-red-500 text-[10px] w-4 h-4 flex items-center justify-center rounded-full shadow-md border-2 border-slate-900 hidden">0</span>
+            </div>
         </div>
     </div>
 
     <!-- Main Content -->
     <div class="pt-20 px-4 space-y-6">
         
-        <!-- Banner -->
-        <div id="bannerArea" class="w-full h-44 rounded-2xl overflow-hidden shadow-2xl bg-slate-800 flex items-center justify-center">
-            <p class="text-slate-500 font-bold tracking-widest">LOADING EVENTS...</p>
+        <!-- Banner Slider -->
+        <div id="bannerArea" class="w-full h-44 rounded-2xl overflow-hidden shadow-2xl relative group border border-slate-700">
+            <div class="w-full h-full bg-slate-800 animate-pulse flex items-center justify-center">
+                <i class="fa-solid fa-image text-4xl text-slate-600"></i>
+            </div>
         </div>
 
-        <!-- Leaderboard Button (Only this remains) -->
-        <button onclick="window.location.href='/leaderboard'" class="w-full bg-slate-800 border border-slate-700 p-3 rounded-xl font-bold shadow-lg hover:bg-slate-700 transition flex items-center justify-between px-6">
-            <div class="flex items-center gap-3">
-                <i class="fa-solid fa-trophy text-yellow-500 text-xl"></i>
-                <span>Leaderboard</span>
-            </div>
-            <i class="fa-solid fa-chevron-right text-slate-500"></i>
-        </button>
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="window.location.href='/wallet'" class="bg-gradient-to-r from-blue-600 to-blue-500 p-3 rounded-xl font-bold shadow-lg shadow-blue-900/40 hover:scale-[1.02] transition transform flex items-center justify-center gap-2 text-sm border border-blue-400/30">
+                <i class="fa-solid fa-circle-plus"></i> Add Money
+            </button>
+            <button onclick="window.location.href='/leaderboard'" class="bg-slate-800 border border-slate-700 p-3 rounded-xl font-bold shadow-lg hover:bg-slate-700 transition flex items-center justify-center gap-2 text-sm text-gray-200">
+                <i class="fa-solid fa-trophy text-yellow-500"></i> Leaderboard
+            </button>
+        </div>
 
-        <!-- Tournaments -->
+        <!-- Games / Categories -->
         <div>
             <div class="flex justify-between items-end mb-4">
-                <h2 class="text-xl font-bold border-l-4 border-blue-500 pl-3">Upcoming Matches</h2>
+                <h2 class="text-lg font-bold border-l-4 border-blue-500 pl-3 text-gray-100">Available Games</h2>
+                <span class="text-xs text-blue-400 bg-blue-500/10 px-2 py-1 rounded">Select a game</span>
             </div>
-            <div id="tournamentList" class="space-y-5">
-                <p class="text-center text-slate-500 py-10">Loading matches...</p>
+
+            <div id="categoryList" class="space-y-4">
+                <!-- Skeleton Loader -->
+                <div class="card-gradient p-4 rounded-2xl shadow-lg border border-slate-800 animate-pulse">
+                    <div class="h-32 bg-slate-700/50 rounded-xl mb-3"></div>
+                    <div class="h-6 bg-slate-700/50 rounded w-1/2"></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Bottom Navigation (3 Items Only) -->
-    <div class="fixed bottom-0 w-full bg-slate-900 border-t border-slate-800 flex justify-around py-3 z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
-        <div onclick="window.location.href='/home'" class="flex flex-col items-center text-blue-500 cursor-pointer">
-            <i class="fa-solid fa-house text-xl mb-1"></i>
+    <!-- Bottom Nav -->
+    <div class="fixed bottom-0 w-full bg-slate-900/95 backdrop-blur-md border-t border-slate-800 flex justify-around py-3 z-50 safe-area-pb">
+        <div class="flex flex-col items-center text-blue-500 cursor-pointer transition transform active:scale-90">
+            <i class="fa-solid fa-house text-xl mb-1 neon-text"></i>
             <span class="text-[10px] font-bold tracking-widest">HOME</span>
         </div>
-        <div onclick="window.location.href='/wallet'" class="flex flex-col items-center text-gray-500 hover:text-white transition cursor-pointer">
+        <div class="flex flex-col items-center text-gray-500 hover:text-white transition cursor-pointer transform active:scale-90">
+            <i class="fa-solid fa-fire text-xl mb-1"></i>
+            <span class="text-[10px] font-bold tracking-widest">LIVE</span>
+        </div>
+        <div class="flex flex-col items-center text-gray-500 hover:text-white transition cursor-pointer transform active:scale-90" onclick="window.location.href='/wallet'">
             <i class="fa-solid fa-wallet text-xl mb-1"></i>
             <span class="text-[10px] font-bold tracking-widest">WALLET</span>
         </div>
-        <div onclick="window.location.href='/profile'" class="flex flex-col items-center text-gray-500 hover:text-white transition cursor-pointer">
+        <div class="flex flex-col items-center text-gray-500 hover:text-white transition cursor-pointer transform active:scale-90" onclick="window.location.href='/profile'">
             <i class="fa-solid fa-user-ninja text-xl mb-1"></i>
             <span class="text-[10px] font-bold tracking-widest">PROFILE</span>
         </div>
@@ -77,7 +107,10 @@
     <script>
         async function loadHomeData() {
             const user = JSON.parse(localStorage.getItem('user'));
-            if (!user) { window.location.href = '/login'; return; }
+            if (!user) {
+                window.location.href = '/';
+                return;
+            }
 
             try {
                 const res = await fetch('/api/user/home', {
@@ -88,49 +121,71 @@
                 const data = await res.json();
 
                 if (data.success) {
+                    // Update Balance
                     document.getElementById('balance').innerText = data.user.wallet_balance;
+                    
+                    // Notification Badge
+                    if (data.unread_notif > 0) {
+                        const badge = document.getElementById('notifCount');
+                        badge.innerText = data.unread_notif;
+                        badge.classList.remove('hidden');
+                    }
 
-                    // Banner
+                    // Banner Slider
                     const bannerArea = document.getElementById('bannerArea');
                     if (data.banners.length > 0) {
-                        bannerArea.innerHTML = `<img src="${data.banners[0].image}" class="w-full h-full object-cover">`;
+                        bannerArea.innerHTML = `
+                            <img src="${data.banners[0].image}" class="w-full h-full object-cover transform hover:scale-105 transition duration-700">
+                            <div class="absolute bottom-0 w-full bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent p-4">
+                                <p class="font-bold text-white text-sm tracking-wide">Featured Event</p>
+                            </div>
+                        `;
                     } else {
-                        bannerArea.innerHTML = `<p class="text-slate-500 font-bold tracking-widest">NO EVENT</p>`;
+                        bannerArea.innerHTML = `<div class="w-full h-full bg-slate-800 flex flex-col items-center justify-center text-slate-600"><i class="fa-solid fa-image text-3xl mb-2"></i><p class="text-xs font-bold tracking-widest">NO BANNERS</p></div>`;
                     }
 
-                    // Tournaments
-                    const list = document.getElementById('tournamentList');
+                    // Category List
+                    const list = document.getElementById('categoryList');
                     list.innerHTML = '';
-                    if (data.tournaments.length === 0) {
-                        list.innerHTML = `<p class="text-center text-slate-500 py-10">No matches found.</p>`;
+                    
+                    if (data.categories.length === 0) {
+                        list.innerHTML = `<div class="text-center py-10 border border-slate-800 rounded-xl bg-slate-800/50"><i class="fa-solid fa-ghost text-4xl text-slate-600 mb-2"></i><p class="text-slate-500 text-sm">No games available yet.</p></div>`;
                     }
-                    data.tournaments.forEach(t => {
-                        let statusColor = t.status === 'open' ? 'bg-green-500' : 'bg-red-500';
+
+                    data.categories.forEach(c => {
+                        let typeBadge = c.is_official ? 'OFFICIAL' : 'NORMAL';
+                        let badgeColor = c.is_official ? 'bg-yellow-500 text-black' : 'bg-blue-600 text-white';
+                        let glowClass = c.is_official ? 'shadow-yellow-500/20' : 'shadow-blue-500/20';
+
                         list.innerHTML += `
-                            <div class="card-gradient rounded-2xl overflow-hidden shadow-lg border border-slate-700 relative group">
-                                <div class="relative h-36">
-                                    <img src="${t.image || 'https://via.placeholder.com/400x200'}" class="w-full h-full object-cover">
-                                    <div class="absolute top-2 right-2 ${statusColor} text-white text-[10px] font-bold px-2 py-1 rounded uppercase">${t.status}</div>
-                                    <div class="absolute bottom-0 w-full bg-gradient-to-t from-slate-900 to-transparent p-3">
-                                        <h3 class="font-bold text-lg text-white">${t.title}</h3>
-                                        <p class="text-xs text-gray-300 mt-1">${t.match_type} • Map: ${t.map || 'Random'}</p>
+                            <div class="card-gradient rounded-2xl overflow-hidden shadow-lg ${glowClass} border border-slate-700 relative group cursor-pointer hover:border-blue-500/50 transition active:scale-95" onclick="window.location.href='/category-details?id=${c.id}'">
+                                <div class="relative h-40 overflow-hidden">
+                                    <img src="${c.image || 'https://via.placeholder.com/400x200'}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                                    
+                                    <!-- Badge -->
+                                    <div class="absolute top-3 right-3 ${badgeColor} text-[10px] font-bold px-2 py-1 rounded shadow-md uppercase tracking-wide z-10">
+                                        ${typeBadge}
                                     </div>
-                                </div>
-                                <div class="p-3 flex justify-between items-center bg-slate-800 m-2 rounded-xl">
-                                    <div>
-                                        <p class="text-[10px] text-gray-400 uppercase">Entry</p>
-                                        <p class="font-bold text-green-400">৳${t.entry_fee}</p>
+
+                                    <!-- Gradient Overlay -->
+                                    <div class="absolute bottom-0 w-full bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent p-4 pt-12">
+                                        <h3 class="font-bold text-xl text-white drop-shadow-md flex items-center gap-2">
+                                            ${c.title} <i class="fa-solid fa-chevron-right text-xs text-blue-400 opacity-0 group-hover:opacity-100 transition transform translate-x-[-5px] group-hover:translate-x-0"></i>
+                                        </h3>
+                                        <p class="text-[11px] text-gray-300 mt-1 flex items-center gap-1 opacity-80">
+                                            <i class="fa-solid fa-layer-group text-blue-400"></i> Tap to view tournaments
+                                        </p>
                                     </div>
-                                    <button onclick="window.location.href='/tournament-details?id=${t.id}'" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-6 rounded-lg text-sm shadow-lg transition active:scale-95">
-                                        JOIN
-                                    </button>
                                 </div>
                             </div>
                         `;
                     });
                 }
-            } catch (error) { console.error(error); }
+            } catch (error) {
+                console.error("Home Load Error:", error);
+            }
         }
+
         loadHomeData();
     </script>
 </body>
