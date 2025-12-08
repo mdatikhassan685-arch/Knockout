@@ -53,38 +53,39 @@
         if (!admin) window.location.href = '/';
 
         async function loadCategories() {
-            const res = await fetch('/api/admin/categories', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'list', adminId: admin.id })
-            });
-            const data = await res.json();
-            
-            const list = document.getElementById('catList');
-            list.innerHTML = '';
+            try {
+                const res = await fetch('/api/admin/categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'list', adminId: admin.id })
+                });
+                const data = await res.json();
+                
+                const list = document.getElementById('catList');
+                list.innerHTML = '';
 
-            if (data.categories.length === 0) {
-                list.innerHTML = '<p class="text-center text-gray-500 col-span-2">No categories found.</p>';
-                return;
-            }
+                if (data.categories.length === 0) {
+                    list.innerHTML = '<p class="text-center text-gray-500 col-span-2">No categories found.</p>';
+                    return;
+                }
 
-            data.categories.forEach(c => {
-                let badge = c.is_official 
-                    ? '<span class="bg-yellow-600 text-xs px-2 py-1 rounded font-bold">OFFICIAL</span>' 
-                    : '<span class="bg-green-600 text-xs px-2 py-1 rounded font-bold">NORMAL</span>';
+                data.categories.forEach(c => {
+                    let badge = c.is_official 
+                        ? '<span class="bg-yellow-600 text-xs px-2 py-1 rounded font-bold">OFFICIAL</span>' 
+                        : '<span class="bg-green-600 text-xs px-2 py-1 rounded font-bold">NORMAL</span>';
 
-                // অন ক্লিক করলে টুর্নামেন্ট লিস্ট পেজে যাবে (পরে বানাব)
-                list.innerHTML += `
-                    <div class="bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 group cursor-pointer relative" onclick="window.location.href='/admin/manage-tournaments?catId=${c.id}'">
-                        <img src="${c.image || 'https://via.placeholder.com/400x200'}" class="w-full h-32 object-cover group-hover:scale-105 transition duration-500">
-                        <div class="absolute top-2 right-2">${badge}</div>
-                        <div class="p-4 flex justify-between items-center bg-gray-800 relative z-10">
-                            <h3 class="font-bold text-lg text-white">${c.title}</h3>
-                            <button onclick="event.stopPropagation(); deleteCategory(${c.id})" class="text-red-500 hover:text-red-400 p-2"><i class="fa-solid fa-trash"></i></button>
+                    list.innerHTML += `
+                        <div class="bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 group cursor-pointer relative" onclick="window.location.href='/admin/manage-tournaments?catId=${c.id}'">
+                            <img src="${c.image || 'https://via.placeholder.com/400x200'}" class="w-full h-32 object-cover group-hover:scale-105 transition duration-500">
+                            <div class="absolute top-2 right-2">${badge}</div>
+                            <div class="p-4 flex justify-between items-center bg-gray-800 relative z-10">
+                                <h3 class="font-bold text-lg text-white">${c.title}</h3>
+                                <button onclick="event.stopPropagation(); deleteCategory(${c.id})" class="text-red-500 hover:text-red-400 p-2"><i class="fa-solid fa-trash"></i></button>
+                            </div>
                         </div>
-                    </div>
-                `;
-            });
+                    `;
+                });
+            } catch (err) { console.error(err); }
         }
 
         async function createCategory() {
@@ -107,7 +108,7 @@
         }
 
         async function deleteCategory(id) {
-            if(!confirm("Delete this category? All tournaments inside will be hidden.")) return;
+            if(!confirm("Delete this category?")) return;
             await fetch('/api/admin/categories', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
