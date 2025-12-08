@@ -7,7 +7,6 @@ module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     const { email, password } = req.body;
 
@@ -17,15 +16,29 @@ module.exports = async (req, res) => {
         if (rows.length > 0) {
             const user = rows[0];
 
-            // ১. স্ট্যাটাস চেক (NEW)
+            // ১. ব্লক চেক
             if (user.status === 'blocked') {
-                return res.status(403).json({ error: 'Your account has been BLOCKED by Admin.' });
-            }
-            if (user.status === 'suspended') {
-                return res.status(403).json({ error: 'Your account is currently SUSPENDED.' });
+                return res.status(403).json({ error: 'Your account is permanently BLOCKED.' });
             }
 
-            // ২. পাসওয়ার্ড চেক
+            // ২. সাসপেনশন চেক (Auto Reactivate Logic)
+            if (user.status === 'suspended') {
+                const now = new Date();
+                const suspendDate = new Date(user.suspended_until);
+
+                if (suspendDate > now) {
+                    // এখনো সময় বাকি আছে
+                    return res.status(403).json({ 
+                        error: `Account Suspended until ${suspendDate.toLocaleString()}` 
+                    });
+                } else {
+                    // সময় শেষ, অটোমেটিক অ্যাক্টিভ করা হচ্ছে
+                    await pool.execute('UPDATE users SET status = "active", suspended_until = NULL WHERE id = ?', [user.id]);
+                    user.status = 'active'; // লোকাল অবজেক্ট আপডেট
+                }
+            }
+
+            // ৩. পাসওয়ার্ড চেক
             if (user.password === password) {
                 return res.status(200).json({
                     success: true,
