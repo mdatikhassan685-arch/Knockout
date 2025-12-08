@@ -32,7 +32,12 @@ module.exports = async (req, res) => {
 
         // ৩. স্ট্যাটাস আপডেট (Block/Suspend/Active)
         if (action === 'update_status') {
-            await pool.execute('UPDATE users SET status = ? WHERE id = ?', [status, userId]);
+            const { until } = req.body; // সাসপেনশন ডেট
+            
+            await pool.execute(
+                'UPDATE users SET status = ?, suspended_until = ? WHERE id = ?', 
+                [status, until || null, userId]
+            );
             return res.json({ success: true, message: `User status updated to ${status}` });
         }
 
