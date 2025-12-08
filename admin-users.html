@@ -11,7 +11,6 @@
 </head>
 <body class="bg-gray-900 text-white min-h-screen p-4">
 
-    <!-- Header -->
     <div class="flex items-center mb-6">
         <a href="/admin/dashboard" class="bg-gray-800 p-2 rounded-lg hover:bg-gray-700 mr-4 border border-gray-600"><i class="fa-solid fa-arrow-left"></i></a>
         <h1 class="text-2xl font-bold text-purple-400">User Management</h1>
@@ -24,10 +23,7 @@
         <button onclick="loadUsers()" class="absolute right-2 top-2 bg-purple-600 px-4 py-1 rounded-lg font-bold hover:bg-purple-500">Search</button>
     </div>
 
-    <!-- User List -->
-    <div id="userList" class="space-y-4">
-        <p class="text-center text-gray-500 py-10">Loading users...</p>
-    </div>
+    <div id="userList" class="space-y-4"><p class="text-center text-gray-500 py-10">Loading...</p></div>
 
     <!-- Action Modal -->
     <div id="actionModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
@@ -37,7 +33,7 @@
             
             <!-- Balance -->
             <div class="mb-6 p-4 bg-gray-900 rounded-xl border border-gray-700">
-                <p class="text-xs text-gray-400 uppercase">Current Balance</p>
+                <p class="text-xs text-gray-400 uppercase">Wallet</p>
                 <h2 id="modalBalance" class="text-2xl font-bold text-white mb-3">৳0</h2>
                 <div class="flex gap-2">
                     <input type="number" id="amount" placeholder="+/- Amount" class="w-2/3 bg-gray-800 border border-gray-600 p-2 rounded text-white">
@@ -48,10 +44,17 @@
             <!-- Status -->
             <div>
                 <p class="text-xs text-gray-400 uppercase mb-2">Account Status</p>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-3 gap-2 mb-3">
                     <button onclick="updateStatus('active')" class="bg-green-900 text-green-300 py-2 rounded border border-green-700 hover:bg-green-800">Active</button>
-                    <button onclick="updateStatus('suspended')" class="bg-yellow-900 text-yellow-300 py-2 rounded border border-yellow-700 hover:bg-yellow-800">Suspend</button>
+                    <button onclick="showSuspendOptions()" class="bg-yellow-900 text-yellow-300 py-2 rounded border border-yellow-700 hover:bg-yellow-800">Suspend</button>
                     <button onclick="updateStatus('blocked')" class="bg-red-900 text-red-300 py-2 rounded border border-red-700 hover:bg-red-800">Block</button>
+                </div>
+
+                <!-- Suspend Date Picker (Hidden by default) -->
+                <div id="suspendDiv" class="hidden bg-yellow-900/20 p-3 rounded border border-yellow-700/50">
+                    <p class="text-xs text-yellow-500 mb-1">Suspend Until:</p>
+                    <input type="datetime-local" id="suspendDate" class="w-full bg-gray-900 border border-gray-600 p-2 rounded text-white text-sm mb-2">
+                    <button onclick="confirmSuspend()" class="w-full bg-yellow-600 text-white py-1 rounded font-bold hover:bg-yellow-500">Confirm Suspension</button>
                 </div>
             </div>
         </div>
@@ -102,10 +105,21 @@
             document.getElementById('modalUser').innerText = name;
             document.getElementById('modalBalance').innerText = '৳' + balance;
             document.getElementById('actionModal').classList.remove('hidden');
+            document.getElementById('suspendDiv').classList.add('hidden'); // Reset suspend box
         }
 
         function closeModal() {
             document.getElementById('actionModal').classList.add('hidden');
+        }
+
+        function showSuspendOptions() {
+            document.getElementById('suspendDiv').classList.remove('hidden');
+        }
+
+        async function confirmSuspend() {
+            const date = document.getElementById('suspendDate').value;
+            if(!date) return alert("Select a date and time!");
+            await apiCall({ action: 'update_status', userId: selectedUserId, status: 'suspended', until: date });
         }
 
         async function updateStatus(status) {
@@ -139,4 +153,4 @@
         loadUsers();
     </script>
 </body>
-  </html>
+</html>
