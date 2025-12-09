@@ -3,119 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>Admin Dashboard - Knockout</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Rajdhani', sans-serif; }</style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen pb-10">
+<body class="bg-gray-900 text-white min-h-screen p-4 pb-20">
 
     <!-- Header -->
-    <div class="bg-gray-800 p-4 shadow-lg flex justify-between items-center sticky top-0 z-50 border-b border-gray-700">
-        <div class="flex items-center gap-2">
-            <i class="fa-solid fa-shield-halved text-2xl text-red-500"></i>
-            <h1 class="text-xl font-bold tracking-wider">ADMIN PANEL</h1>
-        </div>
-        <button onclick="logout()" class="text-gray-400 hover:text-white transition"><i class="fa-solid fa-right-from-bracket text-xl"></i></button>
+    <div class="flex items-center justify-between mb-6 sticky top-0 bg-gray-900 z-50 py-2">
+        <h1 class="text-2xl font-bold text-white tracking-wide">Admin Dashboard</h1>
+        <button onclick="logoutAdmin()" class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition active:scale-95">
+            Logout
+        </button>
     </div>
 
-    <div class="p-5 space-y-6">
-        
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-2 gap-4">
-            <div class="bg-gray-800 p-4 rounded-2xl border border-gray-700 shadow-lg relative">
-                <p class="text-gray-400 text-[10px] uppercase font-bold tracking-widest">Total Users</p>
-                <h2 id="totalUsers" class="text-3xl font-bold text-blue-400 mt-1">...</h2>
-            </div>
+    <!-- Stats Section -->
+    <div class="grid grid-cols-2 gap-4 mb-6" id="statsContainer">
+        <!-- Skeleton Loaders -->
+        <div class="animate-pulse bg-gray-800 rounded-lg h-24 border border-gray-700"></div>
+        <div class="animate-pulse bg-gray-800 rounded-lg h-24 border border-gray-700"></div>
+        <div class="animate-pulse bg-gray-800 rounded-lg h-24 border border-gray-700 col-span-2"></div>
+    </div>
 
-            <div onclick="location.href='/admin/deposits'" class="bg-gray-800 p-4 rounded-2xl border border-gray-700 shadow-lg relative cursor-pointer hover:bg-gray-750 transition">
-                <div id="depositBadge" class="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold w-6 h-6 flex items-center justify-center rounded-full shadow-lg hidden">0</div>
-                <p class="text-gray-400 text-[10px] uppercase font-bold tracking-widest">Payment Requests</p>
-                <h2 id="pendingDeposits" class="text-3xl font-bold text-yellow-400 mt-1">0</h2>
-            </div>
-
-            <div class="bg-gray-800 p-4 rounded-2xl border border-gray-700 shadow-lg relative">
-                <p class="text-gray-400 text-[10px] uppercase font-bold tracking-widest">Active Tournaments</p>
-                <h2 id="totalTournaments" class="text-3xl font-bold text-purple-400 mt-1">0</h2>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <h3 class="text-sm font-bold text-gray-400 border-l-4 border-blue-500 pl-2 uppercase">Quick Actions</h3>
-        <div class="grid grid-cols-2 gap-3">
-            <button onclick="location.href='/admin/categories'" class="bg-blue-600 p-3 rounded-xl font-bold shadow-lg hover:bg-blue-500 flex flex-col items-center justify-center gap-1 border border-blue-500">
-                <i class="fa-solid fa-plus-circle text-2xl text-blue-200"></i>
-                <span class="text-xs">New Tournament</span>
-            </button>
-            <button onclick="location.href='/admin/users'" class="bg-gray-800 p-3 rounded-xl font-bold shadow-lg border border-gray-700 hover:bg-gray-700 transition flex flex-col items-center justify-center gap-1">
-                <i class="fa-solid fa-users-gear text-2xl text-gray-400"></i>
-                <span class="text-xs text-gray-300">Manage Users</span>
-            </button>
-        </div>
-
-        <!-- Recent Activity -->
-        <h3 class="text-sm font-bold text-gray-400 border-l-4 border-green-500 pl-2 uppercase mt-2">Recent Deposits</h3>
-        <div id="recentList" class="space-y-3">
-            <p class="text-center text-gray-600 text-xs py-4">Loading...</p>
-        </div>
-
+    <!-- Navigation Menu -->
+    <div class="space-y-4">
+        <a href="/admin/users" class="flex items-center justify-between bg-gray-800 p-4 rounded-lg shadow-md border border-gray-700 hover:border-blue-500 transition active:scale-95">
+            <h3 class="font-bold text-lg text-white">Manage Users</h3>
+            <i class="fa-solid fa-users text-blue-400"></i>
+        </a>
+        <a href="/admin/categories" class="flex items-center justify-between bg-gray-800 p-4 rounded-lg shadow-md border border-gray-700 hover:border-blue-500 transition active:scale-95">
+            <h3 class="font-bold text-lg text-white">Manage Categories</h3>
+            <i class="fa-solid fa-list text-blue-400"></i>
+        </a>
+        <a href="/admin/payments" class="flex items-center justify-between bg-gray-800 p-4 rounded-lg shadow-md border border-gray-700 hover:border-blue-500 transition active:scale-95">
+            <h3 class="font-bold text-lg text-white">Manage Payments</h3>
+            <i class="fa-solid fa-dollar-sign text-blue-400"></i>
+        </a>
     </div>
 
     <script>
-        async function loadDashboard() {
-            const admin = JSON.parse(localStorage.getItem('admin'));
-            if (!admin) { window.location.href = '/'; return; }
+        // --- Authentication Check (Client Side) ---
+        // Ensures user is logged in before loading dashboard data.
+        // If not logged in, redirects to login page.
+        function checkAdminAuth() {
+            const adminToken = localStorage.getItem('adminToken');
+            if (!adminToken) {
+                // If token is missing, redirect to login page
+                window.location.href = '/index.html';
+            }
+        }
+
+        // --- Fetch Dashboard Stats ---
+        async function loadDashboardStats() {
+            const statsContainer = document.getElementById('statsContainer');
+            // Show skeleton loader initially
+            statsContainer.innerHTML = `
+                <div class="animate-pulse bg-gray-800 rounded-lg h-24 border border-gray-700"></div>
+                <div class="animate-pulse bg-gray-800 rounded-lg h-24 border border-gray-700"></div>
+                <div class="animate-pulse bg-gray-800 rounded-lg h-24 border border-gray-700 col-span-2"></div>
+            `;
 
             try {
-                // UPDATED API CALL
+                const adminToken = localStorage.getItem('adminToken');
+                if (!adminToken) throw new Error("Authentication token missing. Please log in again.");
+
                 const res = await fetch('/api/admin', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'dashboard-stats', adminId: admin.id })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}` // Send token for authentication
+                    },
+                    body: JSON.stringify({ type: 'dashboard_stats' }) // Back-end expects 'type' parameter
                 });
+
+                if (!res.ok) {
+                    // Handle non-200 status codes (e.g., 401 Unauthorized)
+                    const errorDetails = await res.json();
+                    if (res.status === 401 || res.status === 403) {
+                        localStorage.removeItem('adminToken');
+                        window.location.href = '/index.html'; // Redirect on auth failure
+                    }
+                    throw new Error(errorDetails.error || `HTTP error! status: ${res.status}`);
+                }
+
                 const data = await res.json();
 
-                if (data.success) {
-                    document.getElementById('totalUsers').innerText = data.stats.totalUsers;
-                    document.getElementById('pendingDeposits').innerText = data.stats.pendingDeposits;
-                    document.getElementById('totalTournaments').innerText = data.stats.totalTournaments;
-                    
-                    const badge = document.getElementById('depositBadge');
-                    if(data.stats.pendingDeposits > 0) {
-                        badge.innerText = data.stats.pendingDeposits;
-                        badge.classList.remove('hidden');
-                    }
-
-                    const list = document.getElementById('recentList');
-                    list.innerHTML = '';
-                    if (data.recentDeposits.length === 0) {
-                        list.innerHTML = '<p class="text-center text-gray-600 text-xs py-4">No recent activity.</p>';
-                    } else {
-                        data.recentDeposits.forEach(d => {
-                            list.innerHTML += `
-                                <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center border border-gray-700 shadow-sm">
-                                    <div>
-                                        <p class="font-bold text-gray-200 text-sm">${d.username}</p>
-                                        <p class="text-[10px] text-gray-500">${new Date(d.created_at).toLocaleDateString()}</p>
-                                    </div>
-                                    <p class="font-bold text-green-400 text-sm">+৳${d.amount}</p>
-                                </div>
-                            `;
-                        });
-                    }
-                } else {
-                    logout();
+                if (!data.success) {
+                    throw new Error(data.error || 'API call failed without specific error message.');
                 }
-            } catch (error) { console.error(error); }
+
+                // --- UI Update with Stats ---
+                statsContainer.innerHTML = `
+                    <div class="bg-gray-800 p-4 rounded-lg shadow-md border border-gray-700">
+                        <p class="text-xs text-gray-400 uppercase font-bold">Total Users</p>
+                        <p class="text-2xl font-bold text-white">${data.totalUsers || 0}</p>
+                    </div>
+                    <div class="bg-gray-800 p-4 rounded-lg shadow-md border border-gray-700">
+                        <p class="text-xs text-gray-400 uppercase font-bold">New Registrations</p>
+                        <p class="text-2xl font-bold text-white">${data.newRegistrations || 0}</p>
+                    </div>
+                    <div class="bg-gray-800 p-4 rounded-lg shadow-md border border-gray-700 col-span-2">
+                        <p class="text-xs text-gray-400 uppercase font-bold">Pending Deposits</p>
+                        <p class="text-2xl font-bold text-white">৳${data.pendingDeposits || 0}</p>
+                    </div>
+                `;
+
+            } catch (err) {
+                console.error('Error loading dashboard stats:', err);
+                statsContainer.innerHTML = `<p class="text-center text-red-500 col-span-2 py-4">Error loading data: ${err.message}</p>`;
+            }
         }
 
-        function logout() {
-            localStorage.removeItem('admin');
-            window.location.href = '/';
+        // --- Logout Functionality ---
+        function logoutAdmin() {
+            localStorage.removeItem('adminToken');
+            window.location.href = '/index.html';
         }
 
-        loadDashboard();
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAdminAuth();
+            loadDashboardStats();
+        });
     </script>
 </body>
 </html>
