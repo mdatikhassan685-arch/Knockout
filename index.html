@@ -3,126 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knockout - Login</title>
+    <title>Login - Knockout</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Rajdhani', sans-serif; }</style>
 </head>
-<body class="bg-blue-900 flex items-center justify-center min-h-screen relative">
+<body class="bg-gray-900 min-h-screen flex items-center justify-center">
 
-    <!-- User Login Box -->
-    <div class="bg-white p-8 rounded-lg shadow-2xl w-96 z-10">
-        <div class="text-center mb-6">
-            <i class="fa-solid fa-gamepad text-6xl text-blue-600"></i>
-            <h1 class="text-3xl font-bold text-gray-800 mt-2">Knockout</h1>
-            <p class="text-gray-500 text-sm">Esports Tournament Platform</p>
-        </div>
+    <div class="bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-sm border border-gray-700">
+        <h2 class="text-3xl font-bold text-center text-white mb-6">Knockout Login</h2>
 
-        <form id="loginForm" class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" id="email" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your email">
+        <form id="loginForm">
+            <div class="mb-4">
+                <label for="email" class="block text-sm font-medium text-gray-400">Email Address</label>
+                <input type="email" id="email" name="email" class="mt-1 block w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="your.email@example.com" required>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Password</label>
-                <input type="password" id="password" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="••••••">
+            <div class="mb-6">
+                <label for="password" class="block text-sm font-medium text-gray-400">Password</label>
+                <input type="password" id="password" name="password" class="mt-1 block w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="********" required>
             </div>
-            
-            <p id="errorMsg" class="text-red-500 text-sm text-center hidden"></p>
 
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-bold">
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-md transition transform active:scale-95">
                 Login
             </button>
         </form>
 
-        <p class="text-center text-sm text-gray-600 mt-4">
-            Don't have an account? <a href="/signup" class="text-blue-600 hover:underline">Sign Up</a>
+        <p class="mt-4 text-center text-sm text-gray-400">
+            Don't have an account? <a href="/signup.html" class="font-bold text-blue-400 hover:text-blue-300">Sign Up</a>
         </p>
-    </div>
-
-    <!-- Admin Button -->
-    <div class="absolute top-0 right-0 p-4 z-50">
-        <button onclick="toggleAdminPanel()" class="w-10 h-10 bg-transparent cursor-default focus:outline-none"></button>
-    </div>
-
-    <!-- Admin Modal -->
-    <div id="adminModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 backdrop-blur-sm">
-        <div class="bg-white p-6 rounded-lg w-80 shadow-2xl border-t-4 border-red-600">
-            <h2 class="text-xl font-bold mb-4 text-gray-800"><i class="fa-solid fa-lock text-red-600"></i> Admin Access</h2>
-            <input type="email" id="adminEmail" placeholder="Admin Email" class="w-full border p-2 rounded mb-3 text-sm">
-            <input type="password" id="adminToken" placeholder="Secret Token" class="w-full border p-2 rounded mb-3 text-sm">
-            <p id="adminMsg" class="text-red-500 text-xs mb-2 text-center hidden font-bold"></p>
-            <button onclick="adminLogin()" class="w-full bg-red-600 text-white py-2 rounded font-bold hover:bg-red-700">Enter Panel</button>
-            <button onclick="toggleAdminPanel()" class="mt-3 text-sm text-gray-500 w-full text-center">Cancel</button>
-        </div>
+        
+        <p id="errorMessage" class="mt-4 text-center text-red-500 hidden"></p>
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const btn = this.querySelector('button');
-            const msg = document.getElementById('errorMsg');
-            
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
-            btn.disabled = true;
-            msg.classList.add('hidden');
+        // --- Event Listener for Login Form Submission ---
+        document.getElementById('loginForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMessageElement = document.getElementById('errorMessage');
+
+            errorMessageElement.classList.add('hidden'); // Clear previous errors
 
             try {
-                // UPDATED API CALL
-                const res = await fetch('/api/auth/login', {
+                // Determine API endpoint based on logic (assuming single API for user/admin login)
+                // We will use a standard '/api/auth' endpoint and differentiate by a 'role' parameter if possible,
+                // or assume separate endpoints if your backend logic demands it.
+                // Based on previous logs, let's assume the admin login endpoint is '/api/auth'.
+
+                const res = await fetch('/api/auth', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        type: 'login', // Type added
-                        email: document.getElementById('email').value,
-                        password: document.getElementById('password').value
+                        type: 'login', // Type for regular user login
+                        email: email,
+                        password: password
                     })
                 });
-                const data = await res.json();
 
-                if (res.ok) {
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    window.location.href = '/home';
-                } else {
-                    msg.innerText = data.error || 'Login failed';
-                    msg.classList.remove('hidden');
-                }
-            } catch (err) {
-                msg.innerText = 'Network Error';
-                msg.classList.remove('hidden');
-            } finally {
-                btn.innerHTML = 'Login';
-                btn.disabled = false;
-            }
-        });
-
-        function toggleAdminPanel() { document.getElementById('adminModal').classList.toggle('hidden'); }
-
-        async function adminLogin() {
-            const email = document.getElementById('adminEmail').value;
-            const token = document.getElementById('adminToken').value;
-            const msg = document.getElementById('adminMsg');
-
-            try {
-                // UPDATED API CALL
-                const res = await fetch('/api/auth/admin-login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'admin-login', email, token })
-                });
                 const data = await res.json();
 
                 if (data.success) {
-                    localStorage.setItem('admin', JSON.stringify(data.admin));
-                    window.location.href = '/admin/dashboard';
+                    // Successful login: Save token and redirect
+                    localStorage.setItem('userToken', data.token); // Save user token
+                    window.location.href = '/home'; // Redirect to user dashboard
+
                 } else {
-                    msg.innerText = "Invalid Credentials!";
-                    msg.classList.remove('hidden');
+                    errorMessageElement.innerText = data.error || 'Login failed. Please try again.';
+                    errorMessageElement.classList.remove('hidden');
                 }
+
             } catch (err) {
-                msg.innerText = "Connection Failed!";
-                msg.classList.remove('hidden');
+                console.error('Login Error:', err);
+                errorMessageElement.innerText = 'Network error or server unavailable.';
+                errorMessageElement.classList.remove('hidden');
             }
-        }
+        });
+
+        // --- Check for Admin Login (if a separate button/link exists) ---
+        // If your admin login has a separate process (e.g., specific form or page):
+        // You would need to handle that redirection separately in your code.
+        // If a single form handles both user and admin, a separate check for admin role is needed in the backend response.
     </script>
 </body>
 </html>
