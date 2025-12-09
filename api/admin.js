@@ -2,15 +2,27 @@
 const pool = require('../db');
 
 // --- Helper Functions ---
-// Function to verify Admin status (JWT or Session Check)
-// You must implement proper authentication logic here!
-// Example: async function checkAdminStatus(userId) { ... }
+// TODO: Implement your authentication logic here to verify admin status using JWT or session data.
+async function verifyAdminToken(token) {
+    // Example: verify token using jwt library (if you are using JWT)
+    // const jwt = require('jsonwebtoken');
+    // try {
+    //     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    //     // Check if user ID from decoded token exists in users table and has admin role
+    //     const [user] = await pool.execute('SELECT role FROM users WHERE id = ?', [decoded.userId]);
+    //     return user.length > 0 && user[0].role === 'admin';
+    // } catch (e) {
+    //     return false;
+    // }
+    // For now, return true as a placeholder, but this must be replaced.
+    return true;
+}
 
 module.exports = async (req, res) => {
     // CORS Configuration (Essential for Vercel)
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Added Authorization header for security
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
@@ -18,9 +30,11 @@ module.exports = async (req, res) => {
     const { type, ...params } = req.body; // ...params collects all other parameters
 
     // 1. Authentication Check (Crucial for Admin Panel)
-    // You must add your admin verification logic here.
-    // Example: const isAdmin = await checkAdminStatus(req.headers.authorization);
-    // if (!isAdmin) { return res.status(401).json({ success: false, error: 'Unauthorized access.' }); }
+    const adminToken = req.headers.authorization ? req.headers.authorization.split(' ')[1] : null;
+    const isAdmin = await verifyAdminToken(adminToken);
+    if (!isAdmin) {
+        return res.status(401).json({ success: false, error: 'Unauthorized access.' });
+    }
 
     // 2. Input Validation
     if (!type) {
@@ -28,16 +42,17 @@ module.exports = async (req, res) => {
     }
 
     try {
+        // --- Dashboard Stats Logic ---
+        if (type === 'dashboard_stats') {
+            const [totalUsers] = await pool.execute('SELECT COUNT(*) as count FROM users');
+            // Add other stats queries here
+            return res.json({ success: true, totalUsers: totalUsers[0].count, newRegistrations: 0, pendingDeposits: 0 });
+        }
+
         // --- Categories Logic (list_categories) ---
         if (type === 'list_categories') {
             const [categories] = await pool.execute('SELECT * FROM tournaments WHERE is_category = 1 ORDER BY id DESC');
             return res.json({ success: true, categories });
-        }
-
-        // --- Add other Admin Logic here (e.g., Manage Users, Payments) ---
-        if (type === 'update_user_status') {
-            // ... logic for update user status ...
-            // return res.json({ success: true, message: 'User updated successfully.' });
         }
         
         // --- If request type is not recognized ---
