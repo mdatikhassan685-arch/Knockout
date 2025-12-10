@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Withdrawals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-gray-900 text-white pb-20">
+
+    <!-- Header -->
+    <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50">
+        <a href="/admin/dashboard" class="mr-4 text-gray-400 hover:text-white"><i class="fa-solid fa-arrow-left text-xl"></i></a>
+        <div class="text-xl font-bold text-red-500">Withdrawal Requests</div>
+    </header>
+
+    <!-- Request List -->
+    <div class="p-4 space-y-4" id="wd_list">
+        <p class="text-center text-gray-500 mt-10 animate-pulse">Loading requests...</p>
+    </div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || user.role !== 'admin') window.location.href = '/';
+
+        async function loadData() {
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'list_withdrawals' })
+                });
+                const data = await res.json();
+                
+                const container = document.getElementById('wd_list');
+                
+                if (data.length > 0) {
+                    container.innerHTML = data.map(wd => `
+                        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow-md">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h3 class="font-bold text-lg text-white">${wd.username}</h3>
+                                    <p class="text-xs text-gray-400">User ID: ${wd.user_id}</p>
+                                </div>
+                                <span class="bg-red-500/20 text-red-400 px-2 py-1 rounded text-xs font-bold uppercase">Pending</span>
+                            </div>
+                            
+                            <div class="bg-gray-900 p-3 rounded mb-3 text-sm space-y-1">
+                                <p class="flex justify-between"><span class="text-gray-500">Amount:</span> <span class="font-bold text-red-400">৳${wd.amount}</span></p>
+                                <p class="flex justify-between"><span class="text-gray-500">Method:</span> <span class="font-bold text-blue-400 uppercase">${wd.method}</span></p>
+                                <p class="flex justify-between"><span class="text-gray-500">Account:</span> <span class="text-white select-all font-mono">${wd.account_number}</span></p>
+                                <p class="text-right text-xs text-gray-600 pt-1">${new Date(wd.created_at).toLocaleString()}</p>
+                            </div>
+
+                            <div class="flex gap-3">
+                                <button onclick="process(${wd.id}, 'approve')" class="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-lg font-bold text-sm transition">Approve</button>
+                                <button onclick="process(${wd.id}, 'reject')" class="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded-lg font-bold text-sm transition">Reject</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = `
+                        <div class="text-center text-gray-500 mt-20">
+                            <i class="fa-solid fa-check-circle text-5xl mb-3 opacity-50"></i>
+                            <p>No pending withdrawals.</p>
+                        </div>`;
+                }
+            } catch (e) { 
+                console.error(e);
+                document.getElementById('wd_list').innerHTML = '<p class="text-red-500 text-center">Failed to load data.</p>';
+            }
+        }
+
+        async function process(id, action) {
+            const msg = action === 'approve' ? "Approve this withdrawal? Balance will be deducted." : "Reject this request?";
+            if(!confirm(msg)) return;
+            
+            const btn = event.target;
+            btn.innerText = "...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'handle_withdrawal', withdraw_id: id, action })
+                });
+                const data = await res.json();
+                
+                if(data.success) {
+                    alert(data.message);
+                    loadData(); // Reload list
+                } else {
+                    alert("Error: " + data.error);
+                    btn.innerText = action === 'approve' ? "Approve" : "Reject";
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                alert("Network error");
+                btn.disabled = false;
+            }
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
