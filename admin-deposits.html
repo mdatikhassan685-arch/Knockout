@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Deposits</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-gray-900 text-white pb-20">
+
+    <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50">
+        <a href="/admin/dashboard" class="mr-4 text-gray-400"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="text-xl font-bold text-yellow-500">Deposit Requests</div>
+    </header>
+
+    <div class="p-4" id="request_list">
+        <p class="text-center text-gray-500 mt-10">Loading...</p>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'list_deposits' })
+                });
+                const data = await res.json();
+                
+                const container = document.getElementById('request_list');
+                if (data.length > 0) {
+                    container.innerHTML = data.map(d => `
+                        <div class="bg-gray-800 p-4 mb-3 rounded-lg border border-gray-700 shadow-md">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h3 class="font-bold text-lg text-white">${d.username}</h3>
+                                    <p class="text-xs text-gray-400">User ID: ${d.user_id}</p>
+                                </div>
+                                <span class="bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded text-xs font-bold">Pending</span>
+                            </div>
+                            
+                            <div class="bg-gray-900 p-3 rounded mb-3 text-sm">
+                                <p><span class="text-gray-500">Amount:</span> <span class="font-bold text-green-400">৳${d.amount}</span></p>
+                                <p><span class="text-gray-500">Sender:</span> ${d.sender_number}</p>
+                                <p><span class="text-gray-500">TrxID:</span> <span class="text-blue-400 select-all">${d.trx_id}</span></p>
+                            </div>
+
+                            <div class="flex gap-3">
+                                <button onclick="process(${d.id}, 'approve')" class="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded font-bold text-sm">Approve</button>
+                                <button onclick="process(${d.id}, 'reject')" class="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded font-bold text-sm">Reject</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div class="text-center text-gray-500 mt-10"><i class="fa-solid fa-check-circle text-4xl mb-2"></i><p>No pending requests.</p></div>';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function process(id, action) {
+            if(!confirm(`Are you sure you want to ${action}?`)) return;
+            
+            // বাটন ডিজেবল করা
+            event.target.innerText = "...";
+            event.target.disabled = true;
+
+            const res = await fetch('/api/admin', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ type: 'handle_deposit', deposit_id: id, action })
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert(data.message);
+                loadData(); // রিলোড
+            } else {
+                alert("Failed: " + data.error);
+            }
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
