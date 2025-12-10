@@ -1,220 +1,126 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; margin: 0; padding: 20px; }
-        
-        /* Header */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .logo { font-size: 20px; font-weight: bold; color: #3b82f6; text-transform: uppercase; letter-spacing: 1px; }
-        .logout-btn { background: #e11d48; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-
-        /* Stats Grid (4 Cards) */
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
-        .stat-card { background: #1e293b; padding: 15px; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
-        
-        .stat-card h3 { font-size: 28px; margin: 5px 0; font-weight: bold; }
-        .stat-card p { font-size: 12px; color: #94a3b8; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; }
-        
-        /* Colored Borders */
-        .stat-card.blue { border-left: 4px solid #3b82f6; }
-        .stat-card.yellow { border-left: 4px solid #facc15; }
-        .stat-card.purple { border-left: 4px solid #a855f7; }
-        .stat-card.red { border-left: 4px solid #e11d48; }
-
-        /* Quick Actions */
-        .section-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; color: #e2e8f0; }
-        
-        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
-        
-        .action-btn { border: none; border-radius: 12px; padding: 20px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: 0.3s; }
-        
-        .btn-primary { background: #2563eb; color: white; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3); }
-        .btn-secondary { background: #334155; color: white; border: 1px solid #475569; }
-        
-        .action-btn i { font-size: 24px; }
-        .action-btn span { font-size: 14px; font-weight: bold; }
-
-        /* Recent Deposits Section */
-        .deposit-list { background: #1e293b; border-radius: 12px; padding: 15px; min-height: 100px; }
-        .empty-msg { text-align: center; color: #64748b; font-size: 14px; margin-top: 20px; }
-
-        .dep-item { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; }
-        .user-info { font-size: 13px; }
-        .trx-id { color: #facc15; font-size: 11px; }
-        .approve-btn { background: #22c55e; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 12px; }
-
-        /* MODAL (Popup Form for Adding Game) */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
-        .modal-box { background: #1e293b; padding: 25px; border-radius: 15px; width: 85%; max-width: 350px; border: 1px solid #475569; }
-        .modal-box h3 { margin-top: 0; color: #3b82f6; }
-        
-        input { width: 100%; padding: 12px; margin: 10px 0; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 8px; box-sizing: border-box; }
-        .save-btn { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .close-btn { width: 100%; padding: 10px; background: transparent; color: #94a3b8; border: none; cursor: pointer; margin-top: 5px; }
-
-    </style>
+    <title>Knockout Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
-<body>
+<body class="bg-gray-900 text-white font-sans">
 
-    <!-- Header -->
-    <div class="header">
-        <div class="logo">ADMIN PANEL</div>
-        <button class="logout-btn" onclick="logout()">Logout</button>
-    </div>
+    <!-- Mobile Header -->
+    <header class="p-4 bg-gray-800 shadow-md flex justify-between items-center sticky top-0 z-50">
+        <div class="text-xl font-bold text-red-500">ADMIN PANEL</div>
+        <button onclick="logout()" class="bg-red-600 px-3 py-1 rounded text-sm font-bold">Logout</button>
+    </header>
 
     <!-- Stats Grid -->
-    <div class="stats-grid">
-        <div class="stat-card blue">
-            <p>Total Users</p>
-            <h3 id="total-users">0</h3>
+    <div class="p-4 grid grid-cols-2 gap-4">
+        <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-blue-500 shadow-lg">
+            <p class="text-gray-400 text-xs uppercase font-bold">Total Users</p>
+            <h2 class="text-2xl font-bold mt-1" id="total_users">...</h2>
         </div>
-        <div class="stat-card yellow">
-            <p>Pending Deposits</p>
-            <h3 id="pending-dep">0</h3>
+        <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-yellow-500 shadow-lg">
+            <p class="text-gray-400 text-xs uppercase font-bold">Pending Deposits</p>
+            <h2 class="text-2xl font-bold mt-1 text-yellow-400" id="pending_deposits">...</h2>
         </div>
-        <div class="stat-card purple">
-            <p>Categories</p>
-            <h3 id="total-cats">0</h3>
+        <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-purple-500 shadow-lg">
+            <p class="text-gray-400 text-xs uppercase font-bold">Tournaments</p>
+            <h2 class="text-2xl font-bold mt-1">0</h2>
         </div>
-        <div class="stat-card red">
-            <p>Withdrawals</p>
-            <h3>0</h3>
+        <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-red-500 shadow-lg">
+            <p class="text-gray-400 text-xs uppercase font-bold">Withdrawals</p>
+            <h2 class="text-2xl font-bold mt-1 text-red-400">0</h2>
         </div>
     </div>
 
     <!-- Quick Actions -->
-    <div class="section-title">Quick Actions</div>
-    <div class="action-grid">
-        <!-- Add Category Button -->
-        <button class="action-btn btn-primary" onclick="openModal()">
-            <i class="fa-solid fa-plus-circle"></i>
-            <span>Add Category</span>
-        </button>
-        
-        <!-- Manage Users Button -->
-        <button class="action-btn btn-secondary" onclick="alert('User Management Page Coming Soon!')">
-            <i class="fa-solid fa-users-gear"></i>
-            <span>Manage Users</span>
-        </button>
+    <div class="p-4">
+        <h3 class="font-bold text-lg mb-3 border-l-4 border-gray-500 pl-2">Quick Actions</h3>
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="alert('Upcoming Feature')" class="bg-blue-600 p-3 rounded-lg flex flex-col items-center justify-center h-24 hover:bg-blue-700 transition">
+                <i class="fa-solid fa-plus-circle text-2xl mb-1"></i>
+                <span class="text-xs font-bold">Add Tournament</span>
+            </button>
+            <button onclick="window.location.href='/admin-users.html'" class="bg-gray-700 p-3 rounded-lg flex flex-col items-center justify-center h-24 hover:bg-gray-600 transition">
+                <i class="fa-solid fa-users text-2xl mb-1"></i>
+                <span class="text-xs font-bold">Manage Users</span>
+            </button>
+        </div>
     </div>
 
-    <!-- Recent Deposits -->
-    <div class="section-title">Recent Deposits</div>
-    <div id="deposit-list" class="deposit-list">
-        <p class="empty-msg">No pending requests.</p>
-    </div>
-
-    <!-- MODAL: ADD CATEGORY -->
-    <div class="modal-overlay" id="addModal">
-        <div class="modal-box">
-            <h3><i class="fa-solid fa-gamepad"></i> Add New Category</h3>
-            <input type="text" id="game-title" placeholder="Game Name (e.g. Free Fire)">
-            <input type="text" id="game-img" placeholder="Image URL (Link)">
-            
-            <button class="save-btn" onclick="addCategory()">Save Category</button>
-            <button class="close-btn" onclick="closeModal()">Cancel</button>
+    <!-- Recent Deposits List -->
+    <div class="p-4 mb-20">
+        <h3 class="font-bold text-lg mb-3 border-l-4 border-green-500 pl-2">Recent Deposits</h3>
+        <div id="deposit_list" class="space-y-3">
+            <p class="text-gray-500 text-center py-4">Loading requests...</p>
         </div>
     </div>
 
     <script>
-        // Check Admin
+        // Admin Security Check
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || user.role !== 'admin') window.location.href = '/';
 
-        // Load Data
-        async function loadData() {
+        async function loadDashboard() {
             try {
-                // 1. Stats
-                const res = await fetch('/api/admin', {
+                // 1. Load Stats
+                const statsRes = await fetch('/api/admin', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ type: 'get_stats' })
+                    body: JSON.stringify({ type: 'dashboard_stats' })
                 });
-                const data = await res.json();
+                const stats = await statsRes.json();
                 
-                document.getElementById('total-users').innerText = data.total_users;
-                document.getElementById('pending-dep').innerText = data.pending_deposits;
-                // Categories count (Dummy for now or logic from backend)
-                document.getElementById('total-cats').innerText = data.total_categories || '0'; 
+                document.getElementById('total_users').innerText = stats.total_users;
+                document.getElementById('pending_deposits').innerText = stats.pending_deposits;
 
-                // 2. Deposits
-                loadDeposits();
-            } catch(e) { console.log(e); }
-        }
-
-        async function loadDeposits() {
-            const res = await fetch('/api/admin', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ type: 'get_deposits' })
-            });
-            const data = await res.json();
-            const list = document.getElementById('deposit-list');
-            
-            if(data.deposits.length === 0) {
-                list.innerHTML = '<p class="empty-msg">No pending requests.</p>';
-            } else {
-                list.innerHTML = '';
-                data.deposits.forEach(dep => {
-                    list.innerHTML += `
-                        <div class="dep-item">
-                            <div class="user-info">
-                                <b>UID: ${dep.user_id}</b> | <span style="color:#4ade80">৳${dep.amount}</span><br>
-                                <span style="color:#94a3b8">${dep.method} - ${dep.sender_number}</span><br>
-                                <span class="trx-id">Trx: ${dep.trx_id}</span>
-                            </div>
-                            <button class="approve-btn" onclick="approve(${dep.id}, ${dep.user_id}, ${dep.amount})">Approve</button>
-                        </div>
-                    `;
+                // 2. Load Pending Deposits (Limit 5)
+                // Note: We need to implement 'list_deposits' in api/admin.js next
+                const depRes = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'list_deposits' }) // This part needs backend support
                 });
+                const deposits = await depRes.json();
+
+                const list = document.getElementById('deposit_list');
+                if (deposits.length > 0) {
+                    list.innerHTML = deposits.map(d => `
+                        <div class="bg-gray-800 p-3 rounded-lg border border-gray-700 flex justify-between items-center">
+                            <div>
+                                <p class="font-bold text-sm text-yellow-400">৳${d.amount}</p>
+                                <p class="text-xs text-gray-400">Trx: ${d.trx_id} | User ID: ${d.user_id}</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="handleDeposit(${d.id}, 'approve')" class="bg-green-600 text-white px-2 py-1 rounded text-xs">✔</button>
+                                <button onclick="handleDeposit(${d.id}, 'reject')" class="bg-red-600 text-white px-2 py-1 rounded text-xs">✖</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    list.innerHTML = '<p class="text-gray-500 text-center text-sm">No pending requests.</p>';
+                }
+
+            } catch (e) {
+                console.error(e);
             }
         }
 
-        // Actions
-        async function addCategory() {
-            const title = document.getElementById('game-title').value;
-            const image = document.getElementById('game-img').value;
+        async function handleDeposit(id, action) {
+            if(!confirm("Are you sure?")) return;
             
-            if(!title) return alert("Please enter game name");
-
-            await fetch('/api/admin', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ type: 'add_category', title, image })
-            });
-            
-            alert("Category Added!");
-            closeModal();
-            document.getElementById('game-title').value = '';
-            document.getElementById('game-img').value = '';
+            // This API call needs to be implemented in api/admin.js
+            alert("Action: " + action + " on ID: " + id);
         }
-
-        async function approve(id, uid, amt) {
-            if(!confirm("Approve this payment?")) return;
-            await fetch('/api/admin', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ type: 'approve_deposit', depositId: id, userId: uid, amount: amt })
-            });
-            alert("Approved!");
-            loadDeposits();
-        }
-
-        // Modal Functions
-        function openModal() { document.getElementById('addModal').style.display = 'flex'; }
-        function closeModal() { document.getElementById('addModal').style.display = 'none'; }
 
         function logout() {
             localStorage.removeItem('user');
             window.location.href = '/';
         }
 
-        loadData();
+        loadDashboard();
     </script>
 </body>
 </html>
