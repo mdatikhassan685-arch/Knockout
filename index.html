@@ -4,38 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Knockout</title>
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; position: relative; }
         
-        /* Admin Button (Top Left - Fixed & High Z-Index) */
-        .admin-trigger { position: fixed; top: 20px; left: 20px; background: rgba(255, 255, 255, 0.1); border: 1px solid #334155; color: #94a3b8; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; }
-        
+        /* 🔥 ADMIN BUTTON (TOP LEFT) 🔥 */
+        .admin-btn { 
+            position: absolute; 
+            top: 20px; 
+            left: 20px; 
+            background: rgba(30, 41, 59, 0.8); 
+            border: 1px solid #334155; 
+            color: #94a3b8; 
+            width: 45px; 
+            height: 45px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            z-index: 100; 
+            font-size: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: 0.3s;
+        }
+        /* বাটনটি চাপলে বা মাউস নিলে রঙ বদলাবে */
+        .admin-btn:hover, .admin-btn:active {
+            background: #e11d48;
+            color: white;
+            border-color: #e11d48;
+        }
+
         /* Language Dropdown */
         .lang-box { position: absolute; top: 20px; right: 20px; }
         select { background: #1e293b; color: white; border: 1px solid #334155; padding: 5px 10px; border-radius: 8px; outline: none; }
 
+        /* Login Card */
         .login-box { width: 100%; max-width: 350px; padding: 30px; background: #1e293b; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; border: 1px solid #334155; }
-        .logo i { font-size: 50px; color: #3b82f6; margin-bottom: 10px; }
+        .logo i { font-size: 50px; color: #3b82f6; margin-bottom: 15px; }
         
         input { width: 100%; padding: 15px; margin-bottom: 15px; background: #0f172a; border: 1px solid #334155; border-radius: 12px; color: white; box-sizing: border-box; outline: none; }
         button { width: 100%; padding: 15px; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        
         .links { margin-top: 20px; font-size: 14px; color: #94a3b8; }
         .links a { color: #3b82f6; text-decoration: none; font-weight: bold; }
 
-        /* ADMIN MODAL */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(5px); }
-        .modal-box { background: #0f172a; padding: 30px; border-radius: 15px; width: 300px; text-align: center; border: 1px solid #e11d48; }
+        /* ADMIN MODAL (POPUP) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 200; backdrop-filter: blur(5px); }
+        .modal-box { background: #0f172a; padding: 25px; border-radius: 15px; width: 300px; text-align: center; border: 1px solid #e11d48; }
+        .modal-box h3 { color: #e11d48; margin-top: 0; }
         .close-btn { background: #334155; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <!-- Admin Trigger (Icon) -->
-    <div class="admin-trigger" onclick="openAdmin()">
+    <!-- 🔥 ১. এডমিন বাটন (শিল্ড আইকন) 🔥 -->
+    <div class="admin-btn" onclick="openAdmin()">
         <i class="fa-solid fa-user-shield"></i>
     </div>
 
+    <!-- ভাষা বাটন -->
     <div class="lang-box">
         <select id="langSelect" onchange="changeLanguage(this.value)">
             <option value="en">English</option>
@@ -43,6 +72,7 @@
         </select>
     </div>
 
+    <!-- লগইন ফর্ম -->
     <div class="login-box">
         <div class="logo"><i class="fa-solid fa-gamepad"></i></div>
         <h2 data-key="login_title">Login</h2>
@@ -56,21 +86,16 @@
             <a href="/signup" data-key="signup_link">Sign Up</a>
         </div>
         
-        <!-- BACKUP ADMIN LINK (TEMPORARY) -->
-        <p style="margin-top: 20px; font-size: 12px; cursor: pointer; color: #475569;" onclick="openAdmin()">
-            <i class="fa-solid fa-lock"></i> Admin Access
-        </p>
-
         <p id="msg" style="margin-top:10px; font-size:14px;"></p>
     </div>
 
-    <!-- ADMIN MODAL -->
+    <!-- এডমিন পপ-আপ -->
     <div class="modal-overlay" id="adminModal">
         <div class="modal-box">
-            <h3>ADMIN LOGIN</h3>
+            <h3><i class="fa-solid fa-lock"></i> ADMIN ACCESS</h3>
             <input type="email" id="adm-email" placeholder="Admin Email">
             <input type="password" id="adm-token" placeholder="Secret Token">
-            <button onclick="adminLogin()" style="background: #e11d48;">ENTER</button>
+            <button onclick="adminLogin()" style="background: #e11d48;">ENTER DASHBOARD</button>
             <button class="close-btn" onclick="closeAdmin()">CANCEL</button>
             <p id="adm-msg" style="margin-top:10px; font-size:13px;"></p>
         </div>
@@ -78,13 +103,11 @@
 
     <script src="lang.js"></script>
     <script>
-        function openAdmin() {
-            document.getElementById('adminModal').style.display = 'flex';
-        }
-        function closeAdmin() {
-            document.getElementById('adminModal').style.display = 'none';
-        }
+        // পপ-আপ খোলা/বন্ধ করা
+        function openAdmin() { document.getElementById('adminModal').style.display = 'flex'; }
+        function closeAdmin() { document.getElementById('adminModal').style.display = 'none'; }
 
+        // ১. সাধারণ লগইন
         async function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('pass').value;
@@ -103,9 +126,10 @@
                     localStorage.setItem('user', JSON.stringify(data.user));
                     window.location.href = '/home';
                 } else { msg.style.color = 'red'; msg.innerText = data.error; }
-            } catch(e) { msg.innerText = "Error"; }
+            } catch(e) { msg.innerText = "Server Error"; }
         }
 
+        // ২. এডমিন লগইন
         async function adminLogin() {
             const email = document.getElementById('adm-email').value;
             const token = document.getElementById('adm-token').value;
@@ -120,9 +144,9 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    msg.style.color = 'green'; msg.innerText = "Success!";
-                    localStorage.setItem('user', JSON.stringify(data.user)); // Save Admin Session
-                    window.location.href = '/admin';
+                    msg.style.color = 'green'; msg.innerText = "Verified! 🚀";
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    setTimeout(() => window.location.href = '/admin', 1000);
                 } else { msg.style.color = 'red'; msg.innerText = data.error; }
             } catch(e) { msg.innerText = "Error"; }
         }
