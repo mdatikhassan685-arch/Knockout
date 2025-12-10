@@ -27,10 +27,15 @@ module.exports = async (req, res) => {
             });
         }
 
-        // ========== PENDING DEPOSITS LIST ==========
+        // ========== PENDING DEPOSITS LIST (FIXED) ==========
         if (type === 'list_deposits') {
             const [deposits] = await db.execute(
-                'SELECT d.*, u.username FROM deposits d JOIN users u ON d.user_id = u.id WHERE d.status = "pending" ORDER BY d.created_at DESC LIMIT 50'
+                `SELECT d.id, d.user_id, d.amount, d.sender_number, d.trx_id, d.status, d.created_at, 
+                COALESCE(u.username, 'Unknown User') as username 
+                FROM deposits d 
+                LEFT JOIN users u ON d.user_id = u.id 
+                WHERE d.status = 'pending' 
+                ORDER BY d.created_at DESC LIMIT 50`
             );
             return res.status(200).json(deposits);
         }
@@ -55,10 +60,15 @@ module.exports = async (req, res) => {
             }
         }
 
-        // ========== PENDING WITHDRAWALS LIST ==========
+        // ========== PENDING WITHDRAWALS LIST (FIXED) ==========
         if (type === 'list_withdrawals') {
             const [data] = await db.execute(
-                'SELECT w.*, u.username FROM withdrawals w JOIN users u ON w.user_id = u.id WHERE w.status = "pending" ORDER BY w.created_at DESC LIMIT 50'
+                `SELECT w.id, w.user_id, w.amount, w.method, w.account_number, w.status, w.created_at, 
+                COALESCE(u.username, 'Unknown User') as username 
+                FROM withdrawals w 
+                LEFT JOIN users u ON w.user_id = u.id 
+                WHERE w.status = 'pending' 
+                ORDER BY w.created_at DESC LIMIT 50`
             );
             return res.status(200).json(data);
         }
@@ -71,7 +81,6 @@ module.exports = async (req, res) => {
             const { user_id, amount: wdAmount } = wd[0];
 
             if (action === 'approve') {
-                // ব্যালেন্স কমানো
                 await db.execute('UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?', [wdAmount, user_id]);
                 await db.execute('UPDATE withdrawals SET status = "approved" WHERE id = ?', [withdraw_id]);
                 await db.execute('INSERT INTO transactions (user_id, amount, type) VALUES (?, ?, "Withdraw")', [user_id, -wdAmount]);
@@ -82,7 +91,7 @@ module.exports = async (req, res) => {
             }
         }
 
-        // ========== USER LIST (Optional) ==========
+        // ========== USER LIST ==========
         if (type === 'list_users') {
             const [users] = await db.execute('SELECT id, username, email, wallet_balance, status FROM users ORDER BY id DESC LIMIT 50');
             return res.status(200).json(users);
