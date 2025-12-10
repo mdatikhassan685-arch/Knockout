@@ -1,140 +1,195 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wallet</title>
+    <title>Knockout - Wallet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body { font-family: sans-serif; background: #0f3460; color: white; margin: 0; padding: 10px; }
-        .card { background: #16213e; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; }
-        .balance-text { font-size: 30px; color: #4caf50; font-weight: bold; margin: 10px 0; }
-        
-        .form-box { background: #1a1a2e; padding: 15px; border-radius: 10px; border: 1px solid #e94560; }
-        .admin-num { background: #e94560; padding: 10px; border-radius: 5px; font-weight: bold; font-size: 18px; margin-bottom: 10px; display: block; }
-        
-        input, select { width: 95%; padding: 12px; margin: 8px 0; border-radius: 5px; border: none; background: #0f3460; color: white; }
-        button { width: 100%; padding: 12px; background: #4caf50; color: white; border: none; border-radius: 5px; font-weight: bold; margin-top: 10px; cursor: pointer; }
-        
-        .history-item { background: #16213e; padding: 10px; margin-top: 5px; border-radius: 5px; display: flex; justify-content: space-between; }
-        .badge { padding: 3px 8px; border-radius: 4px; font-size: 12px; }
-        .pending { background: orange; color: black; }
-        .approved { background: green; color: white; }
-        
-        .nav-btn { background: none; border: 1px solid white; margin-bottom: 10px; width: auto; padding: 5px 15px; }
+        /* Bottom Nav Active State */
+        .nav-item.active { color: #3b82f6; }
     </style>
 </head>
-<body>
+<body class="bg-gray-900 text-white pb-24">
 
-    <button onclick="window.location.href='/home'" class="nav-btn">⬅ Back</button>
+    <!-- Header -->
+    <header class="p-4 bg-gray-800 shadow-md sticky top-0 z-50 flex items-center">
+        <a href="/home" class="mr-4 text-gray-400"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="text-xl font-bold">My Wallet</div>
+    </header>
 
     <!-- Balance Card -->
-    <div class="card">
-        <h3 data-key="wallet_title">আমার ওয়ালেট</h3>
-        <div class="balance-text">৳ <span id="bal">0</span></div>
-    </div>
+    <div class="p-6">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-6 shadow-lg text-center relative overflow-hidden">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 rounded-full bg-white opacity-10"></div>
+            <p class="text-blue-100 text-sm mb-1">Total Balance</p>
+            <h1 class="text-4xl font-bold text-white">৳ <span id="balance">0.00</span></h1>
+        </div>
 
-    <!-- Deposit Form -->
-    <div class="form-box">
-        <h3 data-key="add_money">টাকা জমা দিন</h3>
-        
-        <p data-key="bkash_inst" style="font-size: 12px; color: #ccc;">Send Money করুন</p>
-        <span class="admin-num">017XXXXXXXX</span> <!-- আপনার বিকাশ নাম্বার এখানে দেবেন -->
-
-        <select id="method">
-            <option value="bkash">bKash</option>
-            <option value="nagad">Nagad</option>
-            <option value="rocket">Rocket</option>
-        </select>
-
-        <input type="number" id="amount" data-key="amount_ph" placeholder="টাকার পরিমাণ">
-        <input type="number" id="phone" data-key="send_num_ph" placeholder="প্রেরকের নাম্বার">
-        <input type="text" id="trx" data-key="trx_ph" placeholder="TrxID">
-
-        <button onclick="deposit()" data-key="deposit_btn">জমা নিশ্চিত করুন</button>
-        <p id="msg" style="text-align: center; margin-top: 10px; font-size: 14px;"></p>
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-2 gap-4 mt-6">
+            <button onclick="openModal('depositModal')" class="bg-gray-800 hover:bg-gray-700 p-4 rounded-xl flex flex-col items-center shadow-md border border-gray-700 transition">
+                <div class="w-10 h-10 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mb-2">
+                    <i class="fa-solid fa-plus"></i>
+                </div>
+                <span class="font-semibold text-sm">Add Money</span>
+            </button>
+            <button onclick="openModal('withdrawModal')" class="bg-gray-800 hover:bg-gray-700 p-4 rounded-xl flex flex-col items-center shadow-md border border-gray-700 transition">
+                <div class="w-10 h-10 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mb-2">
+                    <i class="fa-solid fa-arrow-down"></i>
+                </div>
+                <span class="font-semibold text-sm">Withdraw</span>
+            </button>
+        </div>
     </div>
 
     <!-- Transaction History -->
-    <h3 data-key="history" style="margin-top: 20px;">লেনদেন</h3>
-    <div id="history-list">
-        <p style="text-align: center; color: #ccc;">Loading...</p>
+    <div class="px-6">
+        <h3 class="font-bold text-lg mb-4 text-gray-300">Recent Transactions</h3>
+        <div id="transactions" class="space-y-3">
+            <!-- Loading Skeleton -->
+            <div class="bg-gray-800 h-16 rounded-lg animate-pulse"></div>
+            <div class="bg-gray-800 h-16 rounded-lg animate-pulse"></div>
+        </div>
     </div>
 
-    <script src="lang.js"></script>
+    <!-- DEPOSIT MODAL -->
+    <div id="depositModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-[60] p-4 backdrop-blur-sm">
+        <div class="bg-gray-800 w-full max-w-sm rounded-2xl p-6 border border-gray-700">
+            <h3 class="text-xl font-bold mb-4">Add Money</h3>
+            <div class="bg-blue-900/30 p-3 rounded-lg border border-blue-500/30 mb-4 text-sm text-blue-200">
+                Send money to <strong>01xxxxxxxxx</strong> (Bkash/Nagad) then submit details below.
+            </div>
+            <input type="number" id="dep_amount" placeholder="Amount (৳)" class="w-full bg-gray-700 p-3 rounded-lg mb-3 text-white outline-none border border-gray-600 focus:border-blue-500">
+            <input type="text" id="dep_sender" placeholder="Sender Number" class="w-full bg-gray-700 p-3 rounded-lg mb-3 text-white outline-none border border-gray-600 focus:border-blue-500">
+            <input type="text" id="dep_trx" placeholder="Transaction ID" class="w-full bg-gray-700 p-3 rounded-lg mb-4 text-white outline-none border border-gray-600 focus:border-blue-500">
+            <div class="flex gap-3">
+                <button onclick="closeModal('depositModal')" class="flex-1 bg-gray-700 py-2 rounded-lg">Cancel</button>
+                <button onclick="submitDeposit()" class="flex-1 bg-blue-600 py-2 rounded-lg font-bold">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WITHDRAW MODAL -->
+    <div id="withdrawModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-[60] p-4 backdrop-blur-sm">
+        <div class="bg-gray-800 w-full max-w-sm rounded-2xl p-6 border border-gray-700">
+            <h3 class="text-xl font-bold mb-4">Withdraw Money</h3>
+            <input type="number" id="wd_amount" placeholder="Amount (৳)" class="w-full bg-gray-700 p-3 rounded-lg mb-3 text-white outline-none border border-gray-600 focus:border-blue-500">
+            <select id="wd_method" class="w-full bg-gray-700 p-3 rounded-lg mb-3 text-white outline-none border border-gray-600">
+                <option value="bkash">Bkash</option>
+                <option value="nagad">Nagad</option>
+            </select>
+            <input type="text" id="wd_account" placeholder="Your Account Number" class="w-full bg-gray-700 p-3 rounded-lg mb-4 text-white outline-none border border-gray-600 focus:border-blue-500">
+            <div class="flex gap-3">
+                <button onclick="closeModal('withdrawModal')" class="flex-1 bg-gray-700 py-2 rounded-lg">Cancel</button>
+                <button onclick="submitWithdraw()" class="flex-1 bg-green-600 py-2 rounded-lg font-bold">Withdraw</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Nav (Same as Home) -->
+    <nav class="fixed bottom-0 w-full bg-gray-900 border-t border-gray-800 flex justify-around py-3 z-40">
+        <a href="/home" class="text-gray-500 hover:text-blue-500 flex flex-col items-center transition">
+            <i class="fa-solid fa-house text-xl mb-1"></i><span class="text-xs">Home</span>
+        </a>
+        <a href="#" class="text-gray-500 hover:text-blue-500 flex flex-col items-center transition">
+            <i class="fa-solid fa-fire text-xl mb-1"></i><span class="text-xs">Live</span>
+        </a>
+        <a href="/wallet" class="text-blue-500 flex flex-col items-center transition">
+            <i class="fa-solid fa-wallet text-xl mb-1"></i><span class="text-xs">Wallet</span>
+        </a>
+        <a href="#" class="text-gray-500 hover:text-blue-500 flex flex-col items-center transition">
+            <i class="fa-solid fa-user text-xl mb-1"></i><span class="text-xs">Profile</span>
+        </a>
+    </nav>
+
     <script>
         const user = JSON.parse(localStorage.getItem('user'));
-        if(!user) window.location.href = '/';
+        if (!user) window.location.href = '/';
 
-        // 1. Load Data on Start
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
         async function loadWallet() {
             try {
                 const res = await fetch('/api/user', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ type: 'get_wallet', userId: user.id })
+                    body: JSON.stringify({ type: 'wallet_info', user_id: user.id })
                 });
                 const data = await res.json();
                 
-                document.getElementById('bal').innerText = data.balance;
-                
-                // Show History
-                const list = document.getElementById('history-list');
-                list.innerHTML = '';
-                data.history.forEach(item => {
-                    const statusClass = item.description.includes('Pending') ? 'pending' : 'approved';
-                    list.innerHTML += `
-                        <div class="history-item">
-                            <span>${item.description}</span>
-                            <span class="badge ${statusClass}">৳ ${item.amount}</span>
-                        </div>
-                    `;
-                });
-
-            } catch(e) { console.log(e); }
-        }
-
-        // 2. Deposit Function
-        async function deposit() {
-            const amount = document.getElementById('amount').value;
-            const number = document.getElementById('phone').value;
-            const trx = document.getElementById('trx').value;
-            const method = document.getElementById('method').value;
-            const msg = document.getElementById('msg');
-
-            // Language check
-            const lang = localStorage.getItem('appLang') || 'bn';
-            const texts = lang==='bn' ? 
-                {wait: 'অপেক্ষা করুন...', done: 'রিকুয়েস্ট সফল!'} : 
-                {wait: 'Sending...', done: 'Request Sent!'};
-
-            msg.style.color = "yellow";
-            msg.innerText = texts.wait;
-
-            try {
-                const res = await fetch('/api/user', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        type: 'deposit', 
-                        userId: user.id, 
-                        amount, method, number, trxId: trx 
-                    })
-                });
-
-                if(res.ok) {
-                    msg.style.color = "green";
-                    msg.innerText = texts.done;
-                    loadWallet(); // Reload balance/history
-                    // Clear inputs
-                    document.getElementById('trx').value = '';
-                } else {
-                    msg.style.color = "red";
-                    msg.innerText = "Error!";
+                if (res.ok) {
+                    document.getElementById('balance').innerText = parseFloat(data.balance).toFixed(2);
+                    
+                    const list = document.getElementById('transactions');
+                    if (data.transactions.length > 0) {
+                        list.innerHTML = data.transactions.map(t => `
+                            <div class="flex justify-between items-center bg-gray-800 p-3 rounded-lg border border-gray-700">
+                                <div>
+                                    <p class="font-bold text-sm">${t.type}</p>
+                                    <p class="text-xs text-gray-500">${new Date(t.created_at).toLocaleDateString()}</p>
+                                </div>
+                                <span class="font-bold ${t.type === 'Deposit' ? 'text-green-400' : 'text-red-400'}">
+                                    ${t.type === 'Deposit' ? '+' : '-'}৳${t.amount}
+                                </span>
+                            </div>
+                        `).join('');
+                    } else {
+                        list.innerHTML = '<p class="text-gray-500 text-center text-sm py-4">No transactions found.</p>';
+                    }
                 }
-            } catch(e) { msg.innerText = "Server Error"; }
+            } catch (e) { console.error(e); }
         }
 
-        loadWallet(); // Run initially
+        async function submitDeposit() {
+            const amount = document.getElementById('dep_amount').value;
+            const sender = document.getElementById('dep_sender').value;
+            const trx = document.getElementById('dep_trx').value;
+
+            if(!amount || !sender || !trx) return alert("All fields required");
+
+            const res = await fetch('/api/user', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    type: 'deposit', 
+                    user_id: user.id, 
+                    amount, 
+                    sender_number: sender, 
+                    trx_id: trx 
+                })
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
+            closeModal('depositModal');
+        }
+
+        async function submitWithdraw() {
+            const amount = document.getElementById('wd_amount').value;
+            const method = document.getElementById('wd_method').value;
+            const account = document.getElementById('wd_account').value;
+
+            if(!amount || !account) return alert("All fields required");
+
+            const res = await fetch('/api/user', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    type: 'withdraw', 
+                    user_id: user.id, 
+                    amount, 
+                    method, 
+                    account_number: account 
+                })
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
+            closeModal('withdrawModal');
+        }
+
+        loadWallet();
     </script>
 </body>
 </html>
