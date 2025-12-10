@@ -27,14 +27,14 @@ module.exports = async (req, res) => {
             });
         }
 
-        // ========== PENDING DEPOSITS LIST (FIXED) ==========
+        // ========== PENDING DEPOSITS LIST (Case Insensitive Fix) ==========
         if (type === 'list_deposits') {
             const [deposits] = await db.execute(
                 `SELECT d.id, d.user_id, d.amount, d.sender_number, d.trx_id, d.status, d.created_at, 
                 COALESCE(u.username, 'Unknown User') as username 
                 FROM deposits d 
                 LEFT JOIN users u ON d.user_id = u.id 
-                WHERE d.status = 'pending' 
+                WHERE LOWER(d.status) = 'pending' 
                 ORDER BY d.created_at DESC LIMIT 50`
             );
             return res.status(200).json(deposits);
