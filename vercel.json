@@ -8,6 +8,7 @@
     { "source": "/signup", "destination": "/signup.html" },
     { "source": "/home", "destination": "/home.html" },
     { "source": "/wallet", "destination": "/wallet.html" },
+    { "source": "/admin", "destination": "/admin-dashboard.html" },
     
     { "source": "/(.*)", "destination": "/$1" }
   ]
