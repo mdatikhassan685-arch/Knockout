@@ -9,10 +9,10 @@ module.exports = async (req, res) => {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-    const { type, user_id, status, amount, deposit_id, action } = req.body;
+    const { type, user_id, status, deposit_id, withdraw_id, action } = req.body;
 
     try {
-        // ========== DASHBOARD STATS (ড্যাশবোর্ড তথ্য) ==========
+        // ========== DASHBOARD STATS ==========
         if (type === 'dashboard_stats') {
             const [users] = await db.execute('SELECT COUNT(*) as total FROM users');
             const [deposits] = await db.execute('SELECT COUNT(*) as pending FROM deposits WHERE status = "pending"');
@@ -27,52 +27,75 @@ module.exports = async (req, res) => {
             });
         }
 
-        // ========== PENDING DEPOSITS LIST (ডিপোজিট লিস্ট) ==========
+        // ========== PENDING DEPOSITS LIST ==========
         if (type === 'list_deposits') {
             const [deposits] = await db.execute(
-                'SELECT d.*, u.username FROM deposits d JOIN users u ON d.user_id = u.id WHERE d.status = "pending" ORDER BY d.created_at DESC LIMIT 20'
+                'SELECT d.*, u.username FROM deposits d JOIN users u ON d.user_id = u.id WHERE d.status = "pending" ORDER BY d.created_at DESC LIMIT 50'
             );
             return res.status(200).json(deposits);
         }
 
-        // ========== APPROVE/REJECT DEPOSIT (পেমেন্ট অ্যাকশন) ==========
+        // ========== HANDLE DEPOSIT (Approve/Reject) ==========
         if (type === 'handle_deposit') {
             if (!deposit_id || !action) return res.status(400).json({ error: 'Invalid parameters' });
 
-            // 1. ডিপোজিট খুঁজে বের করা
             const [deposit] = await db.execute('SELECT * FROM deposits WHERE id = ? AND status = "pending"', [deposit_id]);
-            
-            if (deposit.length === 0) {
-                return res.status(404).json({ error: 'Request not found or already processed' });
-            }
+            if (deposit.length === 0) return res.status(404).json({ error: 'Request not found' });
 
             const { user_id, amount: depAmount } = deposit[0];
 
             if (action === 'approve') {
-                // ব্যালেন্স যোগ করা
                 await db.execute('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?', [depAmount, user_id]);
-                // স্ট্যাটাস আপডেট
                 await db.execute('UPDATE deposits SET status = "approved" WHERE id = ?', [deposit_id]);
-                // ট্রানজেকশন হিস্ট্রি
                 await db.execute('INSERT INTO transactions (user_id, amount, type) VALUES (?, ?, "Deposit")', [user_id, depAmount]);
-                
-                return res.status(200).json({ success: true, message: 'Deposit Approved & Balance Added' });
-            } 
-            else if (action === 'reject') {
-                // শুধু স্ট্যাটাস আপডেট (রিজেক্ট)
+                return res.status(200).json({ success: true, message: 'Deposit Approved' });
+            } else {
                 await db.execute('UPDATE deposits SET status = "rejected" WHERE id = ?', [deposit_id]);
                 return res.status(200).json({ success: true, message: 'Deposit Rejected' });
             }
         }
 
-        // ========== MANAGE USERS (ইউজার স্ট্যাটাস আপডেট) ==========
+        // ========== PENDING WITHDRAWALS LIST ==========
+        if (type === 'list_withdrawals') {
+            const [data] = await db.execute(
+                'SELECT w.*, u.username FROM withdrawals w JOIN users u ON w.user_id = u.id WHERE w.status = "pending" ORDER BY w.created_at DESC LIMIT 50'
+            );
+            return res.status(200).json(data);
+        }
+
+        // ========== HANDLE WITHDRAWAL (Approve/Reject) ==========
+        if (type === 'handle_withdrawal') {
+            const [wd] = await db.execute('SELECT * FROM withdrawals WHERE id = ? AND status = "pending"', [withdraw_id]);
+            if (!wd.length) return res.status(404).json({ error: 'Request not found' });
+            
+            const { user_id, amount: wdAmount } = wd[0];
+
+            if (action === 'approve') {
+                // ব্যালেন্স কমানো
+                await db.execute('UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?', [wdAmount, user_id]);
+                await db.execute('UPDATE withdrawals SET status = "approved" WHERE id = ?', [withdraw_id]);
+                await db.execute('INSERT INTO transactions (user_id, amount, type) VALUES (?, ?, "Withdraw")', [user_id, -wdAmount]);
+                return res.status(200).json({ success: true, message: 'Withdrawal Approved' });
+            } else {
+                await db.execute('UPDATE withdrawals SET status = "rejected" WHERE id = ?', [withdraw_id]);
+                return res.status(200).json({ success: true, message: 'Withdrawal Rejected' });
+            }
+        }
+
+        // ========== USER LIST (Optional) ==========
+        if (type === 'list_users') {
+            const [users] = await db.execute('SELECT id, username, email, wallet_balance, status FROM users ORDER BY id DESC LIMIT 50');
+            return res.status(200).json(users);
+        }
+
+        // ========== UPDATE USER STATUS ==========
         if (type === 'update_user_status') {
             await db.execute('UPDATE users SET status = ? WHERE id = ?', [status, user_id]);
-            return res.status(200).json({ success: true, message: 'User status updated' });
+            return res.status(200).json({ success: true, message: 'User updated' });
         }
 
         else {
-            return res.status(400).json({ error: 'Invalid admin action type' });
+            return res.status(400).json({ error: 'Invalid type' });
         }
 
     } catch (error) {
