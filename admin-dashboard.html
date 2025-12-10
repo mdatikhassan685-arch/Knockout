@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; margin: 0; padding: 20px; }
+        
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
+        .title { font-size: 22px; font-weight: bold; color: #3b82f6; }
+        .logout { background: #e11d48; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+
+        /* Stats Cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 30px; }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; text-align: center; }
+        .card h3 { margin: 0; font-size: 30px; color: #facc15; }
+        .card p { margin: 5px 0 0; color: #94a3b8; font-size: 14px; }
+
+        /* Controls Section */
+        .section { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 20px; }
+        .section h4 { margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+
+        input, textarea { width: 95%; padding: 10px; margin: 10px 0; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 5px; }
+        button.action-btn { width: 100%; padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+
+        /* Deposit List */
+        .dep-item { background: #0f172a; padding: 10px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .approve-btn { background: #22c55e; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="title"><i class="fa-solid fa-user-shield"></i> ADMIN PANEL</div>
+        <button class="logout" onclick="logout()">Logout</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="card">
+            <h3 id="total-users">0</h3>
+            <p>Total Users</p>
+        </div>
+        <div class="card">
+            <h3 id="pending-dep">0</h3>
+            <p>Pending Deposits</p>
+        </div>
+    </div>
+
+    <!-- 1. Add Game Category -->
+    <div class="section">
+        <h4><i class="fa-solid fa-gamepad"></i> Add New Game</h4>
+        <input type="text" id="game-title" placeholder="Game Name (e.g. Free Fire)">
+        <input type="text" id="game-img" placeholder="Image URL (Link)">
+        <button class="action-btn" onclick="addGame()">Add Game</button>
+    </div>
+
+    <!-- 2. Update Notice -->
+    <div class="section">
+        <h4><i class="fa-solid fa-bullhorn"></i> Update Announcement</h4>
+        <textarea id="notice-msg" rows="2" placeholder="Write new notice..."></textarea>
+        <button class="action-btn" style="background: #e11d48;" onclick="updateNotice()">Update Notice</button>
+    </div>
+
+    <!-- 3. Pending Deposits -->
+    <div class="section">
+        <h4><i class="fa-solid fa-money-bill"></i> Deposit Requests</h4>
+        <div id="deposit-list">
+            <p style="color:#94a3b8;">Loading...</p>
+        </div>
+    </div>
+
+    <script>
+        // Check if Admin (Simple check for now)
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || user.role !== 'admin') {
+            alert("Access Denied!");
+            window.location.href = '/';
+        }
+
+        // Load Data
+        async function loadAdminData() {
+            // 1. Stats
+            const res = await fetch('/api/admin', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ type: 'get_stats' })
+            });
+            const data = await res.json();
+            document.getElementById('total-users').innerText = data.total_users;
+            document.getElementById('pending-dep').innerText = data.pending_deposits;
+
+            // 2. Deposits
+            loadDeposits();
+        }
+
+        async function loadDeposits() {
+            const res = await fetch('/api/admin', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ type: 'get_deposits' })
+            });
+            const data = await res.json();
+            const list = document.getElementById('deposit-list');
+            list.innerHTML = '';
+
+            if(data.deposits.length === 0) list.innerHTML = '<p>No pending requests.</p>';
+
+            data.deposits.forEach(dep => {
+                list.innerHTML += `
+                    <div class="dep-item">
+                        <div>
+                            <b>UID: ${dep.user_id}</b> | ৳${dep.amount}<br>
+                            <small>${dep.method} - ${dep.sender_number}</small><br>
+                            <small style="color:yellow">Trx: ${dep.trx_id}</small>
+                        </div>
+                        <button class="approve-btn" onclick="approve(${dep.id}, ${dep.user_id}, ${dep.amount})">Approve</button>
+                    </div>
+                `;
+            });
+        }
+
+        // Actions
+        async function addGame() {
+            const title = document.getElementById('game-title').value;
+            const image = document.getElementById('game-img').value;
+            if(!title) return alert("Enter Game Name");
+
+            await fetch('/api/admin', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ type: 'add_category', title, image })
+            });
+            alert("Game Added!");
+            document.getElementById('game-title').value = '';
+        }
+
+        async function updateNotice() {
+            const message = document.getElementById('notice-msg').value;
+            if(!message) return alert("Write something");
+
+            await fetch('/api/admin', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ type: 'update_notice', message })
+            });
+            alert("Notice Updated!");
+        }
+
+        async function approve(id, uid, amt) {
+            if(!confirm("Approve this payment?")) return;
+
+            await fetch('/api/admin', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ type: 'approve_deposit', depositId: id, userId: uid, amount: amt })
+            });
+            alert("Approved!");
+            loadDeposits(); // Refresh list
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/';
+        }
+
+        loadAdminData();
+    </script>
+</body>
+</html>
