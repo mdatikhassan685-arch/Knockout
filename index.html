@@ -1,57 +1,79 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knockout Esports - Login</title>
+    <title>Knockout Esports</title>
     <style>
-        body { font-family: sans-serif; background: #1a1a2e; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { background: #16213e; padding: 20px; border-radius: 10px; width: 300px; text-align: center; }
-        input { width: 90%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; }
-        button { width: 100%; padding: 10px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .link { margin-top: 10px; display: block; color: #ccc; text-decoration: none; font-size: 14px; }
+        body { font-family: sans-serif; background: #1a1a2e; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; position: relative; }
+        .lang-box { position: absolute; top: 20px; right: 20px; }
+        select { padding: 5px; border-radius: 5px; background: #16213e; color: white; border: 1px solid #e94560; }
+        
+        .box { background: #16213e; padding: 25px; border-radius: 10px; width: 300px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 5px; border: none; background: #0f3460; color: white; }
+        button { width: 100%; padding: 12px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        .link { margin-top: 15px; display: block; color: #ccc; text-decoration: none; font-size: 14px; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h2>🚀 লগইন করুন</h2>
-    <input type="email" id="email" placeholder="ইমেইল">
-    <input type="password" id="pass" placeholder="পাসওয়ার্ড">
-    <button onclick="login()">লগইন</button>
-    <a href="/signup" class="link">নতুন একাউন্ট খুলুন</a>
-    <p id="msg" style="color: yellow; font-size: 14px;"></p>
-</div>
+    <!-- ভাষা পরিবর্তনের বাটন -->
+    <div class="lang-box">
+        <select id="langSelect" onchange="changeLanguage(this.value)">
+            <option value="bn">🇧🇩 বাংলা</option>
+            <option value="en">🇺🇸 English</option>
+        </select>
+    </div>
 
-<script>
-    async function login() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('pass').value;
-        const msg = document.getElementById('msg');
+    <div class="box">
+        <h2 data-key="login_title">লগইন করুন</h2>
+        
+        <input type="email" id="email" data-key="email_ph" placeholder="ইমেইল">
+        <input type="password" id="pass" data-key="pass_ph" placeholder="পাসওয়ার্ড">
+        
+        <button onclick="login()" data-key="login_btn">লগইন</button>
+        
+        <a href="/signup" class="link" data-key="signup_link">নতুন একাউন্ট খুলুন</a>
+        
+        <p id="msg" style="color: yellow; font-size: 14px; margin-top: 10px;"></p>
+    </div>
 
-        msg.innerText = "লগইন হচ্ছে...";
+    <!-- লজিক ফাইল কানেক্ট করা -->
+    <script src="lang.js"></script>
 
-        try {
-            const res = await fetch('/api/auth', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'login', email, password })
-            });
+    <script>
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('pass').value;
+            const msg = document.getElementById('msg');
+            
+            // ভাষা অনুযায়ী লোডিং মেসেজ
+            const lang = localStorage.getItem('appLang') || 'bn';
+            msg.innerText = (lang === 'bn') ? "অপেক্ষা করুন..." : "Loading...";
 
-            const data = await res.json();
+            try {
+                const res = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'login', email, password })
+                });
 
-            if (res.ok) {
-                msg.innerText = "সফল! হোমপেজে নেওয়া হচ্ছে...";
-                localStorage.setItem('user', JSON.stringify(data.user)); // তথ্য সেভ
-                window.location.href = '/home'; // হোম পেজে রিডাইরেক্ট
-            } else {
-                msg.innerText = data.error;
+                const data = await res.json();
+
+                if (res.ok) {
+                    msg.style.color = 'green';
+                    msg.innerText = (lang === 'bn') ? "সফল!" : "Success!";
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = '/home';
+                } else {
+                    msg.style.color = 'red';
+                    msg.innerText = data.error; 
+                }
+            } catch (err) {
+                msg.innerText = "Error!";
             }
-        } catch (err) {
-            msg.innerText = "সার্ভার এরর!";
         }
-    }
-</script>
+    </script>
 
 </body>
 </html>
