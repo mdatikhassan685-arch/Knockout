@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knockout Signup</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a2e; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; position: relative; }
+        .lang-box { position: absolute; top: 20px; right: 20px; }
+        select { padding: 5px; border-radius: 5px; background: #16213e; color: white; border: 1px solid #e94560; }
+        
+        .box { background: #16213e; padding: 20px; border-radius: 10px; width: 300px; text-align: center; }
+        input { width: 90%; padding: 10px; margin: 8px 0; border-radius: 5px; border: none; background: #0f3460; color: white; }
+        button { width: 100%; padding: 10px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .link { margin-top: 15px; display: block; color: #ccc; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="lang-box">
+        <select id="langSelect" onchange="changeLanguage(this.value)">
+            <option value="bn">🇧🇩 বাংলা</option>
+            <option value="en">🇺🇸 English</option>
+        </select>
+    </div>
+
+    <div class="box">
+        <h2 data-key="signup_title">নতুন একাউন্ট খুলুন</h2>
+        <input type="text" id="name" data-key="name_ph" placeholder="নাম">
+        <input type="email" id="email" data-key="email_ph" placeholder="ইমেইল">
+        <input type="number" id="phone" data-key="phone_ph" placeholder="মোবাইল">
+        <input type="password" id="pass" data-key="pass_ph" placeholder="পাসওয়ার্ড">
+        
+        <button onclick="signup()" data-key="register_btn">রেজিস্টার</button>
+        <a href="/" class="link" data-key="login_link_text">লগইন করুন</a>
+        <p id="msg" style="color: yellow; font-size: 14px; margin-top: 10px;"></p>
+    </div>
+
+    <script src="lang.js"></script>
+    <script>
+        async function signup() {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const password = document.getElementById('pass').value;
+            const msg = document.getElementById('msg');
+            
+            // Language logic for JS alerts
+            const lang = localStorage.getItem('appLang') || 'bn';
+            const texts = (lang === 'bn') ? 
+                { fill: "সব ঘর পূরণ করুন", wait: "অপেক্ষা করুন...", success: "সফল! লগইন করুন" } : 
+                { fill: "Please fill all fields", wait: "Please wait...", success: "Success! Please Login" };
+
+            if(!name || !email || !phone || !password) {
+                msg.innerText = texts.fill;
+                return;
+            }
+
+            msg.innerText = texts.wait;
+
+            try {
+                const res = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'signup', name, email, phone, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    msg.style.color = "green";
+                    msg.innerText = texts.success;
+                    setTimeout(() => { window.location.href = '/'; }, 2000);
+                } else {
+                    msg.style.color = "red";
+                    msg.innerText = data.error;
+                }
+            } catch (err) { msg.innerText = "Server Error"; }
+        }
+    </script>
+</body>
+</html>
