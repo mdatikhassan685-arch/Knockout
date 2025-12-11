@@ -1,152 +1,215 @@
-const db = require('../db');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-gray-900 text-white pb-20">
 
-module.exports = async (req, res) => {
-    // 1. CORS & Method Check
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    <!-- Header -->
+    <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50">
+        <a href="/admin" class="mr-4 text-gray-400"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="text-xl font-bold">User List</div>
+    </header>
 
-    if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    <!-- User List Container -->
+    <div class="p-4 space-y-3" id="user_list">
+        <p class="text-center text-gray-500 mt-10 animate-pulse">Loading users...</p>
+    </div>
 
-    const { type, user_id, status, amount, deposit_id, withdraw_id, action, suspend_days } = req.body;
-
-    try {
-        // ========== DASHBOARD STATS ==========
-        if (type === 'dashboard_stats') {
-            let totalUsers = 0, pendingDeposits = 0, pendingWithdraws = 0, totalTournaments = 0;
-            try { const [u] = await db.execute('SELECT COUNT(*) as total FROM users'); totalUsers = u[0].total; } catch(e){}
-            try { const [d] = await db.execute('SELECT COUNT(*) as pending FROM deposits WHERE status = "pending"'); pendingDeposits = d[0].pending; } catch(e){}
-            try { const [w] = await db.execute('SELECT COUNT(*) as pending FROM withdrawals WHERE status = "pending"'); pendingWithdraws = w[0].pending; } catch(e){}
-            try { const [t] = await db.execute('SELECT COUNT(*) as total FROM tournaments'); totalTournaments = t[0].total; } catch(e){}
+    <!-- STATUS MODAL -->
+    <div id="statusModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-gray-800 p-6 rounded-xl w-full max-w-sm border border-gray-700 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4 text-white">Change User Status</h3>
+            <input type="hidden" id="target_user_id">
             
-            return res.status(200).json({ total_users: totalUsers, pending_deposits: pendingDeposits, pending_withdraws: pendingWithdraws, total_tournaments: totalTournaments });
-        }
+            <label class="block text-sm text-gray-400 mb-2">Select Action</label>
+            <select id="new_status" onchange="toggleSuspendInput()" class="w-full bg-gray-700 p-3 rounded-lg mb-4 text-white border border-gray-600 outline-none focus:border-blue-500">
+                <option value="active">Active</option>
+                <option value="suspended">Suspend (Temporary)</option>
+                <option value="blocked">Block (Permanent)</option>
+            </select>
 
-        // ========== USER LIST (SAFE MODE) ==========
-        if (type === 'list_users') {
-            const [users] = await db.execute('SELECT * FROM users ORDER BY id DESC LIMIT 50');
-            const formattedUsers = users.map(u => ({
-                id: u.id,
-                username: u.username || u.name || "Unknown",
-                email: u.email,
-                wallet_balance: u.wallet_balance || u.balance || 0,
-                status: u.status || 'active'
-            }));
-            return res.status(200).json(formattedUsers);
-        }
+            <div id="suspend_days_box" class="hidden mb-4">
+                <label class="block text-sm text-gray-400 mb-2">Suspend Duration (Days)</label>
+                <input type="number" id="suspend_days" placeholder="Example: 7" class="w-full bg-gray-700 p-3 rounded-lg text-white border border-gray-600 outline-none focus:border-blue-500">
+            </div>
 
-        // ========== UPDATE USER STATUS (BLOCK/ACTIVE/SUSPEND) ==========
-        if (type === 'update_user_status') {
-            // যদি ব্লক বা অ্যাক্টিভ হয়, সরাসরি আপডেট হবে
-            if (status === 'blocked' || status === 'active') {
-                await db.execute('UPDATE users SET status = ? WHERE id = ?', [status, user_id]);
-                return res.status(200).json({ success: true, message: `User ${status} successfully` });
-            }
+            <div class="flex gap-3">
+                <button onclick="closeModal()" class="flex-1 bg-gray-600 hover:bg-gray-500 py-2 rounded-lg text-sm font-semibold transition">Cancel</button>
+                <button onclick="saveStatus()" class="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-sm font-bold transition">Save</button>
+            </div>
+        </div>
+    </div>
 
-            // যদি সাসপেন্ড হয়
-            if (status === 'suspended') {
-                let suspendUntil = null;
-                if (suspend_days) {
-                    const date = new Date();
-                    date.setDate(date.getDate() + parseInt(suspend_days));
-                    suspendUntil = date.toISOString().slice(0, 19).replace('T', ' ');
+    <!-- BALANCE MODAL -->
+    <div id="balanceModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-gray-800 p-6 rounded-xl w-full max-w-sm border border-gray-700 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4 text-white">Manage Balance</h3>
+            <input type="hidden" id="bal_user_id">
+            
+            <label class="block text-sm text-gray-400 mb-2">Amount (৳)</label>
+            <input type="number" id="bal_amount" placeholder="Enter amount" class="w-full bg-gray-700 p-3 rounded-lg mb-6 text-white border border-gray-600 outline-none focus:border-green-500">
+            
+            <div class="flex gap-3">
+                <button onclick="updateBalance('add')" class="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-lg font-bold transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Add
+                </button>
+                <button onclick="updateBalance('deduct')" class="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded-lg font-bold transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-minus"></i> Cut
+                </button>
+            </div>
+            <button onclick="closeModal()" class="mt-4 text-gray-400 text-sm w-full hover:text-white transition">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // Check Admin Login
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || user.role !== 'admin') window.location.href = '/';
+
+        async function loadUsers() {
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'list_users' })
+                });
+                const users = await res.json();
+                
+                const list = document.getElementById('user_list');
+                if (users.length > 0) {
+                    list.innerHTML = users.map(u => {
+                        let statusColor = 'bg-green-600';
+                        if(u.status === 'blocked') statusColor = 'bg-red-600';
+                        if(u.status === 'suspended') statusColor = 'bg-yellow-600';
+
+                        return `
+                        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-md flex justify-between items-center transition hover:bg-gray-750">
+                            <div>
+                                <h3 class="font-bold text-white text-lg">${u.username}</h3>
+                                <p class="text-xs text-gray-400 font-mono">${u.email}</p>
+                                <p class="text-sm text-green-400 mt-1 font-bold">Balance: ৳${parseFloat(u.wallet_balance).toFixed(2)}</p>
+                            </div>
+                            <div class="flex flex-col items-end gap-2">
+                                <button onclick="openStatusModal(${u.id}, '${u.status}')" class="${statusColor} w-24 py-1.5 rounded-lg text-xs font-bold capitalize shadow-sm border border-white/10 hover:opacity-90 transition">${u.status}</button>
+                                <button onclick="openBalanceModal(${u.id})" class="bg-blue-600/20 w-24 py-1.5 rounded-lg text-xs font-bold text-blue-300 border border-blue-500/30 hover:bg-blue-600/30 transition">Manage ৳</button>
+                            </div>
+                        </div>
+                    `}).join('');
+                } else {
+                    list.innerHTML = '<div class="text-center text-gray-500 mt-10"><i class="fa-solid fa-users-slash text-4xl mb-2"></i><p>No users found.</p></div>';
                 }
-
-                try {
-                    // কলাম থাকলে টাইমসহ আপডেট হবে
-                    await db.execute('UPDATE users SET status = ?, suspended_until = ? WHERE id = ?', [status, suspendUntil, user_id]);
-                } catch (err) {
-                    // কলাম না থাকলে শুধু স্ট্যাটাস আপডেট হবে (Safe Fallback)
-                    await db.execute('UPDATE users SET status = ? WHERE id = ?', [status, user_id]);
-                }
-                return res.status(200).json({ success: true, message: 'User suspended' });
-            }
+            } catch (e) { console.error(e); }
         }
 
-        // ========== MANAGE BALANCE (ADD / CUT) ==========
-        if (type === 'manage_balance') {
-            const finalAmount = action === 'deduct' ? -Math.abs(amount) : Math.abs(amount);
-            const typeText = action === 'deduct' ? 'Admin Penalty' : 'Admin Gift';
+        // --- MODAL FUNCTIONS ---
+        function openStatusModal(id, status) {
+            document.getElementById('target_user_id').value = id;
+            document.getElementById('new_status').value = status;
+            toggleSuspendInput();
+            document.getElementById('statusModal').style.display = 'flex';
+        }
+
+        function openBalanceModal(id) {
+            document.getElementById('bal_user_id').value = id;
+            document.getElementById('bal_amount').value = ''; // Reset amount
+            document.getElementById('balanceModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('statusModal').style.display = 'none';
+            document.getElementById('balanceModal').style.display = 'none';
+        }
+
+        function toggleSuspendInput() {
+            const status = document.getElementById('new_status').value;
+            const box = document.getElementById('suspend_days_box');
+            if(status === 'suspended') box.classList.remove('hidden');
+            else box.classList.add('hidden');
+        }
+
+        // --- API ACTIONS ---
+        async function saveStatus() {
+            const id = document.getElementById('target_user_id').value;
+            const status = document.getElementById('new_status').value;
+            const days = document.getElementById('suspend_days').value;
+
+            // Loading State
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "...";
+            btn.disabled = true;
 
             try {
-                await db.execute('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?', [finalAmount, user_id]);
-            } catch {
-                await db.execute('UPDATE users SET balance = balance + ? WHERE id = ?', [finalAmount, user_id]);
-            }
-
-            await db.execute('INSERT INTO transactions (user_id, amount, type) VALUES (?, ?, ?)', [user_id, finalAmount, typeText]);
-            return res.status(200).json({ success: true, message: 'Balance updated' });
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        type: 'update_user_status', 
+                        user_id: id, 
+                        status: status,
+                        suspend_days: days 
+                    })
+                });
+                
+                const data = await res.json();
+                if(data.success) {
+                    alert(data.message);
+                    closeModal();
+                    loadUsers(); // Reload list
+                } else {
+                    alert("Error: " + data.error);
+                }
+            } catch(e) { alert("Network Error"); }
+            
+            btn.innerText = originalText;
+            btn.disabled = false;
         }
 
-        // ========== PENDING DEPOSITS & WITHDRAWALS ==========
-        if (type === 'list_deposits') {
-            const [deposits] = await db.execute(
-                `SELECT d.*, COALESCE(u.username, u.name, 'Unknown') as username FROM deposits d LEFT JOIN users u ON d.user_id = u.id ORDER BY d.created_at DESC LIMIT 50`
-            );
-            return res.status(200).json(deposits.filter(d => d.status && d.status.toLowerCase() === 'pending'));
+        async function updateBalance(action) {
+            const id = document.getElementById('bal_user_id').value;
+            const amount = document.getElementById('bal_amount').value;
+            
+            if(!amount || amount <= 0) return alert("Please enter a valid amount");
+
+            // Loading State
+            const btn = event.target;
+            const originalHTML = btn.innerHTML; // Icon save করার জন্য
+            btn.innerText = "...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        type: 'manage_balance', 
+                        user_id: id, 
+                        amount: amount,
+                        action: action 
+                    })
+                });
+                
+                const data = await res.json();
+                if(data.success) {
+                    alert("Balance Updated Successfully!");
+                    closeModal();
+                    loadUsers(); // Reload list
+                } else {
+                    alert("Error: " + (data.error || "Failed"));
+                }
+            } catch(e) { alert("Network Error"); }
+
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
         }
 
-        if (type === 'list_withdrawals') {
-            const [data] = await db.execute(
-                `SELECT w.*, COALESCE(u.username, u.name, 'Unknown') as username FROM withdrawals w LEFT JOIN users u ON w.user_id = u.id ORDER BY w.created_at DESC LIMIT 50`
-            );
-            return res.status(200).json(data.filter(d => d.status && d.status.toLowerCase() === 'pending'));
-        }
-
-        // ========== HANDLE REQUESTS ==========
-        if (type === 'handle_deposit') {
-            const [deposit] = await db.execute('SELECT * FROM deposits WHERE id = ?', [deposit_id]);
-            if (!deposit.length) return res.status(404).json({ error: 'Not found' });
-            const { user_id: uid, amount: amt } = deposit[0];
-
-            if (action === 'approve') {
-                try { await db.execute('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?', [amt, uid]); } 
-                catch { await db.execute('UPDATE users SET balance = balance + ? WHERE id = ?', [amt, uid]); }
-                await db.execute('UPDATE deposits SET status = "approved" WHERE id = ?', [deposit_id]);
-                await db.execute('INSERT INTO transactions (user_id, amount, type) VALUES (?, ?, "Deposit")', [uid, amt]);
-            } else {
-                await db.execute('UPDATE deposits SET status = "rejected" WHERE id = ?', [deposit_id]);
-            }
-            return res.status(200).json({ success: true, message: 'Deposit Processed' });
-        }
-
-        if (type === 'handle_withdrawal') {
-            const [wd] = await db.execute('SELECT * FROM withdrawals WHERE id = ?', [withdraw_id]);
-            if (!wd.length) return res.status(404).json({ error: 'Not found' });
-            const { user_id: uid, amount: amt } = wd[0];
-
-            if (action === 'approve') {
-                try { await db.execute('UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?', [amt, uid]); }
-                catch { await db.execute('UPDATE users SET balance = balance - ? WHERE id = ?', [amt, uid]); }
-                await db.execute('UPDATE withdrawals SET status = "approved" WHERE id = ?', [withdraw_id]);
-                await db.execute('INSERT INTO transactions (user_id, amount, type) VALUES (?, ?, "Withdraw")', [uid, -amt]);
-            } else {
-                await db.execute('UPDATE withdrawals SET status = "rejected" WHERE id = ?', [withdraw_id]);
-            }
-            return res.status(200).json({ success: true, message: 'Withdrawal Processed' });
-        }
-
-        // ========== CATEGORIES ==========
-        if (type === 'list_categories') {
-            const [cats] = await db.execute('SELECT * FROM tournaments WHERE is_category = 1');
-            return res.status(200).json(cats);
-        }
-        if (type === 'create_category') {
-            const { title, image } = req.body;
-            await db.execute('INSERT INTO tournaments (title, image, is_category, is_official) VALUES (?, ?, 1, 0)', [title, image]);
-            return res.status(200).json({ success: true });
-        }
-        if (type === 'delete_category') {
-            const { id } = req.body;
-            await db.execute('DELETE FROM tournaments WHERE id = ?', [id]);
-            return res.status(200).json({ success: true });
-        }
-
-        else { return res.status(400).json({ error: 'Invalid type' }); }
-
-    } catch (error) {
-        console.error('Admin API Error:', error);
-        return res.status(500).json({ error: 'Server error', details: error.message });
-    }
-};
+        // Initial Load
+        loadUsers();
+    </script>
+</body>
+    </html>
