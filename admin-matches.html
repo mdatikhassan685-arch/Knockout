@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Matches</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-gray-900 text-white pb-20">
+
+    <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50">
+        <a href="/admin-categories" class="mr-4 text-gray-400"><i class="fa-solid fa-arrow-left"></i></a>
+        <div class="text-xl font-bold" id="page_title">Matches</div>
+    </header>
+
+    <!-- Add Match Form -->
+    <div class="p-4 bg-gray-800 m-4 rounded-xl border border-gray-700 space-y-3">
+        <h3 class="font-bold border-b border-gray-600 pb-2">Add New Match</h3>
+        
+        <input type="text" id="m_title" placeholder="Match Title (e.g. TDM Solo)" class="w-full bg-gray-900 p-2 rounded text-white border border-gray-600">
+        
+        <div class="grid grid-cols-2 gap-2">
+            <input type="number" id="m_fee" placeholder="Entry Fee" class="bg-gray-900 p-2 rounded text-white border border-gray-600">
+            <input type="number" id="m_prize" placeholder="Winning Prize" class="bg-gray-900 p-2 rounded text-white border border-gray-600">
+        </div>
+        
+        <div class="grid grid-cols-2 gap-2">
+            <input type="datetime-local" id="m_time" class="bg-gray-900 p-2 rounded text-white border border-gray-600 text-xs">
+            <select id="m_type" class="bg-gray-900 p-2 rounded text-white border border-gray-600">
+                <option value="Solo">Solo</option>
+                <option value="Duo">Duo</option>
+                <option value="Squad">Squad</option>
+            </select>
+        </div>
+
+        <input type="number" id="m_spots" placeholder="Total Spots (e.g. 100)" class="w-full bg-gray-900 p-2 rounded text-white border border-gray-600">
+
+        <button onclick="addMatch()" class="w-full bg-green-600 py-2 rounded font-bold hover:bg-green-700">Create Match</button>
+    </div>
+
+    <!-- Match List -->
+    <div class="p-4 space-y-3" id="match_list">
+        <p class="text-center text-gray-500">Loading matches...</p>
+    </div>
+
+    <!-- Room Modal -->
+    <div id="roomModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 p-6 rounded-xl w-full max-w-sm">
+            <h3 class="text-lg font-bold mb-3">Set Room ID & Pass</h3>
+            <input type="hidden" id="room_match_id">
+            <input type="text" id="room_id_input" placeholder="Room ID" class="w-full mb-2 bg-gray-900 p-2 rounded border border-gray-600 text-white">
+            <input type="text" id="room_pass_input" placeholder="Password" class="w-full mb-4 bg-gray-900 p-2 rounded border border-gray-600 text-white">
+            <div class="flex gap-2">
+                <button onclick="document.getElementById('roomModal').style.display='none'" class="flex-1 bg-gray-600 py-2 rounded">Cancel</button>
+                <button onclick="saveRoom()" class="flex-1 bg-blue-600 py-2 rounded font-bold">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const catId = urlParams.get('cat_id');
+        const catName = urlParams.get('name');
+        
+        if(catName) document.getElementById('page_title').innerText = catName + " Matches";
+
+        async function loadMatches() {
+            const res = await fetch('/api/admin', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ type: 'get_admin_matches', category_id: catId })
+            });
+            const data = await res.json();
+            
+            const container = document.getElementById('match_list');
+            if(data.length > 0) {
+                container.innerHTML = data.map(m => `
+                    <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-md">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-lg">${m.title}</h3>
+                            <button onclick="deleteMatch(${m.id})" class="text-red-500 text-xs"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                        <p class="text-xs text-gray-400 mb-2">${new Date(m.schedule_time).toLocaleString()}</p>
+                        
+                        <div class="flex gap-4 text-sm mb-3">
+                            <span class="text-yellow-400 font-bold">Fee: ${m.entry_fee}</span>
+                            <span class="text-green-400 font-bold">Win: ${m.winning_prize}</span>
+                            <span class="text-blue-400">${m.match_type}</span>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button onclick="openRoomModal(${m.id}, '${m.room_id || ''}', '${m.room_pass || ''}')" class="flex-1 bg-gray-700 py-1.5 rounded text-xs font-bold border border-gray-600">Set Room ID</button>
+                            <!-- Future: View Participants -->
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<p class="text-center text-gray-500">No matches created yet.</p>';
+            }
+        }
+
+        async function addMatch() {
+            const title = document.getElementById('m_title').value;
+            const fee = document.getElementById('m_fee').value;
+            const prize = document.getElementById('m_prize').value;
+            const time = document.getElementById('m_time').value;
+            const type = document.getElementById('m_type').value;
+            const spots = document.getElementById('m_spots').value;
+
+            if(!title || !fee || !time) return alert("Fill required fields");
+
+            const btn = event.target;
+            btn.innerText = "...";
+
+            await fetch('/api/admin', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    type: 'add_match', 
+                    category_id: catId,
+                    title, entry_fee: fee, winning_prize: prize, 
+                    schedule_time: time, match_type: type, total_spots: spots 
+                })
+            });
+
+            btn.innerText = "Create Match";
+            alert("Match Created!");
+            loadMatches();
+        }
+
+        async function deleteMatch(id) {
+            if(!confirm("Delete this match?")) return;
+            await fetch('/api/admin', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ type: 'delete_match', id })
+            });
+            loadMatches();
+        }
+
+        // ROOM ID LOGIC
+        function openRoomModal(id, currentId, currentPass) {
+            document.getElementById('room_match_id').value = id;
+            document.getElementById('room_id_input').value = currentId;
+            document.getElementById('room_pass_input').value = currentPass;
+            document.getElementById('roomModal').style.display = 'flex';
+        }
+
+        async function saveRoom() {
+            const id = document.getElementById('room_match_id').value;
+            const roomId = document.getElementById('room_id_input').value;
+            const pass = document.getElementById('room_pass_input').value;
+
+            await fetch('/api/admin', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ type: 'update_room', id, room_id: roomId, room_pass: pass })
+            });
+            
+            document.getElementById('roomModal').style.display = 'none';
+            alert("Room details updated!");
+            loadMatches(); // Reload to save state
+        }
+
+        loadMatches();
+    </script>
+</body>
+</html>
