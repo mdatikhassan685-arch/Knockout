@@ -13,13 +13,18 @@ module.exports = async (req, res) => {
 
     try {
         // =======================
-        // 🎮 CATEGORY MANAGEMENT (NEW)
+        // 🎮 CATEGORY MANAGEMENT (UPDATED)
         // =======================
         if (type === 'add_category') {
+            const { title, image, cat_type } = req.body; // cat_type গ্রহণ করা হচ্ছে
+
             if (!title || !image) {
                 return res.status(400).json({ error: 'Title and Image required' });
             }
-            const [result] = await db.execute('INSERT INTO categories (title, image) VALUES (?, ?)', [title, image]);
+            // ডিফল্ট হিসেবে 'normal' সেট করা হলো যদি টাইপ না আসে
+            const finalType = cat_type || 'normal';
+
+            const [result] = await db.execute('INSERT INTO categories (title, image, type) VALUES (?, ?, ?)', [title, image, finalType]);
             return res.status(200).json({ success: true, message: 'Category Added!', id: result.insertId });
         }
 
