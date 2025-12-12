@@ -10,15 +10,13 @@
         /* স্ক্রলবার লুকানোর জন্য */
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* কাস্টম ফন্ট স্টাইল */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
 <body class="bg-[#0f172a] text-white pb-24 select-none">
 
     <!-- Header -->
-    <header class="flex justify-between items-center p-4 bg-gray-900/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-800">
+    <header class="flex justify-between items-center p-4 bg-gray-900/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-800">
         <div class="flex items-center gap-3">
             <div class="bg-blue-600 w-10 h-10 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/40">
                 <i class="fa-solid fa-gamepad text-white text-xl"></i>
@@ -30,7 +28,7 @@
         </div>
         
         <div class="flex items-center gap-3">
-            <a href="/wallet" class="bg-gray-800 border border-gray-700 px-4 py-1.5 rounded-full flex items-center gap-2 active:scale-95 transition hover:bg-gray-700">
+            <a href="/wallet" class="bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-full flex items-center gap-2 active:scale-95 transition hover:bg-gray-700">
                 <i class="fa-solid fa-coins text-yellow-400"></i>
                 <span class="text-yellow-400 font-bold text-sm">৳ <span id="balance">0.00</span></span>
             </a>
@@ -42,9 +40,9 @@
     </header>
 
     <!-- Marquee Announcement -->
-    <div class="bg-gradient-to-r from-blue-900/50 to-purple-900/50 border-y border-white/10 py-2">
+    <div class="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-y border-white/5 py-2">
         <marquee id="announcement" behavior="scroll" direction="left" class="text-xs font-bold text-blue-200 tracking-wide">
-            Welcome to Knockout Esports! Join tournaments and win real money. Verify your account to start playing.
+            Welcome to Knockout Esports! Join tournaments and win real money.
         </marquee>
     </div>
 
@@ -56,15 +54,15 @@
 
     <!-- Quick Actions -->
     <div class="px-4 flex gap-3 mb-6">
-        <a href="/wallet" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition">
+        <a href="/wallet" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition text-sm">
             <i class="fa-solid fa-plus-circle"></i> Add Money
         </a>
-        <a href="#" class="flex-1 bg-gray-800 border border-gray-700 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold active:scale-95 transition hover:bg-gray-750">
+        <a href="#" class="flex-1 bg-gray-800 border border-gray-700 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold active:scale-95 transition hover:bg-gray-750 text-sm">
             <i class="fa-solid fa-trophy text-yellow-500"></i> Leaderboard
         </a>
     </div>
 
-    <!-- Tournaments Section (Poster Style) -->
+    <!-- Tournaments Section -->
     <div class="px-4">
         <div class="flex justify-between items-end mb-4">
             <h2 class="text-xl font-bold border-l-4 border-blue-500 pl-3 leading-none">Available Games</h2>
@@ -132,41 +130,36 @@
                 if (data.banners && data.banners.length > 0) {
                     bannerContainer.innerHTML = data.banners.map(b => 
                         `<div class="w-80 h-40 rounded-2xl overflow-hidden shadow-lg flex-shrink-0 relative border border-gray-700 group">
-                            <img src="${b.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://placehold.co/600x400?text=No+Image'">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                            <img src="${b.image}" class="w-full h-full object-cover">
                         </div>`
                     ).join('');
                 } else {
                     bannerContainer.innerHTML = `<div class="w-full h-24 flex items-center justify-center text-gray-500 text-sm border border-dashed border-gray-700 rounded-xl">No Offers Active</div>`;
                 }
 
-                // 4. Load Categories (UPDATED CARD DESIGN) 🌟
+                // 4. Load Categories (Corrected Design) ✅
                 const catContainer = document.getElementById('categories');
                 if (data.categories && data.categories.length > 0) {
                     catContainer.innerHTML = data.categories.map(c => `
-                        <div onclick="window.location.href='/matches?cat_id=${c.id}&name=${c.title}'" class="relative w-full h-52 bg-gray-800 rounded-2xl overflow-hidden shadow-xl border border-gray-700 active:scale-95 transition cursor-pointer group">
+                        <div onclick="window.location.href='/matches?cat_id=${c.id}&name=${c.title}'" class="relative w-full h-52 bg-gray-800 rounded-2xl overflow-hidden shadow-xl border border-gray-700 active:scale-95 transition cursor-pointer mb-5">
                             
                             <!-- Full Background Image -->
-                            <img src="${c.image}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700 ease-in-out" onerror="this.src='https://placehold.co/600x400?text=Game+Image'">
+                            <!-- onerror ব্যবহার করা হয়েছে যাতে লিংক ভুল হলে ইউজার বুঝতে পারে -->
+                            <img src="${c.image}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x400/333/FFF?text=Check+Image+URL'">
                             
                             <!-- Dark Gradient Overlay (Text readability) -->
-                            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90"></div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90"></div>
 
                             <!-- Text Content (Bottom Left) -->
                             <div class="absolute bottom-0 left-0 p-5 w-full">
-                                <h3 class="text-2xl font-black text-white uppercase tracking-wider drop-shadow-md leading-none mb-1.5">${c.title}</h3>
+                                <h3 class="text-2xl font-black text-white uppercase tracking-wider drop-shadow-lg leading-none mb-2">${c.title}</h3>
                                 <div class="flex items-center gap-2">
                                     <span class="flex h-2 w-2 relative">
                                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                         <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                                     </span>
-                                    <p class="text-xs text-gray-300 font-bold uppercase tracking-wide">Tap to join matches</p>
+                                    <p class="text-xs text-gray-300 font-bold uppercase tracking-wide">Tap to Enter</p>
                                 </div>
-                            </div>
-
-                            <!-- Play Icon (Hover Effect) -->
-                            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-md w-14 h-14 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300 border border-white/30">
-                                <i class="fa-solid fa-play text-white text-2xl ml-1"></i>
                             </div>
                         </div>
                     `).join('');
