@@ -7,99 +7,80 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* স্ক্রলবার লুকানোর জন্য */
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        body { font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Segoe UI', sans-serif; }
     </style>
 </head>
 <body class="bg-[#0f172a] text-white pb-24 select-none">
 
-    <!-- Header -->
+    <!-- Header (Same as before) -->
     <header class="flex justify-between items-center p-4 bg-gray-900/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-800">
         <div class="flex items-center gap-3">
-            <div class="bg-blue-600 w-10 h-10 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/40">
+            <div class="bg-blue-600 w-10 h-10 rounded-full flex items-center justify-center shadow-lg">
                 <i class="fa-solid fa-gamepad text-white text-xl"></i>
             </div>
             <div>
-                <h1 class="text-xl font-black tracking-widest uppercase italic">Knockout</h1>
-                <p class="text-[10px] text-gray-400 font-bold -mt-1 tracking-wide">ESPORTS</p>
+                <h1 class="text-xl font-black uppercase italic">Knockout</h1>
+                <p class="text-[10px] text-gray-400 font-bold -mt-1">ESPORTS</p>
             </div>
         </div>
-        
         <div class="flex items-center gap-3">
-            <a href="/wallet" class="bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-full flex items-center gap-2 active:scale-95 transition hover:bg-gray-700">
+            <a href="/wallet" class="bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-full flex items-center gap-2">
                 <i class="fa-solid fa-coins text-yellow-400"></i>
                 <span class="text-yellow-400 font-bold text-sm">৳ <span id="balance">0.00</span></span>
             </a>
-            <button class="relative w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 hover:text-white text-gray-400 transition">
+            <button class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-gray-400">
                 <i class="fa-regular fa-bell text-xl"></i>
-                <span class="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-gray-800"></span>
             </button>
         </div>
     </header>
 
-    <!-- Marquee Announcement -->
+    <!-- Marquee -->
     <div class="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-y border-white/5 py-2">
-        <marquee id="announcement" behavior="scroll" direction="left" class="text-xs font-bold text-blue-200 tracking-wide">
-            Welcome to Knockout Esports! Join tournaments and win real money.
-        </marquee>
+        <marquee id="announcement" class="text-xs font-bold text-blue-200">Welcome to Knockout Esports!</marquee>
     </div>
 
-    <!-- Banners Slider -->
+    <!-- Banners -->
     <div class="p-4 overflow-x-auto whitespace-nowrap scrollbar-hide flex gap-4" id="banners">
-        <!-- Skeleton Loader -->
-        <div class="w-80 h-40 bg-gray-800 rounded-2xl animate-pulse border border-gray-700 flex-shrink-0"></div>
+        <div class="w-80 h-40 bg-gray-800 rounded-2xl animate-pulse border border-gray-700"></div>
     </div>
 
     <!-- Quick Actions -->
     <div class="px-4 flex gap-3 mb-6">
-        <a href="/wallet" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition text-sm">
+        <a href="/wallet" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold shadow-lg text-sm">
             <i class="fa-solid fa-plus-circle"></i> Add Money
         </a>
-        <a href="#" class="flex-1 bg-gray-800 border border-gray-700 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold active:scale-95 transition hover:bg-gray-750 text-sm">
+        <a href="#" class="flex-1 bg-gray-800 border border-gray-700 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm">
             <i class="fa-solid fa-trophy text-yellow-500"></i> Leaderboard
         </a>
     </div>
 
-    <!-- Tournaments Section -->
-    <div class="px-4">
-        <div class="flex justify-between items-end mb-4">
-            <h2 class="text-xl font-bold border-l-4 border-blue-500 pl-3 leading-none">Available Games</h2>
-            <button class="text-xs text-blue-400 font-bold hover:text-white transition">See All</button>
-        </div>
-        
-        <!-- Categories Container -->
-        <div class="grid grid-cols-1 gap-5 pb-5" id="categories">
-            <!-- Loading Skeletons -->
-            <div class="w-full h-48 bg-gray-800 rounded-2xl animate-pulse"></div>
-            <div class="w-full h-48 bg-gray-800 rounded-2xl animate-pulse"></div>
+    <!-- 🔥 SECTION 1: OFFICIAL TOURNAMENTS (Big Cards) -->
+    <div class="px-4 mb-6">
+        <h2 class="text-xl font-bold border-l-4 border-red-500 pl-3 leading-none mb-4">Official Tournaments</h2>
+        <div class="grid grid-cols-1 gap-5" id="official_list">
+            <!-- Data will load here -->
         </div>
     </div>
 
-    <!-- Bottom Navigation -->
+    <!-- 🎮 SECTION 2: REGULAR MATCHES (Small Grid) -->
+    <div class="px-4">
+        <h2 class="text-xl font-bold border-l-4 border-blue-500 pl-3 leading-none mb-4">Daily Matches</h2>
+        <div class="grid grid-cols-2 gap-4" id="normal_list">
+            <!-- Data will load here -->
+        </div>
+    </div>
+
+    <!-- Bottom Nav -->
     <nav class="fixed bottom-0 w-full bg-[#0f172a]/95 backdrop-blur-lg border-t border-gray-800 flex justify-around py-3 z-40 pb-6">
-        <a href="/home" class="text-blue-500 flex flex-col items-center transition group">
-            <i class="fa-solid fa-house text-xl mb-1 group-active:scale-90 transition"></i>
-            <span class="text-[10px] font-bold">Home</span>
-        </a>
-        <a href="#" class="text-gray-500 hover:text-white flex flex-col items-center transition group">
-            <i class="fa-solid fa-fire text-xl mb-1 group-active:scale-90 transition"></i>
-            <span class="text-[10px] font-bold">Live</span>
-        </a>
-        <a href="/wallet" class="text-gray-500 hover:text-white flex flex-col items-center transition group">
-            <i class="fa-solid fa-wallet text-xl mb-1 group-active:scale-90 transition"></i>
-            <span class="text-[10px] font-bold">Wallet</span>
-        </a>
-        <a href="/profile" class="text-gray-500 hover:text-white flex flex-col items-center transition group">
-            <i class="fa-solid fa-user text-xl mb-1 group-active:scale-90 transition"></i>
-            <span class="text-[10px] font-bold">Profile</span>
-        </a>
+        <a href="/home" class="text-blue-500 flex flex-col items-center"><i class="fa-solid fa-house text-xl"></i><span class="text-[10px]">Home</span></a>
+        <a href="#" class="text-gray-500 flex flex-col items-center"><i class="fa-solid fa-fire text-xl"></i><span class="text-[10px]">Live</span></a>
+        <a href="/wallet" class="text-gray-500 flex flex-col items-center"><i class="fa-solid fa-wallet text-xl"></i><span class="text-[10px]">Wallet</span></a>
+        <a href="/profile" class="text-gray-500 flex flex-col items-center"><i class="fa-solid fa-user text-xl"></i><span class="text-[10px]">Profile</span></a>
     </nav>
 
-    <!-- JavaScript Logic -->
     <script>
-        // Check User Login
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user) window.location.href = '/';
 
@@ -111,69 +92,73 @@
                     body: JSON.stringify({ type: 'home', user_id: user.id })
                 });
 
-                if (!res.ok) {
-                    console.error("API Error");
-                    return;
-                }
-
+                if (!res.ok) return;
                 const data = await res.json();
 
-                // 1. Update Balance
-                const balance = data.wallet !== undefined ? data.wallet : (user.wallet_balance || 0);
-                document.getElementById('balance').innerText = parseFloat(balance).toFixed(2);
-                
-                // 2. Update Announcement
+                // Balance & Announcement
+                document.getElementById('balance').innerText = parseFloat(data.wallet || user.wallet_balance || 0).toFixed(2);
                 if(data.announcement) document.getElementById('announcement').innerText = data.announcement;
 
-                // 3. Load Banners
+                // Banners
                 const bannerContainer = document.getElementById('banners');
                 if (data.banners && data.banners.length > 0) {
                     bannerContainer.innerHTML = data.banners.map(b => 
-                        `<div class="w-80 h-40 rounded-2xl overflow-hidden shadow-lg flex-shrink-0 relative border border-gray-700 group">
+                        `<div class="w-80 h-40 rounded-2xl overflow-hidden shadow-lg flex-shrink-0 relative border border-gray-700">
                             <img src="${b.image}" class="w-full h-full object-cover">
                         </div>`
                     ).join('');
                 } else {
-                    bannerContainer.innerHTML = `<div class="w-full h-24 flex items-center justify-center text-gray-500 text-sm border border-dashed border-gray-700 rounded-xl">No Offers Active</div>`;
+                    bannerContainer.innerHTML = `<div class="w-full h-24 text-center text-gray-500 border border-dashed border-gray-700 rounded-xl flex items-center justify-center">No Offers</div>`;
                 }
 
-                // 4. Load Categories (Corrected Design) ✅
-                const catContainer = document.getElementById('categories');
-                if (data.categories && data.categories.length > 0) {
-                    catContainer.innerHTML = data.categories.map(c => `
-                        <div onclick="window.location.href='/matches?cat_id=${c.id}&name=${c.title}'" class="relative w-full h-52 bg-gray-800 rounded-2xl overflow-hidden shadow-xl border border-gray-700 active:scale-95 transition cursor-pointer mb-5">
-                            
-                            <!-- Full Background Image -->
-                            <!-- onerror ব্যবহার করা হয়েছে যাতে লিংক ভুল হলে ইউজার বুঝতে পারে -->
-                            <img src="${c.image}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x400/333/FFF?text=Check+Image+URL'">
-                            
-                            <!-- Dark Gradient Overlay (Text readability) -->
-                            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90"></div>
+                // ============================================
+                // 🔥 LOAD CATEGORIES (SPLIT INTO 2 SECTIONS)
+                // ============================================
+                const officialList = document.getElementById('official_list');
+                const normalList = document.getElementById('normal_list');
 
-                            <!-- Text Content (Bottom Left) -->
-                            <div class="absolute bottom-0 left-0 p-5 w-full">
-                                <h3 class="text-2xl font-black text-white uppercase tracking-wider drop-shadow-lg leading-none mb-2">${c.title}</h3>
-                                <div class="flex items-center gap-2">
-                                    <span class="flex h-2 w-2 relative">
-                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                        <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                                    </span>
-                                    <p class="text-xs text-gray-300 font-bold uppercase tracking-wide">Tap to Enter</p>
+                if (data.categories && data.categories.length > 0) {
+                    
+                    // Filter Data
+                    const officialData = data.categories.filter(c => c.type === 'official');
+                    const normalData = data.categories.filter(c => !c.type || c.type === 'normal');
+
+                    // 1. RENDER OFFICIAL (Big Cards)
+                    if(officialData.length > 0) {
+                        officialList.innerHTML = officialData.map(c => `
+                            <div onclick="window.location.href='/matches?cat_id=${c.id}&name=${c.title}'" class="relative w-full h-48 bg-gray-800 rounded-2xl overflow-hidden shadow-xl border border-gray-700 active:scale-95 transition cursor-pointer">
+                                <img src="${c.image}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x400/222/fff?text=Link+Error'">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90"></div>
+                                <div class="absolute bottom-0 left-0 p-4 w-full">
+                                    <h3 class="text-2xl font-black text-white uppercase leading-none mb-1">${c.title}</h3>
+                                    <p class="text-xs text-green-400 font-bold uppercase tracking-wide flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Live Tournament</p>
                                 </div>
                             </div>
-                        </div>
-                    `).join('');
+                        `).join('');
+                    } else {
+                        officialList.innerHTML = '<p class="text-gray-500 text-sm">No official tournaments running.</p>';
+                    }
+
+                    // 2. RENDER NORMAL (Small Square Cards)
+                    if(normalData.length > 0) {
+                        normalList.innerHTML = normalData.map(c => `
+                            <div onclick="window.location.href='/matches?cat_id=${c.id}&name=${c.title}'" class="bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 shadow-lg active:scale-95 transition cursor-pointer flex flex-col items-center p-3 hover:bg-gray-750">
+                                <div class="w-16 h-16 rounded-2xl overflow-hidden mb-2 bg-gray-900 shadow-inner">
+                                    <img src="${c.image}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/200?text=Game'">
+                                </div>
+                                <h3 class="font-bold text-sm text-center leading-tight mb-1 line-clamp-2">${c.title}</h3>
+                                <p class="text-[10px] text-blue-400 font-bold">Tap to Join</p>
+                            </div>
+                        `).join('');
+                    } else {
+                        normalList.innerHTML = '<p class="text-gray-500 text-sm col-span-2">No regular matches.</p>';
+                    }
+
                 } else {
-                    catContainer.innerHTML = `
-                        <div class="text-center text-gray-500 py-10 bg-gray-800/30 rounded-2xl border border-gray-700/50 border-dashed">
-                            <i class="fa-solid fa-ghost text-4xl mb-3 opacity-50"></i>
-                            <p>No games available right now.</p>
-                        </div>`;
+                    officialList.innerHTML = '<p class="text-gray-500">No data found.</p>';
                 }
 
-            } catch (err) {
-                console.error("Home Data Error:", err);
-            }
+            } catch (err) { console.error(err); }
         }
 
         loadHomeData();
