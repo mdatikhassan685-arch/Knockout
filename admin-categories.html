@@ -11,75 +11,122 @@
 
     <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50">
         <a href="/admin" class="mr-4 text-gray-400"><i class="fa-solid fa-arrow-left"></i></a>
-        <div class="text-xl font-bold">match Categories</div>
+        <div class="text-xl font-bold">
+          Categories</div>
     </header>
 
     <!-- Add Category Form -->
-    <div class="p-4 bg-gray-800 m-4 rounded-xl border border-gray-700">
-        <h3 class="font-bold mb-3">Add New Category</h3>
-        <input type="text" id="cat_title" placeholder="Category Name (e.g. Free fire official tournament)" class="w-full bg-gray-900 p-2 rounded mb-2 text-white border border-gray-600">
-        <input type="text" id="cat_img" placeholder="Image URL (Link)" class="w-full bg-gray-900 p-2 rounded mb-2 text-white border border-gray-600">
-        <button onclick="addCategory()" class="w-full bg-blue-600 py-2 rounded font-bold hover:bg-blue-700">Add Category</button>
+    <div class="p-4 bg-gray-800 m-4 rounded-xl border border-gray-700 shadow-lg">
+        <h3 class="font-bold mb-3 text-lg border-b border-gray-600 pb-2">Add New Categories</h3>
+        
+        <label class="text-xs text-gray-400 ml-1">Categories Name</label>
+        <input type="text" id="cat_title" placeholder="e.g. FreeFire" class="w-full bg-gray-900 p-3 rounded-lg mb-3 text-white border border-gray-600 outline-none focus:border-blue-500">
+        
+        <label class="text-xs text-gray-400 ml-1">Image URL</label>
+        <input type="text" id="cat_img" placeholder="https://..." class="w-full bg-gray-900 p-3 rounded-lg mb-4 text-white border border-gray-600 outline-none focus:border-blue-500">
+        
+        <button onclick="addCategory()" class="w-full bg-blue-600 py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-600/30">Add Category</button>
     </div>
 
     <!-- Category List -->
-    <div class="p-4 grid grid-cols-2 gap-4" id="cat_list">
-        <p class="text-gray-500">Loading...</p>
+    <div class="px-4">
+        <h3 class="font-bold text-lg mb-3 ml-1">All Categories</h3>
+        <div class="grid grid-cols-2 gap-4" id="cat_list">
+            <p class="text-gray-500 col-span-2 text-center animate-pulse">Loading Categories...</p>
+        </div>
     </div>
 
     <script>
+        // ক্যাটাগরি লোড করা
         async function loadCategories() {
-            const res = await fetch('/api/admin', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ type: 'get_categories' })
-            });
-            const data = await res.json();
-            
-            const container = document.getElementById('cat_list');
-            if(data.length > 0) {
-                container.innerHTML = data.map(c => `
-                    <div onclick="window.location.href='/admin-matches?cat_id=${c.id}&name=${c.title}'" class="bg-gray-800 p-3 rounded-xl border border-gray-700 active:scale-95 transition cursor-pointer hover:bg-gray-750 relative group">
-                        <img src="${c.image}" class="w-full h-24 object-cover rounded-lg mb-2">
-                        <h3 class="font-bold text-center">${c.title}</h3>
-                        <p class="text-xs text-center text-gray-400">Tap to add matches</p>
-                        <button onclick="deleteCategory(${c.id}, event)" class="absolute top-2 right-2 bg-red-600 w-6 h-6 rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                `).join('');
-            } else {
-                container.innerHTML = '<p class="text-gray-500 col-span-2 text-center">No games added yet.</p>';
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'get_categories' })
+                });
+
+                if(!res.ok) {
+                    console.error("API Error Status:", res.status);
+                    document.getElementById('cat_list').innerHTML = '<p class="text-red-500 col-span-2 text-center">API Error (Check Console)</p>';
+                    return;
+                }
+
+                const data = await res.json();
+                
+                const container = document.getElementById('cat_list');
+                if(data.length > 0) {
+                    container.innerHTML = data.map(c => `
+                        <div onclick="window.location.href='/admin-matches?cat_id=${c.id}&name=${c.title}'" class="bg-gray-800 p-3 rounded-xl border border-gray-700 active:scale-95 transition cursor-pointer hover:bg-gray-750 relative group shadow-md">
+                            <div class="w-full h-24 overflow-hidden rounded-lg mb-2 bg-gray-900">
+                                <img src="${c.image}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300" onerror="this.src='https://placehold.co/300x200?text=No+Image'">
+                            </div>
+                            <h3 class="font-bold text-center text-sm">${c.title}</h3>
+                            <button onclick="deleteCategory(${c.id}, event)" class="absolute top-2 right-2 bg-red-600 w-7 h-7 rounded-full text-xs flex items-center justify-center text-white shadow-md hover:scale-110 transition"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p class="text-gray-500 col-span-2 text-center py-5 border border-dashed border-gray-700 rounded-xl">No games added yet.</p>';
+                }
+            } catch(e) { 
+                console.error(e);
+                document.getElementById('cat_list').innerHTML = '<p class="text-red-500 col-span-2 text-center">Network Error</p>';
             }
         }
 
+        // ক্যাটাগরি অ্যাড করা (Improved)
         async function addCategory() {
             const title = document.getElementById('cat_title').value;
             const img = document.getElementById('cat_img').value;
-            if(!title || !img) return alert("Fill all fields");
-
-            await fetch('/api/admin', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ type: 'add_category', title, image: img })
-            });
             
-            document.getElementById('cat_title').value = '';
-            document.getElementById('cat_img').value = '';
-            loadCategories();
+            if(!title || !img) return alert("Please fill both Game Name and Image Link!");
+
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "Adding...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'add_category', title: title, image: img })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    alert("✅ Category Added!");
+                    document.getElementById('cat_title').value = '';
+                    document.getElementById('cat_img').value = '';
+                    loadCategories(); 
+                } else {
+                    alert("❌ Error: " + (data.error || "Unknown Error"));
+                }
+            } catch (error) {
+                alert("❌ Network/Server Error: " + error.message);
+            }
+
+            btn.innerText = originalText;
+            btn.disabled = false;
         }
 
+        // ক্যাটাগরি ডিলিট করা
         async function deleteCategory(id, e) {
-            e.stopPropagation(); // Parent click stop করার জন্য
-            if(!confirm("Delete this category? All matches inside will be hidden.")) return;
+            e.stopPropagation(); 
+            if(!confirm("Delete this category?")) return;
             
-            await fetch('/api/admin', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ type: 'delete_category', id })
-            });
-            loadCategories();
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'delete_category', id })
+                });
+                loadCategories();
+            } catch(e) { alert("Delete failed"); }
         }
 
         loadCategories();
     </script>
 </body>
-      </html>
+</html>
