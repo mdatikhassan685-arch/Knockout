@@ -9,49 +9,53 @@
     <style>
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        body { font-family: 'Segoe UI', sans-serif; }
+        body { font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
 <body class="bg-[#0f172a] text-white pb-24 select-none">
 
-    <!-- Header (Same as before) -->
+    <!-- Header -->
     <header class="flex justify-between items-center p-4 bg-gray-900/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-800">
         <div class="flex items-center gap-3">
-            <div class="bg-blue-600 w-10 h-10 rounded-full flex items-center justify-center shadow-lg">
+            <div class="bg-blue-600 w-10 h-10 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/40">
                 <i class="fa-solid fa-gamepad text-white text-xl"></i>
             </div>
             <div>
-                <h1 class="text-xl font-black uppercase italic">Knockout</h1>
-                <p class="text-[10px] text-gray-400 font-bold -mt-1">ESPORTS</p>
+                <h1 class="text-xl font-black tracking-widest uppercase italic">Knockout</h1>
+                <p class="text-[10px] text-gray-400 font-bold -mt-1 tracking-wide">ESPORTS</p>
             </div>
         </div>
+        
         <div class="flex items-center gap-3">
-            <a href="/wallet" class="bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-full flex items-center gap-2">
+            <a href="/wallet" class="bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-full flex items-center gap-2 active:scale-95 transition hover:bg-gray-700">
                 <i class="fa-solid fa-coins text-yellow-400"></i>
                 <span class="text-yellow-400 font-bold text-sm">৳ <span id="balance">0.00</span></span>
             </a>
-            <button class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-gray-400">
+            <button class="relative w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 hover:text-white text-gray-400 transition">
                 <i class="fa-regular fa-bell text-xl"></i>
+                <span class="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-gray-800"></span>
             </button>
         </div>
     </header>
 
-    <!-- Marquee -->
+    <!-- Marquee Announcement -->
     <div class="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-y border-white/5 py-2">
-        <marquee id="announcement" class="text-xs font-bold text-blue-200">Welcome to Knockout Esports!</marquee>
+        <marquee id="announcement" behavior="scroll" direction="left" class="text-xs font-bold text-blue-200 tracking-wide">
+            Welcome to Knockout Esports! Join tournaments and win real money.
+        </marquee>
     </div>
 
-    <!-- Banners -->
+    <!-- Banners Slider -->
     <div class="p-4 overflow-x-auto whitespace-nowrap scrollbar-hide flex gap-4" id="banners">
-        <div class="w-80 h-40 bg-gray-800 rounded-2xl animate-pulse border border-gray-700"></div>
+        <div class="w-80 h-40 bg-gray-800 rounded-2xl animate-pulse border border-gray-700 flex-shrink-0"></div>
     </div>
 
     <!-- Quick Actions -->
     <div class="px-4 flex gap-3 mb-6">
-        <a href="/wallet" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold shadow-lg text-sm">
+        <a href="/wallet" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition text-sm">
             <i class="fa-solid fa-plus-circle"></i> Add Money
         </a>
-        <a href="#" class="flex-1 bg-gray-800 border border-gray-700 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold text-sm">
+        <a href="#" class="flex-1 bg-gray-800 border border-gray-700 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold active:scale-95 transition hover:bg-gray-750 text-sm">
             <i class="fa-solid fa-trophy text-yellow-500"></i> Leaderboard
         </a>
     </div>
@@ -60,24 +64,41 @@
     <div class="px-4 mb-6">
         <h2 class="text-xl font-bold border-l-4 border-red-500 pl-3 leading-none mb-4">Official Tournaments</h2>
         <div class="grid grid-cols-1 gap-5" id="official_list">
-            <!-- Data will load here -->
+            <!-- Loader -->
+            <div class="w-full h-48 bg-gray-800 rounded-2xl animate-pulse"></div>
         </div>
     </div>
 
-    <!-- 🎮 SECTION 2: REGULAR MATCHES (Small Grid) -->
+    <!-- 🎮 SECTION 2: DAILY MATCHES (3 Column Vertical Grid) -->
     <div class="px-4">
         <h2 class="text-xl font-bold border-l-4 border-blue-500 pl-3 leading-none mb-4">Daily Matches</h2>
-        <div class="grid grid-cols-2 gap-4" id="normal_list">
-            <!-- Data will load here -->
+        <!-- Grid changed to 3 columns -->
+        <div class="grid grid-cols-3 gap-3" id="normal_list">
+            <!-- Loader -->
+            <div class="h-32 bg-gray-800 rounded-xl animate-pulse"></div>
+            <div class="h-32 bg-gray-800 rounded-xl animate-pulse"></div>
+            <div class="h-32 bg-gray-800 rounded-xl animate-pulse"></div>
         </div>
     </div>
 
     <!-- Bottom Nav -->
     <nav class="fixed bottom-0 w-full bg-[#0f172a]/95 backdrop-blur-lg border-t border-gray-800 flex justify-around py-3 z-40 pb-6">
-        <a href="/home" class="text-blue-500 flex flex-col items-center"><i class="fa-solid fa-house text-xl"></i><span class="text-[10px]">Home</span></a>
-        <a href="#" class="text-gray-500 flex flex-col items-center"><i class="fa-solid fa-fire text-xl"></i><span class="text-[10px]">Live</span></a>
-        <a href="/wallet" class="text-gray-500 flex flex-col items-center"><i class="fa-solid fa-wallet text-xl"></i><span class="text-[10px]">Wallet</span></a>
-        <a href="/profile" class="text-gray-500 flex flex-col items-center"><i class="fa-solid fa-user text-xl"></i><span class="text-[10px]">Profile</span></a>
+        <a href="/home" class="text-blue-500 flex flex-col items-center transition group">
+            <i class="fa-solid fa-house text-xl mb-1 group-active:scale-90 transition"></i>
+            <span class="text-[10px] font-bold">Home</span>
+        </a>
+        <a href="#" class="text-gray-500 hover:text-white flex flex-col items-center transition group">
+            <i class="fa-solid fa-fire text-xl mb-1 group-active:scale-90 transition"></i>
+            <span class="text-[10px] font-bold">Live</span>
+        </a>
+        <a href="/wallet" class="text-gray-500 hover:text-white flex flex-col items-center transition group">
+            <i class="fa-solid fa-wallet text-xl mb-1 group-active:scale-90 transition"></i>
+            <span class="text-[10px] font-bold">Wallet</span>
+        </a>
+        <a href="/profile" class="text-gray-500 hover:text-white flex flex-col items-center transition group">
+            <i class="fa-solid fa-user text-xl mb-1 group-active:scale-90 transition"></i>
+            <span class="text-[10px] font-bold">Profile</span>
+        </a>
     </nav>
 
     <script>
@@ -108,54 +129,60 @@
                         </div>`
                     ).join('');
                 } else {
-                    bannerContainer.innerHTML = `<div class="w-full h-24 text-center text-gray-500 border border-dashed border-gray-700 rounded-xl flex items-center justify-center">No Offers</div>`;
+                    bannerContainer.innerHTML = `<div class="w-full h-24 text-center text-gray-500 border border-dashed border-gray-700 rounded-xl flex items-center justify-center text-xs">No Offers</div>`;
                 }
 
                 // ============================================
-                // 🔥 LOAD CATEGORIES (SPLIT INTO 2 SECTIONS)
+                // 🔥 LOAD CATEGORIES
                 // ============================================
                 const officialList = document.getElementById('official_list');
                 const normalList = document.getElementById('normal_list');
 
                 if (data.categories && data.categories.length > 0) {
                     
-                    // Filter Data
                     const officialData = data.categories.filter(c => c.type === 'official');
                     const normalData = data.categories.filter(c => !c.type || c.type === 'normal');
 
-                    // 1. RENDER OFFICIAL (Big Cards)
+                    // 1. OFFICIAL (Big Cards)
                     if(officialData.length > 0) {
                         officialList.innerHTML = officialData.map(c => `
                             <div onclick="window.location.href='/matches?cat_id=${c.id}&name=${c.title}'" class="relative w-full h-48 bg-gray-800 rounded-2xl overflow-hidden shadow-xl border border-gray-700 active:scale-95 transition cursor-pointer">
-                                <img src="${c.image}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x400/222/fff?text=Link+Error'">
+                                <img src="${c.image}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x400/222/fff?text=Image+Error'">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90"></div>
                                 <div class="absolute bottom-0 left-0 p-4 w-full">
-                                    <h3 class="text-2xl font-black text-white uppercase leading-none mb-1">${c.title}</h3>
-                                    <p class="text-xs text-green-400 font-bold uppercase tracking-wide flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Live Tournament</p>
+                                    <h3 class="text-xl font-black text-white uppercase leading-none mb-1">${c.title}</h3>
+                                    <p class="text-[10px] text-green-400 font-bold uppercase tracking-wide flex items-center gap-1"><span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Live</p>
                                 </div>
                             </div>
                         `).join('');
                     } else {
-                        officialList.innerHTML = '<p class="text-gray-500 text-sm">No official tournaments running.</p>';
+                        officialList.innerHTML = '<p class="text-gray-500 text-sm">No official tournaments.</p>';
                     }
 
-                    // 2. RENDER NORMAL (Small Square Cards)
+                    // 2. DAILY MATCHES (Vertical Cards Style) ✅
                     if(normalData.length > 0) {
                         normalList.innerHTML = normalData.map(c => `
-                            <div onclick="window.location.href='/matches?cat_id=${c.id}&name=${c.title}'" class="bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 shadow-lg active:scale-95 transition cursor-pointer flex flex-col items-center p-3 hover:bg-gray-750">
-                                <div class="w-16 h-16 rounded-2xl overflow-hidden mb-2 bg-gray-900 shadow-inner">
-                                    <img src="${c.image}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/200?text=Game'">
+                            <div onclick="window.location.href='/matches?cat_id=${c.id}&name=${c.title}'" class="relative w-full h-36 bg-gray-800 rounded-xl overflow-hidden shadow-md border border-gray-700/50 active:scale-95 transition cursor-pointer group">
+                                
+                                <!-- Full Image -->
+                                <img src="${c.image}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500" onerror="this.src='https://placehold.co/200x300?text=Game'">
+                                
+                                <!-- Gradient Bottom -->
+                                <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90"></div>
+                                
+                                <!-- Text at Bottom -->
+                                <div class="absolute bottom-0 left-0 w-full p-2 text-center">
+                                    <h3 class="text-[10px] font-bold text-white uppercase tracking-wider truncate leading-tight">${c.title}</h3>
                                 </div>
-                                <h3 class="font-bold text-sm text-center leading-tight mb-1 line-clamp-2">${c.title}</h3>
-                                <p class="text-[10px] text-blue-400 font-bold">Tap to Join</p>
                             </div>
                         `).join('');
                     } else {
-                        normalList.innerHTML = '<p class="text-gray-500 text-sm col-span-2">No regular matches.</p>';
+                        normalList.innerHTML = '<p class="text-gray-500 text-xs col-span-3 text-center">No regular matches.</p>';
                     }
 
                 } else {
-                    officialList.innerHTML = '<p class="text-gray-500">No data found.</p>';
+                    officialList.innerHTML = '<p class="text-gray-500 text-sm">No data found.</p>';
+                    normalList.innerHTML = '';
                 }
 
             } catch (err) { console.error(err); }
