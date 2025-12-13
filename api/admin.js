@@ -165,4 +165,46 @@ module.exports = async (req, res) => {
         console.error("Admin API Error:", error);
         return res.status(500).json({ error: error.message });
     }
-};
+}
+
+        // =======================
+        // 🏆 RESULT MANAGEMENT
+        // =======================
+        
+        // ১. ম্যাচের সব প্লেয়ারের লিস্ট আনা
+        if (type === 'get_match_participants') {
+            const { match_id } = req.body;
+            const [players] = await db.execute(`
+                SELECT p.*, u.username 
+                FROM participants p 
+                JOIN users u ON p.user_id = u.id 
+                WHERE p.tournament_id = ?
+            `, [match_id]);
+            return res.status(200).json(players);
+        }
+
+        // ২. রেজাল্ট সেভ করা এবং টাকা পাঠানো
+        if (type === 'save_result') {
+            const { participant_id, user_id, kills, rank, prize } = req.body;
+
+            // Update Participant Stats
+            await db.execute(
+                'UPDATE participants SET kills = ?, rank = ?, prize_won = ? WHERE id = ?',
+                [kills, rank, prize, participant_id]
+            );
+
+            // যদি প্রাইজ থাকে, তবে ইউজারের ব্যালেন্স আপডেট করা
+            if (parseFloat(prize) > 0) {
+                await db.execute('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?', [prize, user_id]);
+                await db.execute('INSERT INTO transactions (user_id, amount, type, created_at) VALUES (?, ?, "Match Winnings", NOW())', [user_id, prize]);
+            }
+
+            return res.status(200).json({ success: true, message: 'Updated' });
+        }
+
+        // ৩. ম্যাচ শেষ ঘোষণা করা
+        if (type === 'finish_match') {
+            const { match_id } = req.body;
+            await db.execute('UPDATE tournaments SET status = "completed" WHERE id = ?', [match_id]);
+            return res.status(200).json({ success: true });
+        };
