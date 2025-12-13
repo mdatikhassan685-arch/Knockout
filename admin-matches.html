@@ -174,11 +174,16 @@
             if(data.success) { alert("Player Kicked!"); openPlayersModal(matchId); }
             else { alert("Error: " + data.error); }
         }
-
-        // --- STATUS UPDATE ---
-        async function updateStatus(id, newStatus) {
-            await fetch('/api/admin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'update_match_status', match_id: id, new_status: newStatus }) });
-        }
+!-- STATUS DROPDOWN (UPDATED) -->
+<div class="mb-4">
+    <label class="text-[10px] text-gray-400 uppercase font-bold ml-1">Current Status</label>
+    <select onchange="updateStatus(${m.id}, this.value)" class="w-full bg-gray-900 text-white p-2 rounded-lg border border-gray-600 text-sm font-bold outline-none focus:border-blue-500">
+        <option value="upcoming" ${m.status === 'upcoming' ? 'selected' : ''}>🟡 Upcoming (Join Locked)</option>
+        <option value="open" ${m.status === 'open' ? 'selected' : ''}>🟢 Open (Start Joining)</option>
+        <option value="live" ${m.status === 'live' ? 'selected' : ''}>🔴 Live / Running</option>
+        <option value="completed" ${m.status === 'completed' ? 'selected' : ''}>✅ Completed</option>
+    </select>
+</div> 
 
         // --- CREATE MATCH ---
         async function addMatch() {
