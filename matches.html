@@ -31,7 +31,6 @@
     <div id="joinModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[60] p-4 backdrop-blur-sm">
         <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-sm border border-gray-700 shadow-2xl relative">
             
-            <!-- Close Button -->
             <button onclick="closeModal('joinModal')" class="absolute top-4 right-4 text-gray-500 hover:text-white"><i class="fa-solid fa-times text-lg"></i></button>
 
             <h3 class="text-xl font-bold mb-1 text-white">Join Match</h3>
@@ -39,22 +38,19 @@
             
             <input type="hidden" id="join_match_id">
             
-            <!-- Input 1: Game Name -->
             <div class="mb-3">
                 <label class="text-[10px] text-gray-400 uppercase font-bold ml-1">In-Game Name</label>
-                <input type="text" id="game_name" placeholder="Ex: Killer_007" class="w-full bg-gray-900 p-3 rounded-lg text-white border border-gray-600 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                <input type="text" id="game_name" placeholder="Ex: Killer_007" class="w-full bg-gray-900 p-3 rounded-lg text-white border border-gray-600 outline-none focus:border-blue-500 transition">
             </div>
 
-            <!-- Input 2: Game UID -->
             <div class="mb-3">
                 <label class="text-[10px] text-gray-400 uppercase font-bold ml-1">Game UID (ID)</label>
-                <input type="number" id="game_uid" placeholder="Ex: 12345678" class="w-full bg-gray-900 p-3 rounded-lg text-white border border-gray-600 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                <input type="number" id="game_uid" placeholder="Ex: 12345678" class="w-full bg-gray-900 p-3 rounded-lg text-white border border-gray-600 outline-none focus:border-blue-500 transition">
             </div>
 
-            <!-- Input 3: Level -->
             <div class="mb-5">
                 <label class="text-[10px] text-gray-400 uppercase font-bold ml-1">Game Level (Min: 40)</label>
-                <input type="number" id="game_level" placeholder="Ex: 52" class="w-full bg-gray-900 p-3 rounded-lg text-white border border-gray-600 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                <input type="number" id="game_level" placeholder="Ex: 52" class="w-full bg-gray-900 p-3 rounded-lg text-white border border-gray-600 outline-none focus:border-blue-500 transition">
             </div>
 
             <button onclick="confirmJoin()" id="join_btn" class="w-full bg-blue-600 py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-600/20 active:scale-95">Confirm Join</button>
@@ -98,7 +94,6 @@
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user) window.location.href = '/';
         
-        // URL থেকে Category তথ্য নেওয়া
         const urlParams = new URLSearchParams(window.location.search);
         const catId = urlParams.get('cat_id');
         const catName = urlParams.get('name');
@@ -126,30 +121,34 @@
                 if(matches.length > 0) {
                     container.innerHTML = matches.map(m => {
                         const filled = (m.joined_count / m.total_spots) * 100;
+                        
+                        // ✅ CHECK JOIN STATUS (0 = false, >0 = true)
                         const isJoined = m.is_joined > 0;
                         const isFull = m.joined_count >= m.total_spots;
                         
-                        // বাটন কন্ডিশন
-                        let btn = `<button onclick="openJoin(${m.id})" class="w-full py-3 rounded-xl font-bold bg-blue-600 hover:bg-blue-700 transition shadow-lg shadow-blue-600/20 active:scale-95 flex items-center justify-center gap-2">
-                                    Join Match <span class="bg-black/20 px-2 rounded text-xs">৳${m.entry_fee}</span>
-                                   </button>`;
-                        
+                        let btn;
+
                         if(isJoined) {
+                            // Already Joined -> Show Room Button
                             btn = `<button onclick="viewRoom(${m.id})" class="w-full py-3 rounded-xl font-bold bg-green-600 hover:bg-green-700 transition shadow-lg shadow-green-600/20 active:scale-95 flex items-center justify-center gap-2">
-                                    <i class="fa-solid fa-key"></i> Room ID & Pass
+                                    <i class="fa-solid fa-check-circle"></i> JOINED (View Room)
                                    </button>`;
                         } else if(isFull) {
+                            // Full -> Disabled
                             btn = `<button disabled class="w-full py-3 rounded-xl font-bold bg-gray-700 text-gray-500 cursor-not-allowed border border-gray-600">Match Full</button>`;
+                        } else {
+                            // Open -> Join Button
+                            btn = `<button onclick="openJoin(${m.id})" class="w-full py-3 rounded-xl font-bold bg-blue-600 hover:bg-blue-700 transition shadow-lg shadow-blue-600/20 active:scale-95 flex items-center justify-center gap-2">
+                                    Join Match <span class="bg-black/20 px-2 rounded text-xs">৳${m.entry_fee}</span>
+                                   </button>`;
                         }
 
-                        // তারিখ ফরম্যাট
                         const date = new Date(m.schedule_time);
                         const dateStr = date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
                         const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
                         return `
                         <div class="bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 shadow-lg relative group">
-                            <!-- Header Strip -->
                             <div class="bg-gray-750 p-3 border-b border-gray-700 flex justify-between items-center bg-gradient-to-r from-gray-800 to-gray-700">
                                 <h3 class="font-bold text-white text-md truncate pr-2">#${m.id} ${m.title}</h3>
                                 <div class="text-[10px] font-bold text-gray-300 bg-gray-900 px-2 py-1 rounded border border-gray-600 flex gap-1">
@@ -158,7 +157,6 @@
                             </div>
 
                             <div class="p-4">
-                                <!-- Info Grid -->
                                 <div class="grid grid-cols-3 gap-2 text-center mb-4">
                                     <div class="bg-gray-900/50 p-2 rounded-xl border border-gray-700/50">
                                         <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Prize</p>
@@ -174,7 +172,6 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Progress Bar -->
                                 <div class="mb-5">
                                     <div class="flex justify-between text-xs mb-1.5 text-gray-400 font-bold">
                                         <span><i class="fa-solid fa-users text-gray-500 mr-1"></i> ${m.joined_count}/${m.total_spots} Joined</span>
@@ -185,7 +182,6 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Action Button -->
                                 ${btn}
                             </div>
                         </div>`;
@@ -203,7 +199,7 @@
             }
         }
 
-        // --- OPEN JOIN MODAL ---
+        // --- OPEN MODAL ---
         function openJoin(id) {
             document.getElementById('join_match_id').value = id;
             document.getElementById('joinModal').style.display = 'flex';
@@ -213,20 +209,15 @@
             document.getElementById(id).style.display = 'none';
         }
 
-        // --- CONFIRM JOIN (With Level Check) ---
+        // --- CONFIRM JOIN ---
         async function confirmJoin() {
             const id = document.getElementById('join_match_id').value;
             const name = document.getElementById('game_name').value;
             const uid = document.getElementById('game_uid').value;
             const level = document.getElementById('game_level').value;
             
-            // 1. খালি আছে কিনা চেক
-            if(!name || !uid || !level) return alert("❌ Please fill Name, UID and Level!");
-
-            // 2. লেভেল চেক (Client Side) ⚠️
-            if(parseInt(level) < 40) {
-                return alert("⚠️ Sorry! Your Game Level must be 40 or higher to join this match.");
-            }
+            if(!name || !uid || !level) return alert("❌ Please fill all fields!");
+            if(parseInt(level) < 40) return alert("⚠️ Minimum Level 40 required!");
 
             const btn = document.getElementById('join_btn');
             const originalText = btn.innerText;
@@ -234,7 +225,6 @@
             btn.disabled = true;
 
             try {
-                // 3. সার্ভারে পাঠানো
                 const res = await fetch('/api/tournament', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -252,15 +242,11 @@
                 if(data.success) {
                     alert("✅ Joined Successfully!");
                     closeModal('joinModal');
-                    // ইনপুট ক্লিয়ার
-                    document.getElementById('game_name').value = '';
-                    document.getElementById('game_uid').value = '';
-                    document.getElementById('game_level').value = '';
-                    loadMatches(); // রিফ্রেশ
+                    loadMatches(); // Reload list to update button
                 } else {
                     alert("❌ Error: " + data.error);
                 }
-            } catch(e) { alert("Network Error! Check internet connection."); }
+            } catch(e) { alert("Network Error"); }
 
             btn.innerText = originalText;
             btn.disabled = false;
@@ -281,19 +267,17 @@
                     document.getElementById('view_room_pass').innerText = data.room_pass;
                     document.getElementById('roomDetailsModal').style.display = 'flex';
                 } else {
-                    alert("⏳ Room details will be published 15 minutes before the match starts.");
+                    alert("⏳ Room details will be available soon.");
                 }
             } catch(e) { alert("Error loading room info"); }
         }
 
-        // Copy Function
         function copyText(id) {
             const text = document.getElementById(id).innerText;
             if(text === '---') return;
             navigator.clipboard.writeText(text).then(() => alert("Copied!"));
         }
 
-        // Initial Load
         loadMatches();
     </script>
 </body>
