@@ -8,19 +8,14 @@ module.exports = async (req, res) => {
 
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    const { type, category_id, user_id, tournament_id, game_name } = req.body;
+    // ইনপুট ভেরিয়েবলগুলো গ্রহণ
+    const { type, category_id, user_id, tournament_id, game_name, game_uid, game_level } = req.body;
 
     try {
         // ============================
-        // 1. GET MATCHES (User View)
+        // 1. GET MATCHES
         // ============================
         if (type === 'get_matches') {
-            if (!category_id) return res.status(400).json({ error: 'Category ID Missing' });
-
-            // এই কুয়েরি চেক করবে:
-            // ১. ম্যাচটি এই ক্যাটাগরির কিনা
-            // ২. ইউজার ইতিমধ্যে জয়েন করেছে কিনা
-            // ৩. কতজন জয়েন করেছে
             const [matches] = await db.execute(`
                 SELECT t.*, 
                 (SELECT COUNT(*) FROM participants p WHERE p.tournament_id = t.id) as joined_count,
@@ -33,20 +28,16 @@ module.exports = async (req, res) => {
             return res.status(200).json(matches);
         }
 
-       // ============================
-        // 2. JOIN MATCH (UPDATED with Level Check)
+        // ============================
+        // 2. JOIN MATCH (Fixed for your DB)
         // ============================
         if (type === 'join_match') {
-            const { category_id, user_id, tournament_id, game_name, game_uid, game_level } = req.body;
-
-            // ১. সব তথ্য আছে কিনা চেক
             if (!game_name || !game_uid || !game_level) {
-                return res.status(400).json({ error: 'All fields (Name, UID, Level) are required!' });
+                return res.status(400).json({ error: 'All fields are required!' });
             }
 
-            // ২. লেভেল চেক (৪০ এর নিচে হলে বাদ)
             if (parseInt(game_level) < 40) {
-                return res.status(400).json({ error: 'Sorry! Minimum Game Level 40 required to join.' });
+                return res.status(400).json({ error: 'Minimum Level 40 required!' });
             }
 
             const [matchData] = await db.execute('SELECT entry_fee, total_spots FROM tournaments WHERE id = ?', [tournament_id]);
@@ -63,21 +54,24 @@ module.exports = async (req, res) => {
             if (countJoin[0].c >= match.total_spots) return res.status(400).json({ error: 'Match is Full!' });
             if (parseFloat(user.wallet_balance) < parseFloat(match.entry_fee)) return res.status(400).json({ error: 'Insufficient Balance!' });
 
-            // ৩. টাকা কাটা এবং ডাটাবেসে ৩টি তথ্য সেভ করা
+            // ১. ব্যালেন্স কাটা
             await db.execute('UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?', [match.entry_fee, user_id]);
             
+            // ২. ডাটাবেসে ইনসার্ট (আপনার স্ক্রিনশট অনুযায়ী কলাম নাম ঠিক করা হয়েছে)
+            // in_game_name, in_game_uid, joined_at ব্যবহার করা হলো
             await db.execute(
-                'INSERT INTO participants (user_id, tournament_id, game_name, game_uid, game_level, created_at) VALUES (?, ?, ?, ?, ?, NOW())', 
+                'INSERT INTO participants (user_id, tournament_id, in_game_name, in_game_uid, game_level, joined_at) VALUES (?, ?, ?, ?, ?, NOW())', 
                 [user_id, tournament_id, game_name, game_uid, game_level]
             );
             
+            // ৩. ট্রানজ্যাকশন লগ
             await db.execute('INSERT INTO transactions (user_id, amount, type, created_at) VALUES (?, ?, "Match Join", NOW())', [user_id, match.entry_fee]);
 
             return res.status(200).json({ success: true, message: 'Joined Successfully' });
         }
 
         // ============================
-        // 3. GET ROOM ID
+        // 3. GET ROOM
         // ============================
         if (type === 'get_room') {
             const [check] = await db.execute('SELECT id FROM participants WHERE user_id = ? AND tournament_id = ?', [user_id, tournament_id]);
