@@ -51,7 +51,9 @@
     </div>
 
     <!-- Existing Matches -->
-    <div class="p-4 space-y-3" id="match_list"></div>
+    <div class="p-4 space-y-3" id="match_list">
+        <p class="text-center text-gray-500">Loading...</p>
+    </div>
 
     <!-- Room Modal -->
     <div id="roomModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
@@ -65,6 +67,9 @@
         </div>
     </div>
 
+    <!-- Result Modal (ম্যাচ শেষ হলে রেজাল্ট দেওয়ার জন্য) -->
+    <!-- (আগের মতই রাখতে পারেন বা প্রয়োজন হলে অ্যাড করব) -->
+
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const catId = urlParams.get('cat_id');
@@ -72,30 +77,78 @@
         if(catName) document.getElementById('page_title').innerText = catName;
 
         async function loadMatches() {
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'get_admin_matches', category_id: catId })
+                });
+                const matches = await res.json();
+                const container = document.getElementById('match_list');
+
+                if(matches.length > 0) {
+                    container.innerHTML = matches.map(m => `
+                        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-md">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-lg text-white">#${m.id} ${m.title}</h3>
+                                <button onclick="deleteMatch(${m.id})" class="text-red-500 bg-red-500/10 p-2 rounded hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                            
+                            <p class="text-xs text-gray-400 mb-3">${new Date(m.schedule_time).toLocaleString()}</p>
+                            
+                            <!-- STATUS DROPDOWN -->
+                            <div class="mb-3">
+                                <label class="text-[10px] text-gray-400 uppercase font-bold">Match Status</label>
+                                <select onchange="updateStatus(${m.id}, this.value)" class="w-full bg-gray-900 text-white p-2 rounded border border-gray-600 text-sm font-bold ${getStatusColor(m.status)}">
+                                    <option value="upcoming" ${m.status === 'upcoming' ? 'selected' : ''}>🔵 Upcoming</option>
+                                    <option value="starting" ${m.status === 'starting' ? 'selected' : ''}>🟡 Starting Soon</option>
+                                    <option value="live" ${m.status === 'live' ? 'selected' : ''}>🔴 Live / Running</option>
+                                    <option value="completed" ${m.status === 'completed' ? 'selected' : ''}>✅ Completed</option>
+                                </select>
+                            </div>
+
+                            <div class="flex gap-4 text-sm mb-3 font-bold border-t border-gray-700 pt-2">
+                                <span class="text-yellow-400">Fee: ${m.entry_fee}</span>
+                                <span class="text-green-400">Win: ${m.winning_prize}</span>
+                                <span class="text-blue-400 ml-auto">${m.match_type}</span>
+                            </div>
+
+                            <div class="flex gap-2">
+                                <button onclick="openRoomModal(${m.id}, '${m.room_id || ''}', '${m.room_pass || ''}')" class="flex-1 bg-blue-600/20 text-blue-400 border border-blue-500/50 py-1.5 rounded text-sm font-bold hover:bg-blue-600 hover:text-white transition">Room Details</button>
+                                
+                                <!-- Result Button (Only if Completed) -->
+                                ${m.status === 'completed' ? 
+                                `<button onclick="alert('Use Result Manager Feature')" class="flex-1 bg-green-600/20 text-green-400 border border-green-500/50 py-1.5 rounded text-sm font-bold">Result</button>` 
+                                : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                } else { container.innerHTML = '<p class="text-center text-gray-500 mt-10">No matches created.</p>'; }
+            } catch(e) { console.error(e); }
+        }
+
+        // Status Update Function
+        async function updateStatus(id, newStatus) {
             const res = await fetch('/api/admin', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ type: 'get_admin_matches', category_id: catId })
+                body: JSON.stringify({ type: 'update_match_status', match_id: id, new_status: newStatus })
             });
-            const matches = await res.json();
-            const container = document.getElementById('match_list');
+            const data = await res.json();
+            if(data.success) {
+                // কালার চেঞ্জ করার জন্য রিলোড দিতে পারেন, অথবা লাইভ চেঞ্জ হবে
+                loadMatches(); 
+            } else {
+                alert("Failed to update status");
+            }
+        }
 
-            if(matches.length > 0) {
-                container.innerHTML = matches.map(m => `
-                    <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
-                        <div class="flex justify-between">
-                            <h3 class="font-bold">${m.title}</h3>
-                            <button onclick="deleteMatch(${m.id})" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                        <p class="text-xs text-gray-400">${new Date(m.schedule_time).toLocaleString()}</p>
-                        <div class="flex gap-3 text-sm mt-2 font-bold">
-                            <span class="text-yellow-400">Fee: ${m.entry_fee}</span>
-                            <span class="text-green-400">Win: ${m.winning_prize}</span>
-                        </div>
-                        <button onclick="openRoomModal(${m.id}, '${m.room_id || ''}', '${m.room_pass || ''}')" class="w-full mt-3 bg-blue-600/20 text-blue-400 border border-blue-500/50 py-1 rounded text-sm">Set Room ID</button>
-                    </div>
-                `).join('');
-            } else { container.innerHTML = '<p class="text-center text-gray-500">No matches created.</p>'; }
+        // Color Helper
+        function getStatusColor(status) {
+            if(status === 'live') return 'text-red-500 border-red-500';
+            if(status === 'completed') return 'text-green-500 border-green-500';
+            if(status === 'starting') return 'text-yellow-500 border-yellow-500';
+            return 'text-blue-400 border-gray-600';
         }
 
         async function addMatch() {
@@ -117,13 +170,6 @@
             loadMatches();
         }
 
-        async function deleteMatch(id) {
-            if(confirm("Delete match?")) {
-                await fetch('/api/admin', { method: 'POST', body: JSON.stringify({ type: 'delete_match', id }) });
-                loadMatches();
-            }
-        }
-
         function openRoomModal(id, rId, rPass) {
             document.getElementById('room_match_id').value = id;
             document.getElementById('room_id').value = rId;
@@ -141,9 +187,16 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ type: 'update_room', id, room_id: roomId, room_pass: roomPass })
             });
-            alert("Room Details Updated!");
+            alert("Room Updated!");
             document.getElementById('roomModal').style.display = 'none';
             loadMatches();
+        }
+
+        async function deleteMatch(id) {
+            if(confirm("Delete match?")) {
+                await fetch('/api/admin', { method: 'POST', body: JSON.stringify({ type: 'delete_match', id }) });
+                loadMatches();
+            }
         }
 
         loadMatches();
