@@ -1,15 +1,20 @@
 const db = require('../db');
 
 module.exports = async (req, res) => {
-    // 1. CORS Setup
+    // 1. CORS এবং No Cache Headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    // ✅ ক্যাশ রিমুভ করার জন্য
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
 
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-    // ইনপুট ভেরিয়েবল
+    // ইনপুট ভেরিয়েবলগুলো গ্রহণ
     const { 
         type, id, user_id, title, image, cat_type, 
         entry_fee, winning_prize, schedule_time, match_type, total_spots,
@@ -20,29 +25,18 @@ module.exports = async (req, res) => {
 
     try {
         // ==========================================
-        // DASHBOARD STATS
+        // 📊 DASHBOARD STATS
         // ==========================================
         if (type === 'dashboard_stats') {
             const [users] = await db.execute('SELECT COUNT(*) as c FROM users');
             const [deposits] = await db.execute('SELECT COUNT(*) as c FROM deposits WHERE status = "pending"');
             const [withdraws] = await db.execute('SELECT COUNT(*) as c FROM withdrawals WHERE status = "pending"');
-            
-            let tourneys = 0;
-            try {
-                const [t] = await db.execute('SELECT COUNT(*) as c FROM tournaments');
-                tourneys = t[0].c;
-            } catch(e) {}
-
-            return res.status(200).json({
-                total_users: users[0].c,
-                pending_deposits: deposits[0].c,
-                pending_withdraws: withdraws[0].c,
-                total_tournaments: tourneys
-            });
+            let tourneys = 0; try { const [t] = await db.execute('SELECT COUNT(*) as c FROM tournaments'); tourneys = t[0].c; } catch(e) {}
+            return res.status(200).json({ total_users: users[0].c, pending_deposits: deposits[0].c, pending_withdraws: withdraws[0].c, total_tournaments: tourneys });
         }
 
         // ==========================================
-        // USER MANAGEMENT
+        // 👥 USER MANAGEMENT
         // ==========================================
         if (type === 'list_users') {
             const [users] = await db.execute('SELECT id, username, email, wallet_balance, status FROM users ORDER BY id DESC');
@@ -73,7 +67,7 @@ module.exports = async (req, res) => {
         }
 
         // ==========================================
-        // DEPOSIT & WITHDRAW
+        // 💰 DEPOSIT & WITHDRAW
         // ==========================================
         if (type === 'list_deposits') {
             const [rows] = await db.execute('SELECT d.*, u.username FROM deposits d JOIN users u ON d.user_id = u.id WHERE d.status = "pending" ORDER BY d.created_at DESC');
@@ -106,7 +100,6 @@ module.exports = async (req, res) => {
             if (action === 'approve') {
                 await db.execute('UPDATE withdrawals SET status = "approved" WHERE id = ?', [withdraw_id]);
             } else {
-                // Refund Money
                 await db.execute('UPDATE withdrawals SET status = "rejected" WHERE id = ?', [withdraw_id]);
                 await db.execute('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?', [parseFloat(wd[0].amount), wd[0].user_id]);
                 await db.execute('INSERT INTO transactions (user_id, amount, type, created_at) VALUES (?, ?, "Refund", NOW())', [wd[0].user_id, parseFloat(wd[0].amount)]);
@@ -115,7 +108,7 @@ module.exports = async (req, res) => {
         }
 
         // ==========================================
-        // CATEGORY MANAGEMENT
+        // 🎮 CATEGORY MANAGEMENT
         // ==========================================
         if (type === 'get_categories') {
             const [rows] = await db.execute('SELECT * FROM categories ORDER BY id ASC');
@@ -123,8 +116,7 @@ module.exports = async (req, res) => {
         }
 
         if (type === 'add_category') {
-            const finalType = cat_type || 'normal';
-            await db.execute('INSERT INTO categories (title, image, type) VALUES (?, ?, ?)', [title, image, finalType]);
+            await db.execute('INSERT INTO categories (title, image, type) VALUES (?, ?, ?)', [title, image, cat_type || 'normal']);
             return res.status(200).json({ success: true });
         }
 
@@ -139,34 +131,21 @@ module.exports = async (req, res) => {
         }
 
         // ==========================================
-        // TOURNAMENT MANAGEMENT
+        // 🔥 TOURNAMENT MANAGEMENT
         // ==========================================
         if (type === 'get_admin_matches') {
-            const { category_id } = req.body;
-            const [matches] = await db.execute('SELECT * FROM tournaments WHERE category_id = ? ORDER BY schedule_time DESC', [category_id]);
+            const [matches] = await db.execute('SELECT * FROM tournaments WHERE category_id = ? ORDER BY schedule_time DESC', [req.body.category_id]);
             return res.status(200).json(matches);
         }
 
         if (type === 'add_match') {
-            const { category_id, title, entry_fee, winning_prize, schedule_time, match_type, total_spots } = req.body;
-            await db.execute(`
-                INSERT INTO tournaments 
-                (category_id, title, entry_fee, winning_prize, schedule_time, match_type, total_spots, status, created_at) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, "upcoming", NOW())
-            `, [category_id, title, entry_fee, winning_prize, schedule_time, match_type, total_spots]);
+            await db.execute('INSERT INTO tournaments (category_id, title, entry_fee, winning_prize, schedule_time, match_type, total_spots, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, "upcoming", NOW())', [req.body.category_id, title, entry_fee, winning_prize, schedule_time, match_type, total_spots]);
             return res.status(200).json({ success: true });
         }
-        
-        if (type === 'edit_match') {
-            const { match_id, title, entry_fee, winning_prize, schedule_time, match_type, total_spots } = req.body;
-            
-            await db.execute(`
-                UPDATE tournaments 
-                SET title = ?, entry_fee = ?, winning_prize = ?, schedule_time = ?, match_type = ?, total_spots = ? 
-                WHERE id = ?
-            `, [title, entry_fee, winning_prize, schedule_time, match_type, total_spots, match_id]);
 
-            return res.status(200).json({ success: true, message: 'Match Updated' });
+        if (type === 'edit_match') {
+            await db.execute('UPDATE tournaments SET title = ?, entry_fee = ?, winning_prize = ?, schedule_time = ?, match_type = ?, total_spots = ? WHERE id = ?', [title, entry_fee, winning_prize, schedule_time, match_type, total_spots, match_id]);
+            return res.status(200).json({ success: true });
         }
 
         if (type === 'delete_match') {
@@ -180,78 +159,46 @@ module.exports = async (req, res) => {
         }
 
         if (type === 'update_match_status') {
-            const { match_id, new_status } = req.body;
-            await db.execute('UPDATE tournaments SET status = ? WHERE id = ?', [new_status, match_id]);
+            await db.execute('UPDATE tournaments SET status = ? WHERE id = ?', [req.body.new_status, match_id]);
             return res.status(200).json({ success: true });
         }
-         // 🚫 KICK PLAYER MANAGEMENT
+
         // ==========================================
-        
-        // ১. প্লেয়ারদের বিস্তারিত তথ্য আনা
+        // 🏆 RESULT & PLAYERS
+        // ==========================================
         if (type === 'get_match_players_details') {
-            const { match_id } = req.body;
-            const [players] = await db.execute(`
-                SELECT p.*, u.username 
-                FROM participants p 
-                JOIN users u ON p.user_id = u.id 
-                WHERE p.tournament_id = ?
-            `, [match_id]);
+            const [players] = await db.execute('SELECT p.*, u.username FROM participants p JOIN users u ON p.user_id = u.id WHERE p.tournament_id = ?', [match_id]);
             return res.status(200).json(players);
         }
 
-        // ২. প্লেয়ার কিক করা (টাকা ফেরত সহ)
         if (type === 'kick_participant') {
-            const { participant_id, match_id } = req.body;
-
-            // ১. ইউজারের তথ্য এবং ম্যাচের ফি বের করা
             const [partData] = await db.execute('SELECT user_id FROM participants WHERE id = ?', [participant_id]);
-            if(partData.length === 0) return res.status(404).json({error: 'Player not found'});
             const userId = partData[0].user_id;
-
             const [matchData] = await db.execute('SELECT entry_fee FROM tournaments WHERE id = ?', [match_id]);
             const refundAmount = parseFloat(matchData[0].entry_fee);
 
-            // ২. ডিলিট করা
             await db.execute('DELETE FROM participants WHERE id = ?', [participant_id]);
 
-            // ৩. টাকা ফেরত দেওয়া (যদি ফি থাকে)
             if(refundAmount > 0) {
                 await db.execute('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?', [refundAmount, userId]);
                 await db.execute('INSERT INTO transactions (user_id, amount, type, created_at) VALUES (?, ?, "Refund (Kicked by Admin)", NOW())', [userId, refundAmount]);
             }
-
-            return res.status(200).json({ success: true, message: 'Player Kicked & Refunded' });
+            return res.status(200).json({ success: true });
         }
 
-        // ==========================================
-        // 🏆 RESULT MANAGEMENT (FIXED SQL)
-        // ==========================================
         if (type === 'get_match_participants') {
-            const [players] = await db.execute(`
-                SELECT p.*, u.username 
-                FROM participants p 
-                JOIN users u ON p.user_id = u.id 
-                WHERE p.tournament_id = ?
-            `, [match_id]);
+            const [players] = await db.execute('SELECT p.*, u.username FROM participants p JOIN users u ON p.user_id = u.id WHERE p.tournament_id = ?', [match_id]);
             return res.status(200).json(players);
         }
 
         if (type === 'save_result') {
-            // ✅ FIX: 'rank' এর দুই পাশে ব্যাকটিক (`) ব্যবহার করা হয়েছে
-            await db.execute(
-                'UPDATE participants SET kills = ?, `rank` = ?, prize_won = ? WHERE id = ?',
-                [kills, rank, prize, participant_id]
-            );
+            // ✅ FIX: 'rank' ব্যাকটিক সহ ব্যবহার করা হয়েছে
+            await db.execute('UPDATE participants SET kills = ?, `rank` = ?, prize_won = ? WHERE id = ?', [kills, rank, prize, participant_id]);
 
             if (parseFloat(prize) > 0) {
                 await db.execute('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?', [prize, user_id]);
                 await db.execute('INSERT INTO transactions (user_id, amount, type, created_at) VALUES (?, ?, "Match Winnings", NOW())', [user_id, prize]);
             }
-            return res.status(200).json({ success: true });
-        }
-
-        if (type === 'finish_match') {
-            await db.execute('UPDATE tournaments SET status = "completed" WHERE id = ?', [match_id]);
             return res.status(200).json({ success: true });
         }
 
