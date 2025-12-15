@@ -15,6 +15,7 @@
 </head>
 <body class="bg-gray-900 text-white pb-20 select-none">
 
+    <!-- Header -->
     <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50">
         <a href="/home" class="mr-4 text-gray-400 active:scale-90 transition"><i class="fa-solid fa-arrow-left text-xl"></i></a>
         <div class="text-xl font-bold truncate w-40" id="cat_title">Matches</div>
@@ -23,7 +24,10 @@
         </div>
     </header>
 
-    <div id="match_list" class="p-4 space-y-4"><div class="text-center mt-10 text-gray-500 animate-pulse">Loading Matches...</div></div>
+    <!-- Matches List -->
+    <div id="match_list" class="p-4 space-y-4">
+        <div class="text-center mt-10 text-gray-500 animate-pulse">Loading Matches...</div>
+    </div>
 
     <!-- DYNAMIC JOIN MODAL -->
     <div id="joinModal" class="fixed inset-0 bg-black/95 hidden items-center justify-center z-[60] p-4 backdrop-blur-sm">
@@ -39,14 +43,46 @@
         </div>
     </div>
 
-    <!-- ROOM & RESULT MODALS (Hidden for brevity, include your existing ones) -->
-    <!-- ... (Room and Result Modals are same as before) ... -->
-    <!-- For full code, assume previous modals are here -->
-    
-    <div id="roomDetailsModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[60] p-4 backdrop-blur-sm"><div class="bg-gray-800 p-6 rounded-2xl w-full max-w-sm border border-gray-700 text-center shadow-2xl relative"><button onclick="closeModal('roomDetailsModal')" class="absolute top-4 right-4 text-gray-500 hover:text-white"><i class="fa-solid fa-times text-lg"></i></button><h3 class="text-lg font-bold mb-4 text-white">Room Details</h3><div class="bg-gray-900 p-4 rounded-xl text-left border border-gray-700 mb-4 space-y-3"><div><p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Room ID</p><div class="flex justify-between items-center bg-black/30 p-2 rounded border border-gray-700"><span id="view_room_id" class="text-blue-400 font-bold text-lg select-all">---</span><i class="fa-regular fa-copy text-gray-500 cursor-pointer hover:text-white" onclick="copyText('view_room_id')"></i></div></div><div><p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Password</p><div class="flex justify-between items-center bg-black/30 p-2 rounded border border-gray-700"><span id="view_room_pass" class="text-red-400 font-bold text-lg select-all">---</span><i class="fa-regular fa-copy text-gray-500 cursor-pointer hover:text-white" onclick="copyText('view_room_pass')"></i></div></div></div><p class="text-xs text-gray-500">Details will appear 15 mins before match.</p></div></div>
-    <div id="resultViewModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[70] p-4 backdrop-blur-sm"><div class="bg-gray-800 p-5 rounded-2xl w-full max-w-sm border border-gray-600 h-[70vh] flex flex-col shadow-2xl relative"><div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3"><h3 class="font-bold text-lg text-yellow-400 flex items-center gap-2"><i class="fa-solid fa-trophy"></i> Match Results</h3><button onclick="document.getElementById('resultViewModal').style.display='none'" class="text-gray-400 hover:text-white"><i class="fa-solid fa-times text-lg"></i></button></div><div class="grid grid-cols-4 text-[10px] text-gray-400 font-bold uppercase mb-2 px-2"><span>Rank</span><span>Player</span><span class="text-center">Kills</span><span class="text-right">Prize</span></div><div id="result_list" class="overflow-y-auto flex-1 space-y-2 pr-1 custom-scroll">Loading...</div></div></div>
-    <div id="playersListModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[70] p-4 backdrop-blur-sm"><div class="bg-gray-800 p-5 rounded-2xl w-full max-w-sm border border-gray-600 h-[60vh] flex flex-col shadow-2xl relative"><div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3"><h3 class="font-bold text-lg text-blue-400 flex items-center gap-2"><i class="fa-solid fa-users"></i> Participants</h3><button onclick="document.getElementById('playersListModal').style.display='none'" class="text-gray-400 hover:text-white"><i class="fa-solid fa-times text-lg"></i></button></div><div id="joined_players_list" class="overflow-y-auto flex-1 space-y-2 pr-1 custom-scroll text-sm">Loading...</div></div></div>
+    <!-- ROOM DETAILS MODAL -->
+    <div id="roomDetailsModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[60] p-4 backdrop-blur-sm">
+        <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-sm border border-gray-700 text-center shadow-2xl relative">
+            <button onclick="closeModal('roomDetailsModal')" class="absolute top-4 right-4 text-gray-500 hover:text-white"><i class="fa-solid fa-times text-lg"></i></button>
+            <div class="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-key text-3xl text-yellow-400"></i></div>
+            <h3 class="text-lg font-bold mb-4 text-white">Room Details</h3>
+            <div class="bg-gray-900 p-4 rounded-xl text-left border border-gray-700 mb-4 space-y-3">
+                <div><p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Room ID</p><div class="flex justify-between items-center bg-black/30 p-2 rounded border border-gray-700"><span id="view_room_id" class="text-blue-400 font-bold text-lg select-all">---</span><i class="fa-regular fa-copy text-gray-500 cursor-pointer hover:text-white" onclick="copyText('view_room_id')"></i></div></div>
+                <div><p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Password</p><div class="flex justify-between items-center bg-black/30 p-2 rounded border border-gray-700"><span id="view_room_pass" class="text-red-400 font-bold text-lg select-all">---</span><i class="fa-regular fa-copy text-gray-500 cursor-pointer hover:text-white" onclick="copyText('view_room_pass')"></i></div></div>
+            </div>
+            <p class="text-xs text-gray-500">Details will appear 15 mins before match.</p>
+        </div>
+    </div>
 
+    <!-- RESULT MODAL -->
+    <div id="resultViewModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[70] p-4 backdrop-blur-sm">
+        <div class="bg-gray-800 p-5 rounded-2xl w-full max-w-sm border border-gray-600 h-[70vh] flex flex-col shadow-2xl relative">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
+                <h3 class="font-bold text-lg text-yellow-400 flex items-center gap-2"><i class="fa-solid fa-trophy"></i> Match Results</h3>
+                <button onclick="document.getElementById('resultViewModal').style.display='none'" class="text-gray-400 hover:text-white"><i class="fa-solid fa-times text-lg"></i></button>
+            </div>
+            <div class="grid grid-cols-4 text-[10px] text-gray-400 font-bold uppercase mb-2 px-2">
+                <span>Rank</span><span>Player</span><span class="text-center">Kills</span><span class="text-right">Prize</span>
+            </div>
+            <div id="result_list" class="overflow-y-auto flex-1 space-y-2 pr-1 custom-scroll">Loading...</div>
+        </div>
+    </div>
+
+    <!-- PLAYERS LIST MODAL -->
+    <div id="playersListModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[70] p-4 backdrop-blur-sm">
+        <div class="bg-gray-800 p-5 rounded-2xl w-full max-w-sm border border-gray-600 h-[60vh] flex flex-col shadow-2xl relative">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
+                <h3 class="font-bold text-lg text-blue-400 flex items-center gap-2"><i class="fa-solid fa-users"></i> Participants</h3>
+                <button onclick="document.getElementById('playersListModal').style.display='none'" class="text-gray-400 hover:text-white"><i class="fa-solid fa-times text-lg"></i></button>
+            </div>
+            <div id="joined_players_list" class="overflow-y-auto flex-1 space-y-2 pr-1 custom-scroll text-sm">Loading...</div>
+        </div>
+    </div>
+
+    <!-- SCRIPT -->
     <script>
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user) window.location.href = '/';
@@ -66,18 +102,24 @@
 
         async function loadMatches() {
             if(!catId) return;
+
             try {
-                const res = await fetch('/api/tournament', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'get_matches', category_id: catId, user_id: user.id }) });
+                const res = await fetch('/api/tournament', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'get_matches', category_id: catId, user_id: user.id })
+                });
                 const matches = await res.json();
                 const container = document.getElementById('match_list');
 
                 if(matches.length > 0) {
-                    container.innerHTML = matches.map(m => {
+                    container.innerHTML = matches.map((m, i) => {
                         const filled = (m.joined_count / m.total_spots) * 100;
                         const isJoined = m.is_joined > 0;
                         const isFull = m.joined_count >= m.total_spots;
                         const status = m.status || 'upcoming';
-                        
+                        const serial = i + 1; // Serial Number
+
                         let statusText="UPCOMING", statusColor="text-yellow-500", btn;
                         if(status==='completed') { statusText="COMPLETED"; statusColor="text-red-500"; btn=`<button onclick="viewResult(${m.id})" class="w-full py-3 rounded-xl font-bold bg-purple-600 hover:bg-purple-700 transition shadow-lg active:scale-95 flex items-center justify-center gap-2"><i class="fa-solid fa-trophy"></i> View Results</button>`; }
                         else if(isJoined) { statusText="JOINED"; statusColor="text-green-400"; btn=`<button onclick="viewRoom(${m.id})" class="w-full py-3 rounded-xl font-bold bg-green-600 hover:bg-green-700 transition shadow-lg active:scale-95 flex items-center justify-center gap-2"><i class="fa-solid fa-key"></i> Room ID & Pass</button>`; } 
@@ -90,7 +132,7 @@
                         return `
                         <div class="bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 shadow-lg relative group">
                             <div class="bg-gray-750 p-3 border-b border-gray-700 flex justify-between items-center bg-gradient-to-r from-gray-800 to-gray-700">
-                                <h3 class="font-bold text-white text-md truncate pr-2">#${m.id} ${m.title}</h3>
+                                <h3 class="font-bold text-white text-md truncate pr-2">#${serial} ${m.title}</h3>
                                 <div class="text-[10px] font-bold text-gray-300 bg-gray-900 px-2 py-1 rounded border border-gray-600 flex gap-1"><i class="fa-regular fa-clock text-blue-400"></i> ${new Date(m.schedule_time).toLocaleDateString()}</div>
                             </div>
                             <div class="p-4">
@@ -116,7 +158,7 @@
             } catch(e) { console.error(e); }
         }
 
-        // --- 🔥 DYNAMIC JOIN FORM (FIXED) ---
+        // --- DYNAMIC JOIN FORM ---
         function openJoin(id, type) {
             document.getElementById('join_match_id').value = id;
             document.getElementById('modal_match_type').innerText = type;
@@ -124,8 +166,6 @@
             container.innerHTML = '';
 
             let playerInputs = '';
-            
-            // ✅ Fix: Clash Squad = 4 players
             let count = 1;
             if (type === 'Duo') count = 2;
             else if (type === 'Squad' || type === 'Clash Squad') count = 4;
@@ -162,18 +202,18 @@
         async function confirmJoin() {
             const id = document.getElementById('join_match_id').value;
             const type = document.getElementById('modal_match_type').innerText;
-            const teamName = (type !== 'Solo' && type !== 'Clash Squad') ? document.getElementById('team_name')?.value : (type === 'Clash Squad' ? document.getElementById('team_name')?.value : '');
-            // Simple check: if not solo, team name needed
-            if(type !== 'Solo' && !document.getElementById('team_name').value) return alert("Please enter Team Name!");
+            const teamName = (type !== 'Solo') ? document.getElementById('team_name')?.value : '';
+            
+            if(type !== 'Solo' && !teamName) return alert("Please enter Team Name!");
 
             const players = [];
-            const count = type === 'Solo' ? 1 : (type === 'Duo' ? 2 : 4);
+            const count = (type === 'Duo') ? 2 : ((type === 'Squad' || type === 'Clash Squad') ? 4 : 1);
 
             for(let i=1; i<=count; i++) {
                 const name = document.getElementById(`name_${i}`).value;
                 const uid = document.getElementById(`uid_${i}`).value;
                 const lvl = document.getElementById(`lvl_${i}`).value;
-                if(!name || !uid || !lvl) return alert(`Fill details for Player ${i}`);
+                if(!name || !uid || !lvl) return alert(`Please fill details for Player ${i}`);
                 if(parseInt(lvl) < 40) return alert(`Player ${i} must be Level 40+`);
                 players.push({ name, uid, level: lvl });
             }
@@ -185,7 +225,7 @@
                 const res = await fetch('/api/tournament', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ type: 'join_match', user_id: user.id, tournament_id: id, team_name: document.getElementById('team_name')?.value || '', players: players })
+                    body: JSON.stringify({ type: 'join_match', user_id: user.id, tournament_id: id, team_name: teamName, players: players })
                 });
                 const data = await res.json();
                 if(data.success) { alert("✅ Joined Successfully!"); closeModal('joinModal'); loadMatches(); fetchBalance(); } 
@@ -194,9 +234,55 @@
             btn.innerText = "Confirm Join"; btn.disabled = false;
         }
 
-        async function viewRoom(id) { try { const res = await fetch('/api/tournament', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'get_room', user_id: user.id, tournament_id: id }) }); const data = await res.json(); if(data.room_id) { document.getElementById('view_room_id').innerText = data.room_id; document.getElementById('view_room_pass').innerText = data.room_pass; document.getElementById('roomDetailsModal').style.display = 'flex'; } else { alert("⏳ Room details soon."); } } catch(e) {} }
-        async function viewResult(id) { document.getElementById('resultViewModal').style.display = 'flex'; const container = document.getElementById('result_list'); container.innerHTML = '<div class="text-center mt-10">Loading...</div>'; try { const res = await fetch('/api/tournament', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'get_result_board', tournament_id: id }) }); const data = await res.json(); if(data.length > 0) { container.innerHTML = data.map((r, i) => `<div class="bg-gray-900 p-3 rounded-lg border border-gray-700 grid grid-cols-4 items-center mb-2"><div class="font-bold ${r.rank === 1 ? 'text-yellow-400' : 'text-white'}">#${r.rank || '-'}</div><div class="text-xs text-gray-300 break-words leading-tight pr-1">${r.in_game_name}</div><div class="text-center text-xs font-bold text-blue-400">${r.kills}</div><div class="text-right text-xs font-bold text-green-400">${parseFloat(r.prize_won) > 0 ? '৳'+r.prize_won : '-'}</div></div>`).join(''); } else { container.innerHTML = '<div class="text-center text-gray-500 mt-10">Results pending.</div>'; } } catch(e) { container.innerHTML = 'Error'; } }
-        async function viewPlayers(id) { document.getElementById('playersListModal').style.display = 'flex'; const container = document.getElementById('joined_players_list'); container.innerHTML = '<div class="text-center mt-10">Fetching...</div>'; try { const res = await fetch('/api/tournament', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'get_result_board', tournament_id: id }) }); const data = await res.json(); if(data.length > 0) { container.innerHTML = data.map((p, i) => `<div class="bg-gray-900 p-3 rounded-lg border border-gray-700 mb-2 hover:bg-gray-800 transition shadow-sm"><div class="flex justify-between items-center mb-1"><div class="flex items-center gap-3"><div class="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center text-[10px] font-bold text-gray-500">#${i+1}</div><span class="font-bold text-white text-sm tracking-wide break-words">${p.in_game_name}</span></div><span class="text-[10px] bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30">Lvl: ${p.game_level}</span></div><div class="flex justify-between items-center border-t border-gray-700 pt-2 mt-2"><span class="text-[10px] text-gray-400 font-mono select-all tracking-wider">UID: ${p.in_game_uid}</span><button onclick="copyText('${p.in_game_uid}')" class="text-gray-500 hover:text-white transition"><i class="fa-regular fa-copy"></i></button></div></div>`).join(''); } else { container.innerHTML = '<div class="text-center text-gray-500 mt-10">No players.</div>'; } } catch(e) { container.innerHTML = 'Error'; } }
+        async function viewRoom(id) {
+            try { const res = await fetch('/api/tournament', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'get_room', user_id: user.id, tournament_id: id }) }); const data = await res.json(); if(data.room_id) { document.getElementById('view_room_id').innerText = data.room_id; document.getElementById('view_room_pass').innerText = data.room_pass; document.getElementById('roomDetailsModal').style.display = 'flex'; } else { alert("⏳ Room details soon."); } } catch(e) {}
+        }
+
+        async function viewResult(id) {
+            document.getElementById('resultViewModal').style.display = 'flex';
+            const container = document.getElementById('result_list');
+            container.innerHTML = '<div class="text-center mt-10"><i class="fa-solid fa-spinner fa-spin text-blue-500 text-2xl"></i><p class="text-gray-500 text-xs mt-2">Loading Results...</p></div>';
+            try {
+                const res = await fetch('/api/tournament', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'get_result_board', tournament_id: id }) });
+                const data = await res.json();
+                if(data.length > 0) {
+                    container.innerHTML = data.map((r, i) => `
+                        <div class="bg-gray-900 p-3 rounded-lg border border-gray-700 grid grid-cols-4 items-center mb-2">
+                            <div class="font-bold ${r.rank === 1 ? 'text-yellow-400' : 'text-white'}">#${r.rank || '-'}</div>
+                            <div class="text-xs text-gray-300 break-words leading-tight pr-1">${r.in_game_name}</div>
+                            <div class="text-center text-xs font-bold text-blue-400">${r.kills}</div>
+                            <div class="text-right text-xs font-bold text-green-400">${parseFloat(r.prize_won) > 0 ? '৳'+r.prize_won : '-'}</div>
+                        </div>`).join('');
+                } else { container.innerHTML = '<div class="text-center text-gray-500 mt-10"><i class="fa-solid fa-clipboard-list text-3xl mb-2 opacity-50"></i><p>Results not published yet.</p></div>'; }
+            } catch(e) { container.innerHTML = '<p class="text-center text-red-500 mt-5">Network Error</p>'; }
+        }
+
+        async function viewPlayers(id) {
+            document.getElementById('playersListModal').style.display = 'flex';
+            const container = document.getElementById('joined_players_list');
+            container.innerHTML = '<div class="text-center mt-10"><i class="fa-solid fa-spinner fa-spin text-blue-500 text-2xl"></i><p class="text-gray-500 text-xs mt-2">Fetching players...</p></div>';
+            try {
+                const res = await fetch('/api/tournament', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'get_result_board', tournament_id: id }) });
+                const data = await res.json();
+                if(data.length > 0) {
+                    container.innerHTML = data.map((p, i) => `
+                        <div class="bg-gray-900 p-3 rounded-lg border border-gray-700 mb-2 hover:bg-gray-800 transition shadow-sm">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center text-[10px] font-bold text-gray-500">#${i+1}</div>
+                                    <span class="font-bold text-white text-sm tracking-wide break-words">${p.in_game_name}</span>
+                                </div>
+                                <span class="text-[10px] bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30">Lvl: ${p.game_level}</span>
+                            </div>
+                            <div class="flex justify-between items-center border-t border-gray-700 pt-2 mt-2">
+                                <span class="text-[10px] text-gray-400 font-mono select-all tracking-wider">UID: ${p.in_game_uid}</span>
+                                <button onclick="copyText('${p.in_game_uid}')" class="text-gray-500 hover:text-white transition"><i class="fa-regular fa-copy"></i></button>
+                            </div>
+                        </div>`).join('');
+                } else { container.innerHTML = '<div class="text-center text-gray-500 mt-10"><i class="fa-solid fa-users-slash text-3xl mb-2"></i><p>No players joined yet.</p></div>'; }
+            } catch(e) { container.innerHTML = '<p class="text-center text-red-500 mt-5">Error fetching data</p>'; }
+        }
+
         function copyText(text) { navigator.clipboard.writeText(text).then(() => alert("Copied!")); }
         loadMatches();
     </script>
