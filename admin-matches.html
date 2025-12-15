@@ -161,58 +161,76 @@
 
         // --- PLAYERS MODAL LOGIC (Expandable Team) ---
         async function openPlayersModal(id) {
-            document.getElementById('playersModal').style.display = 'flex';
-            const container = document.getElementById('joined_player_list');
-            container.innerHTML = '<p class="text-center text-gray-500 mt-20 animate-pulse">Loading players...</p>';
+document.getElementById('playersModal').style.display = 'flex';
+const container = document.getElementById('joined_player_list');
+container.innerHTML = '<p class="text-center text-gray-500 mt-20 animate-pulse">Loading players...</p>';
 
-            try {
-                const res = await fetch('/api/admin', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ type: 'get_match_players_details', match_id: id })
-                });
-                const players = await res.json();
+try {
+const res = await fetch('/api/admin', {
+method: 'POST',
+headers: {'Content-Type': 'application/json'},
+body: JSON.stringify({ type: 'get_match_players_details', match_id: id })
+});
+const players = await res.json();
 
-                if(players.length > 0) {
-                    container.innerHTML = players.map(p => {
-                        let members = [];
-                        try { if(p.team_members) members = JSON.parse(p.team_members); } catch(e) {}
+if(players.length > 0) {
+container.innerHTML = players.map(p => {
+let members = [];
+try {
+if(p.team_members) members = JSON.parse(p.team_members);
+} catch(e) {}
 
-                        let membersHTML = '';
-                        if(members.length > 0) {
-                            membersHTML = members.map((m, i) => `
-                                <div class="flex justify-between items-center text-xs text-gray-400 bg-gray-800 p-2 rounded mt-1 ml-4 border-l-2 border-blue-500">
-                                    <div><p class="font-bold text-white">Player ${i+2}: ${m.name}</p><p>UID: ${m.uid} | Lvl: ${m.level}</p></div>
-                                </div>
-                            `).join('');
-                        } else { membersHTML = '<p class="text-xs text-gray-500 ml-4 mt-1">Solo Player</p>'; }
+let membersHTML = '';
+if(members.length > 0) {
+membersHTML = members.map((m, i) => `
+<div class="flex justify-between items-center text-xs text-gray-400 bg-gray-800 p-2 rounded mt-1 ml-4 border-l-2 border-blue-500">
+<div>
+<p class="font-bold text-white">Player ${i+2}: ${m.name}</p>
+<p>UID: ${m.uid} | <span class="text-blue-300">Lvl: ${m.level}</span></p>
+</div>
+</div>
+`).join('');
+} else {
+membersHTML = '<p class="text-xs text-gray-500 ml-4 mt-1">Solo Player</p>';
+}
 
-                        return `
-                        <div class="bg-gray-900 rounded-lg border border-gray-700 mb-2 overflow-hidden transition">
-                            <div onclick="toggleTeamDetails(${p.id})" class="p-3 flex justify-between items-center cursor-pointer hover:bg-gray-800">
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-yellow-400 font-bold text-sm">${p.team_name || 'Solo'}</span>
-                                        <span class="text-[10px] bg-blue-900 text-blue-300 px-1.5 rounded">Leader</span>
-                                    </div>
-                                    <p class="text-xs text-white mt-1 font-bold">${p.in_game_name} <span class="text-gray-500 font-normal">(UID: ${p.in_game_uid})</span></p>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="event.stopPropagation(); kickPlayer(${p.id}, ${p.tournament_id})" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded text-xs font-bold transition border border-red-600/30">Kick</button>
-                                    <i class="fa-solid fa-chevron-down text-gray-500 transition transform" id="icon_${p.id}"></i>
-                                </div>
-                            </div>
-                            <div id="details_${p.id}" class="hidden p-3 bg-gray-800/50 border-t border-gray-700">
-                                <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Team Members</p>
-                                ${membersHTML}
-                                <div class="mt-2 pt-2 border-t border-gray-700 text-[10px] text-gray-500"><p>Registered by: <span class="text-blue-400">${p.username}</span></p><p>Date: ${new Date(p.joined_at).toLocaleString()}</p></div>
-                            </div>
-                        </div>`;
-                    }).join('');
-                } else { container.innerHTML = '<div class="text-center text-gray-500 mt-20"><p>No players joined.</p></div>'; }
-            } catch(e) { console.error(e); }
-        }
+return `
+<div class="bg-gray-900 rounded-lg border border-gray-700 mb-2 overflow-hidden transition">
 
+<!-- Header -->
+<div onclick="toggleTeamDetails(${p.id})" class="p-3 flex justify-between items-center cursor-pointer hover:bg-gray-800">
+<div>
+<div class="flex items-center gap-2">
+<span class="text-yellow-400 font-bold text-sm">${p.team_name || 'Solo'}</span>
+<span class="text-[10px] bg-blue-900 text-blue-300 px-1.5 rounded">Leader</span>
+<!-- ✅ Leader Level Added Here -->
+<span class="text-[10px] bg-gray-700 text-gray-300 px-1.5 rounded border border-gray-600">Lvl: ${p.game_level}</span>
+</div>
+<p class="text-xs text-white mt-1 font-bold">${p.in_game_name} <span class="text-gray-500 font-normal">(UID: ${p.in_game_uid})</span></p>
+</div>
+<div class="flex items-center gap-2">
+<button onclick="event.stopPropagation(); kickPlayer(${p.id}, ${p.tournament_id})" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded text-xs font-bold transition border border-red-600/30">Kick</button>
+<i class="fa-solid fa-chevron-down text-gray-500 transition transform" id="icon_${p.id}"></i>
+</div>
+</div>
+
+<!-- Body -->
+<div id="details_${p.id}" class="hidden p-3 bg-gray-800/50 border-t border-gray-700">
+<p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Team Members</p>
+${membersHTML}
+<div class="mt-2 pt-2 border-t border-gray-700 text-[10px] text-gray-500">
+<p>Registered by: <span class="text-blue-400">${p.username}</span></p>
+<p>Date: ${new Date(p.joined_at).toLocaleString()}</p>
+</div>
+</div>
+
+</div>`;
+}).join('');
+} else {
+container.innerHTML = '<div class="text-center text-gray-500 mt-20"><i class="fa-solid fa-users-slash text-3xl mb-2"></i><p>No players joined.</p></div>';
+}
+} catch(e) { console.error(e); }
+}
         function toggleTeamDetails(id) {
             const details = document.getElementById(`details_${id}`);
             const icon = document.getElementById(`icon_${id}`);
