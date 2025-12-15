@@ -108,22 +108,17 @@ module.exports = async (req, res) => {
             } else { return res.status(403).json({ error: 'Not joined' }); }
         }
 
-        // ============================
-        // 4. GET PLAYERS LIST
+         // ============================
+        // 4. GET PLAYERS (Updated with Team Info)
         // ============================
         if (type === 'get_result_board') {
-            // এখানে team_name সহ সিলেক্ট করা হলো
             const [results] = await db.execute(`
-                SELECT in_game_name, in_game_uid, game_level, team_name, kills, \`rank\`, prize_won 
+                SELECT in_game_name, in_game_uid, game_level, team_name, team_members, kills, \`rank\`, prize_won 
                 FROM participants 
                 WHERE tournament_id = ? 
                 ORDER BY \`rank\` ASC, kills DESC
             `, [req.body.tournament_id]);
+            
             return res.status(200).json(results);
         }
-
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: error.message });
-    }
 };
