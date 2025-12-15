@@ -27,7 +27,7 @@
         
         <input type="hidden" id="edit_match_id">
 
-        <input type="text" id="m_title" placeholder="Match Title (e.g. Solo TDM Match #1)" class="w-full bg-gray-900 p-2.5 rounded-lg mb-3 text-white border border-gray-600 outline-none focus:border-blue-500 transition">
+        <input type="text" id="m_title" placeholder="Match Title (e.g. CS Rank 4v4)" class="w-full bg-gray-900 p-2.5 rounded-lg mb-3 text-white border border-gray-600 outline-none focus:border-blue-500 transition">
         
         <div class="grid grid-cols-2 gap-3 mb-3">
             <div>
@@ -48,13 +48,16 @@
             <div>
                 <label class="text-[10px] text-gray-400 uppercase font-bold ml-1">Type</label>
                 <select id="m_type" class="w-full bg-gray-900 p-2.5 rounded-lg text-white border border-gray-600 outline-none focus:border-blue-500">
-                    <option>Solo</option><option>Duo</option><option>Squad</option>
+                    <option value="Solo">Solo</option>
+                    <option value="Duo">Duo</option>
+                    <option value="Squad">Squad</option>
+                    <option value="Clash Squad">Clash Squad (CS)</option> <!-- ADDED CS -->
                 </select>
             </div>
         </div>
 
         <label class="text-[10px] text-gray-400 uppercase font-bold ml-1">Total Spots</label>
-        <input type="number" id="m_spots" placeholder="e.g. 48" class="w-full bg-gray-900 p-2.5 rounded-lg mb-4 text-white border border-gray-600 outline-none focus:border-blue-500">
+        <input type="number" id="m_spots" placeholder="e.g. 48 (For CS: 8)" class="w-full bg-gray-900 p-2.5 rounded-lg mb-4 text-white border border-gray-600 outline-none focus:border-blue-500">
 
         <button onclick="handleMatchSubmit()" id="create_btn" class="w-full bg-blue-600 py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-600/20 active:scale-95">Create Match</button>
     </div>
@@ -64,7 +67,9 @@
         <p class="text-center text-gray-500 animate-pulse mt-10">Loading Matches...</p>
     </div>
 
-    <!-- Modals (Room, Players, Result) -->
+    <!-- Modals (Room, Result, Players) - SAME AS BEFORE -->
+    <!-- (I'm keeping only script logic for brevity as HTML is same) -->
+    
     <!-- ROOM MODAL -->
     <div id="roomModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
         <div class="bg-gray-800 p-6 rounded-xl w-full max-w-sm border border-gray-600 shadow-2xl">
@@ -106,20 +111,15 @@
         </div>
     </div>
 
-    <!-- JavaScript Logic -->
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const catId = urlParams.get('cat_id');
         const catName = urlParams.get('name');
         if(catName) document.getElementById('page_title').innerText = catName + " Matches";
 
-        // LOAD MATCHES
         async function loadMatches() {
             try {
-                const res = await fetch('/api/admin', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ type: 'get_admin_matches', category_id: catId })
-                });
+                const res = await fetch('/api/admin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'get_admin_matches', category_id: catId }) });
                 const matches = await res.json();
                 const container = document.getElementById('match_list');
 
@@ -131,16 +131,9 @@
                         return `
                         <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg relative group transition hover:border-gray-600">
                             <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 class="font-bold text-lg text-white">#${m.id} ${m.title}</h3>
-                                    <p class="text-xs text-gray-400">${new Date(m.schedule_time).toLocaleString()}</p>
-                                </div>
-                                <div class="flex gap-2">
-                                    <button onclick='editMatch(${JSON.stringify(m)})' class="text-yellow-500 bg-yellow-500/10 p-2 rounded-lg hover:bg-yellow-500 hover:text-black transition"><i class="fa-solid fa-pen"></i></button>
-                                    <button onclick="deleteMatch(${m.id})" class="text-red-500 bg-red-500/10 p-2 rounded-lg hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
-                                </div>
+                                <div><h3 class="font-bold text-lg text-white">#${m.id} ${m.title}</h3><p class="text-xs text-gray-400">${new Date(m.schedule_time).toLocaleString()}</p></div>
+                                <div class="flex gap-2"><button onclick='editMatch(${JSON.stringify(m)})' class="text-yellow-500 bg-yellow-500/10 p-2 rounded-lg hover:bg-yellow-500 hover:text-black transition"><i class="fa-solid fa-pen"></i></button><button onclick="deleteMatch(${m.id})" class="text-red-500 bg-red-500/10 p-2 rounded-lg hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash"></i></button></div>
                             </div>
-                            
                             <div class="mb-4">
                                 <label class="text-[10px] text-gray-400 uppercase font-bold ml-1">Current Status</label>
                                 <select onchange="updateStatus(${m.id}, this.value)" class="w-full bg-gray-900 text-white p-2 rounded-lg border border-gray-600 text-sm font-bold outline-none focus:border-blue-500 ${getStatusColor(m.status)}">
@@ -150,25 +143,22 @@
                                     <option value="completed" ${m.status === 'completed' ? 'selected' : ''}>✅ Completed</option>
                                 </select>
                             </div>
-
                             <div class="flex gap-4 text-sm mb-4 font-bold border-t border-gray-700 pt-3">
                                 <span class="text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded">Fee: ${feeDisplay}</span>
                                 <span class="text-green-400 bg-green-400/10 px-2 py-1 rounded">Win: ${prizeDisplay}</span>
                                 <span class="text-blue-400 ml-auto bg-blue-400/10 px-2 py-1 rounded uppercase">${m.match_type}</span>
                             </div>
-
                             <div class="flex gap-2">
                                 <button onclick="openPlayersModal(${m.id})" class="flex-1 bg-gray-700 text-white border border-gray-600 py-2 rounded-lg text-sm font-bold hover:bg-gray-600 transition">Players</button>
                                 <button onclick="openRoomModal(${m.id}, '${m.room_id || ''}', '${m.room_pass || ''}')" class="flex-1 bg-blue-600/20 text-blue-400 border border-blue-500/50 py-2 rounded-lg text-sm font-bold hover:bg-blue-600 hover:text-white transition">Room ID</button>
                                 <button onclick="openResultModal(${m.id})" class="flex-1 bg-purple-600/20 text-purple-400 border border-purple-500/50 py-2 rounded-lg text-sm font-bold hover:bg-purple-600 hover:text-white transition">Result</button>
                             </div>
-                        </div>
-                    `}).join('');
+                        </div>`
+                    }).join('');
                 } else { container.innerHTML = '<p class="text-center text-gray-500 mt-10">No matches created yet.</p>'; }
             } catch(e) { console.error(e); }
         }
 
-        // --- HANDLE CREATE / UPDATE ---
         async function handleMatchSubmit() {
             const id = document.getElementById('edit_match_id').value;
             const title = document.getElementById('m_title').value;
@@ -179,26 +169,17 @@
             const spots = document.getElementById('m_spots').value;
 
             if(!title || fee === '' || prize === '' || !time) return alert("Fill all fields!");
-
-            const btn = document.getElementById('create_btn');
-            btn.innerText = "Processing..."; btn.disabled = true;
-
+            document.getElementById('create_btn').innerText = "Processing...";
             const apiType = id ? 'edit_match' : 'add_match';
 
             await fetch('/api/admin', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    type: apiType, match_id: id, category_id: catId, 
-                    title, entry_fee: fee, winning_prize: prize, 
-                    schedule_time: time, match_type: type, total_spots: spots 
-                })
+                body: JSON.stringify({ type: apiType, match_id: id, category_id: catId, title, entry_fee: fee, winning_prize: prize, schedule_time: time, match_type: type, total_spots: spots })
             });
-            
             alert(id ? "Match Updated!" : "Match Created!");
             resetForm(); loadMatches();
         }
 
-        // --- EDIT MODE ---
         function editMatch(m) {
             document.getElementById('edit_match_id').value = m.id;
             document.getElementById('m_title').value = m.title;
@@ -208,7 +189,6 @@
             document.getElementById('m_time').value = dt.toISOString().slice(0, 16);
             document.getElementById('m_type').value = m.match_type;
             document.getElementById('m_spots').value = m.total_spots;
-
             document.getElementById('form_title').innerText = "Edit Match";
             document.getElementById('create_btn').innerText = "Update Match";
             document.getElementById('create_btn').classList.replace("bg-blue-600", "bg-green-600");
@@ -225,29 +205,18 @@
             document.getElementById('m_spots').value = '';
             document.getElementById('form_title').innerText = "Create New Match";
             document.getElementById('create_btn').innerText = "Create Match";
-            document.getElementById('create_btn').disabled = false;
             document.getElementById('create_btn').classList.replace("bg-green-600", "bg-blue-600");
             document.getElementById('cancel_btn').classList.add('hidden');
         }
 
-        // --- OTHER FUNCTIONS ---
         async function updateStatus(id, newStatus) { await fetch('/api/admin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'update_match_status', match_id: id, new_status: newStatus }) }); }
         function getStatusColor(status) { if(status === 'live') return 'text-red-500 border-red-500'; if(status === 'completed') return 'text-green-500 border-green-500'; if(status === 'open') return 'text-green-400 border-green-400'; return 'text-yellow-500 border-yellow-500'; }
-        
-        async function deleteMatch(id) {
-            if(!confirm("⚠️ Are you sure? All joined players data will be removed!")) return;
-            const res = await fetch('/api/admin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'delete_match', id: id }) });
-            const data = await res.json();
-            if(data.success) { alert("✅ Match Deleted!"); loadMatches(); } else { alert("Error: " + data.error); }
-        }
-
+        async function deleteMatch(id) { if(confirm("Delete match?")) { await fetch('/api/admin', { method: 'POST', body: JSON.stringify({ type: 'delete_match', id }) }); loadMatches(); } }
         function openRoomModal(id, rId, rPass) { document.getElementById('room_match_id').value = id; document.getElementById('room_id').value = rId; document.getElementById('room_pass').value = rPass; document.getElementById('roomModal').style.display = 'flex'; }
         async function saveRoom() { const id = document.getElementById('room_match_id').value; const roomId = document.getElementById('room_id').value; const roomPass = document.getElementById('room_pass').value; await fetch('/api/admin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'update_room', id, room_id: roomId, room_pass: roomPass }) }); alert("Room Updated!"); document.getElementById('roomModal').style.display = 'none'; loadMatches(); }
-        
         async function openPlayersModal(id) { document.getElementById('playersModal').style.display = 'flex'; const container = document.getElementById('joined_player_list'); container.innerHTML = '<p class="text-center text-gray-500 mt-20 animate-pulse">Loading players...</p>'; const res = await fetch('/api/admin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'get_match_players_details', match_id: id }) }); const players = await res.json(); if(players.length > 0) { container.innerHTML = players.map(p => `<div class="bg-gray-900 p-3 rounded-lg border border-gray-700 flex justify-between items-center mb-2"><div><div class="flex items-center gap-2"><p class="font-bold text-sm text-white">${p.in_game_name}</p><span class="text-[10px] bg-blue-900 text-blue-300 px-1.5 rounded">Lvl: ${p.game_level}</span></div><p class="text-[10px] text-gray-400 font-mono">UID: ${p.in_game_uid}</p><p class="text-[10px] text-gray-500">User: ${p.username}</p></div><button onclick="kickPlayer(${p.id}, ${p.tournament_id})" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded text-xs font-bold transition border border-red-600/30">Kick</button></div>`).join(''); } else { container.innerHTML = '<div class="text-center text-gray-500 mt-20"><i class="fa-solid fa-users-slash text-3xl mb-2"></i><p>No players joined.</p></div>'; } }
         async function kickPlayer(pId, matchId) { if(!confirm("Kick player? Money will be refunded.")) return; const res = await fetch('/api/admin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'kick_participant', participant_id: pId, match_id: matchId }) }); const data = await res.json(); if(data.success) { alert("Player Kicked!"); openPlayersModal(matchId); } else { alert("Error: " + data.error); } }
-        
-        async function openResultModal(id) { document.getElementById('resultModal').style.display = 'flex'; const container = document.getElementById('player_list'); container.innerHTML = '<p class="text-center text-gray-500 mt-20 animate-pulse">Loading participants...</p>'; const res = await fetch('/api/admin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'get_match_participants', match_id: id }) }); const players = await res.json(); if(players.length > 0) { container.innerHTML = players.map(p => `<div class="bg-gray-900 p-3 rounded-lg border border-gray-700 grid grid-cols-12 gap-2 items-center hover:border-gray-500 transition"><div class="col-span-4"><p class="font-bold text-sm text-white truncate">${p.in_game_name}</p><p class="text-[10px] text-gray-400 font-mono">ID: ${p.in_game_uid}</p></div><input type="number" id="rank_${p.id}" placeholder="#" value="${p.rank || ''}" class="col-span-2 bg-gray-800 p-2 rounded text-white text-xs border border-gray-600 text-center"><input type="number" id="kills_${p.id}" placeholder="0" value="${p.kills || ''}" class="col-span-2 bg-gray-800 p-2 rounded text-white text-xs border border-gray-600 text-center"><input type="number" id="prize_${p.id}" placeholder="৳" value="${p.prize_won || ''}" class="col-span-2 bg-gray-800 p-2 rounded text-green-400 font-bold text-xs border border-gray-600 text-center"><button onclick="savePlayerResult(${p.id}, ${p.user_id}, this)" class="col-span-2 bg-green-600 hover:bg-green-700 text-white py-2 rounded text-xs font-bold transition shadow-md">Save</button></div>`).join(''); } else { container.innerHTML = '<div class="text-center text-gray-500 mt-20"><p>No players joined.</p></div>'; } }
+        async function openResultModal(id) { document.getElementById('resultModal').style.display = 'flex'; const container = document.getElementById('player_list'); container.innerHTML = '<p class="text-center text-gray-500 mt-20 animate-pulse">Loading...</p>'; const res = await fetch('/api/admin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'get_match_participants', match_id: id }) }); const players = await res.json(); if(players.length > 0) { container.innerHTML = players.map(p => `<div class="bg-gray-900 p-3 rounded-lg border border-gray-700 grid grid-cols-12 gap-2 items-center hover:border-gray-500 transition"><div class="col-span-4"><p class="font-bold text-sm text-white truncate">${p.in_game_name}</p><p class="text-[10px] text-gray-400 font-mono">ID: ${p.in_game_uid}</p></div><input type="number" id="rank_${p.id}" placeholder="#" value="${p.rank || ''}" class="col-span-2 bg-gray-800 p-2 rounded text-white text-xs border border-gray-600 text-center"><input type="number" id="kills_${p.id}" placeholder="0" value="${p.kills || ''}" class="col-span-2 bg-gray-800 p-2 rounded text-white text-xs border border-gray-600 text-center"><input type="number" id="prize_${p.id}" placeholder="৳" value="${p.prize_won || ''}" class="col-span-2 bg-gray-800 p-2 rounded text-green-400 font-bold text-xs border border-gray-600 text-center"><button onclick="savePlayerResult(${p.id}, ${p.user_id}, this)" class="col-span-2 bg-green-600 hover:bg-green-700 text-white py-2 rounded text-xs font-bold transition shadow-md">Save</button></div>`).join(''); } else { container.innerHTML = '<div class="text-center text-gray-500 mt-20"><p>No players joined.</p></div>'; } }
         async function savePlayerResult(pId, uId, btn) { const rank = document.getElementById(`rank_${pId}`).value || 0; const kills = document.getElementById(`kills_${pId}`).value || 0; const prize = document.getElementById(`prize_${pId}`).value || 0; if(parseFloat(prize) > 0 && !confirm(`Send ৳${prize} to user?`)) return; btn.innerText = "..."; const res = await fetch('/api/admin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'save_result', participant_id: pId, user_id: uId, kills, rank, prize }) }); const data = await res.json(); if(data.success) { btn.innerText = "Saved"; btn.classList.replace("bg-green-600", "bg-gray-600"); setTimeout(() => { btn.innerText = "Save"; btn.classList.replace("bg-gray-600", "bg-green-600"); }, 2000); } else { alert("Error"); } }
 
         loadMatches();
