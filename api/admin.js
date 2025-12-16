@@ -49,6 +49,20 @@ module.exports = async (req, res) => {
 
             return res.status(200).json({ success: true, message: 'Settings Updated!' });
         }
+        // =======================
+        // 🔔 NOTIFICATION MANAGEMENT
+        // =======================
+        if (type === 'add_notification') {
+            const { title, message } = req.body;
+            await db.execute('INSERT INTO notifications (title, message) VALUES (?, ?)', [title, message]);
+            return res.status(200).json({ success: true, message: 'Notification Sent!' });
+        }
+        
+        if (type === 'delete_notification') {
+            const { id } = req.body;
+            await db.execute('DELETE FROM notifications WHERE id = ?', [id]);
+            return res.status(200).json({ success: true });
+        }
 
         // ==========================================
         // 📊 DASHBOARD STATS
