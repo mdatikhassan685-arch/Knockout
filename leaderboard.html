@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .glass { background: rgba(31, 41, 55, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .rank-1 { background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%); color: black; border: none; }
+        .rank-2 { background: linear-gradient(135deg, #E0E0E0 0%, #BDBDBD 100%); color: black; border: none; }
+        .rank-3 { background: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%); color: black; border: none; }
+    </style>
+</head>
+<body class="bg-[#0f172a] text-white pb-24 select-none">
+
+    <!-- Header -->
+    <header class="p-4 bg-gray-900/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-800 flex items-center">
+        <a href="/home" class="mr-4 text-gray-400 active:scale-90 transition"><i class="fa-solid fa-arrow-left text-xl"></i></a>
+        <div class="text-xl font-black uppercase tracking-widest italic text-yellow-500">Top Players</div>
+    </header>
+
+    <!-- Top 3 Podium (Visual) -->
+    <div class="pt-8 pb-4 flex justify-center items-end gap-3 px-4">
+        <!-- Rank 2 -->
+        <div class="flex flex-col items-center">
+            <div class="w-16 h-16 rounded-full border-2 border-gray-400 bg-gray-800 flex items-center justify-center relative overflow-hidden shadow-lg">
+                <i class="fa-solid fa-user text-3xl text-gray-500"></i>
+                <div class="absolute bottom-0 w-full bg-gray-400 text-[10px] text-black text-center font-bold">#2</div>
+            </div>
+            <p class="text-xs font-bold mt-2 truncate w-20 text-center" id="name_2">...</p>
+            <p class="text-[10px] text-green-400 font-bold" id="won_2">...</p>
+        </div>
+
+        <!-- Rank 1 (Big) -->
+        <div class="flex flex-col items-center -mt-6">
+            <i class="fa-solid fa-crown text-2xl text-yellow-400 mb-1 animate-bounce"></i>
+            <div class="w-20 h-20 rounded-full border-4 border-yellow-400 bg-gray-800 flex items-center justify-center relative overflow-hidden shadow-xl shadow-yellow-500/20">
+                <i class="fa-solid fa-user text-4xl text-gray-500"></i>
+                <div class="absolute bottom-0 w-full bg-yellow-400 text-[10px] text-black text-center font-bold">#1</div>
+            </div>
+            <p class="text-sm font-bold mt-2 text-yellow-400 truncate w-24 text-center" id="name_1">Loading...</p>
+            <p class="text-xs text-green-400 font-bold" id="won_1">...</p>
+        </div>
+
+        <!-- Rank 3 -->
+        <div class="flex flex-col items-center">
+            <div class="w-16 h-16 rounded-full border-2 border-orange-700 bg-gray-800 flex items-center justify-center relative overflow-hidden shadow-lg">
+                <i class="fa-solid fa-user text-3xl text-gray-500"></i>
+                <div class="absolute bottom-0 w-full bg-[#CD7F32] text-[10px] text-black text-center font-bold">#3</div>
+            </div>
+            <p class="text-xs font-bold mt-2 truncate w-20 text-center" id="name_3">...</p>
+            <p class="text-[10px] text-green-400 font-bold" id="won_3">...</p>
+        </div>
+    </div>
+
+    <!-- List (Rank 4-10) -->
+    <div class="px-4 mt-4 space-y-3" id="leaderboard_list">
+        <!-- Skeleton Loaders -->
+        <div class="h-14 bg-gray-800 rounded-xl animate-pulse"></div>
+        <div class="h-14 bg-gray-800 rounded-xl animate-pulse"></div>
+        <div class="h-14 bg-gray-800 rounded-xl animate-pulse"></div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <nav class="fixed bottom-0 w-full bg-[#0f172a]/95 backdrop-blur-lg border-t border-gray-800 flex justify-around py-3 z-50 pb-6">
+        <a href="/home" class="text-gray-500 hover:text-blue-500 flex flex-col items-center group transition"><i class="fa-solid fa-house text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Home</span></a>
+        <a href="#" class="text-blue-500 flex flex-col items-center group transition"><i class="fa-solid fa-fire text-xl mb-1 group-active:scale-90"></i><span class="text-[10px] font-bold">Top</span></a>
+        <a href="/wallet" class="text-gray-500 hover:text-blue-500 flex flex-col items-center group transition"><i class="fa-solid fa-wallet text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Wallet</span></a>
+        <a href="/profile" class="text-gray-500 hover:text-blue-500 flex flex-col items-center group transition"><i class="fa-solid fa-user text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Profile</span></a>
+    </nav>
+
+    <script>
+        async function loadLeaderboard() {
+            try {
+                const res = await fetch('/api/user', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'leaderboard' })
+                });
+                const players = await res.json();
+                
+                // Top 3 Set (Podium)
+                if(players[0]) { document.getElementById('name_1').innerText = players[0].username; document.getElementById('won_1').innerText = '৳'+parseFloat(players[0].total_won).toFixed(0); }
+                if(players[1]) { document.getElementById('name_2').innerText = players[1].username; document.getElementById('won_2').innerText = '৳'+parseFloat(players[1].total_won).toFixed(0); }
+                if(players[2]) { document.getElementById('name_3').innerText = players[2].username; document.getElementById('won_3').innerText = '৳'+parseFloat(players[2].total_won).toFixed(0); }
+
+                // Rest List (4-10)
+                const list = document.getElementById('leaderboard_list');
+                const restPlayers = players.slice(3);
+
+                if(restPlayers.length > 0) {
+                    list.innerHTML = restPlayers.map((p, i) => `
+                        <div class="glass p-3 rounded-xl flex items-center justify-between transition active:scale-95">
+                            <div class="flex items-center gap-4">
+                                <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center font-bold text-gray-400 text-sm">#${i + 4}</div>
+                                <div>
+                                    <p class="font-bold text-sm text-white">${p.username}</p>
+                                    <p class="text-[10px] text-gray-400">${p.total_kills} Kills</p>
+                                </div>
+                            </div>
+                            <p class="text-sm font-bold text-green-400">৳${parseFloat(p.total_won).toFixed(0)}</p>
+                        </div>
+                    `).join('');
+                } else {
+                    list.innerHTML = `<p class="text-center text-gray-500 text-xs mt-4">No more players.</p>`;
+                }
+
+            } catch(e) { console.error(e); }
+        }
+        loadLeaderboard();
+    </script>
+</body>
+          </html>
