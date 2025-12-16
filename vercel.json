@@ -27,6 +27,7 @@
     { "source": "/leaderboard", "destination": "/leaderboard.html" },
     { "source": "/support", "destination": "/support.html" },
     { "source": "/menu", "destination": "/menu.html" },
+    { "source": "/notifications", "destination": "/notifications.html" },
     
     { "source": "/", "destination": "/index.html" },
     { "source": "/(.*)", "destination": "/$1" }
