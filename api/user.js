@@ -16,6 +16,16 @@ module.exports = async (req, res) => {
     const { type, user_id, amount, method, account_number, sender_number, trx_id } = req.body;
 
     try {
+        if (type === 'get_app_settings') {
+            const [rows] = await db.execute('SELECT * FROM settings');
+            
+            const settings = {};
+            rows.forEach(row => {
+                settings[row.setting_key] = row.setting_value;
+            });
+
+            return res.status(200).json(settings);
+        }
         // =======================
         // 🏠 HOME PAGE DATA
         // =======================
