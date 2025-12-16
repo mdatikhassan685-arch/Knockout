@@ -116,22 +116,33 @@ module.exports = async (req, res) => {
             });
         }
                 // =======================
-        // 🏆 LEADERBOARD DATA
+                // =======================
+        // 🏆 LEADERBOARD DATA (UPDATED)
         // =======================
         if (type === 'leaderboard') {
-            // যাদের Winnings সবচেয়ে বেশি তাদের টপ ১০ লিস্ট
-            const [topPlayers] = await db.execute(`
-                SELECT u.username, 
-                COALESCE(SUM(p.prize_won), 0) as total_won,
-                COALESCE(SUM(p.kills), 0) as total_kills
-                FROM users u
-                LEFT JOIN participants p ON u.id = p.user_id
-                GROUP BY u.id
-                ORDER BY total_won DESC
-                LIMIT 10
+            // 1. Top Earnings (Prize Money)
+            const [earners] = await db.execute(`
+                SELECT u.username, COALESCE(SUM(p.prize_won), 0) as value 
+                FROM users u LEFT JOIN participants p ON u.id = p.user_id 
+                GROUP BY u.id ORDER BY value DESC LIMIT 10
+            `);
+
+            // 2. Top Kills
+            const [killers] = await db.execute(`
+                SELECT u.username, COALESCE(SUM(p.kills), 0) as value 
+                FROM users u LEFT JOIN participants p ON u.id = p.user_id 
+                GROUP BY u.id ORDER BY value DESC LIMIT 10
+            `);
+
+            // 3. Top Deposit
+            const [depositors] = await db.execute(`
+                SELECT u.username, COALESCE(SUM(d.amount), 0) as value 
+                FROM users u LEFT JOIN deposits d ON u.id = d.user_id 
+                WHERE d.status = 'approved' OR d.status IS NULL
+                GROUP BY u.id ORDER BY value DESC LIMIT 10
             `);
             
-            return res.status(200).json(topPlayers);
+            return res.status(200).json({ earners, killers, depositors });
         }
 
         // =======================
