@@ -11,41 +11,50 @@
         .glass { background: rgba(31, 41, 55, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .animate-pop { animation: popIn 0.3s ease-out; }
         @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
     </style>
 </head>
 <body class="bg-[#0f172a] text-white pb-24 select-none">
 
+    <!-- Header -->
     <header class="p-4 bg-gray-900/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-800 flex items-center">
         <a href="/home" class="mr-4 text-gray-400 active:scale-90 transition"><i class="fa-solid fa-arrow-left text-xl"></i></a>
         <div class="text-xl font-black uppercase tracking-widest italic text-blue-500">More</div>
     </header>
 
+    <!-- Menu Items -->
     <div class="p-4 space-y-3">
         
+        <!-- Share -->
         <div id="btn_share" class="glass p-4 rounded-xl flex items-center gap-4 active:scale-95 transition hover:bg-gray-800 cursor-pointer">
             <div class="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center text-purple-400"><i class="fa-solid fa-share-nodes"></i></div>
             <div class="flex-1"><h3 class="font-bold text-sm">Share App</h3><p class="text-[10px] text-gray-400">Invite friends & earn</p></div>
             <i class="fa-solid fa-chevron-right text-gray-500 text-xs"></i>
         </div>
 
+        <!-- YouTube -->
         <a href="#" id="link_youtube" target="_blank" class="glass p-4 rounded-xl flex items-center gap-4 active:scale-95 transition hover:bg-gray-800">
             <div class="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center text-red-400"><i class="fa-brands fa-youtube"></i></div>
             <div class="flex-1"><h3 class="font-bold text-sm">How to Play?</h3><p class="text-[10px] text-gray-400">Watch tutorials</p></div>
             <i class="fa-solid fa-chevron-right text-gray-500 text-xs"></i>
         </a>
 
+        <!-- Telegram -->
         <a href="#" id="link_telegram" target="_blank" class="glass p-4 rounded-xl flex items-center gap-4 active:scale-95 transition hover:bg-gray-800">
             <div class="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400"><i class="fa-brands fa-telegram"></i></div>
             <div class="flex-1"><h3 class="font-bold text-sm">Join Telegram</h3><p class="text-[10px] text-gray-400">Official Channel</p></div>
             <i class="fa-solid fa-chevron-right text-gray-500 text-xs"></i>
         </a>
 
+        <!-- Privacy Policy -->
         <div onclick="showInfo('Privacy Policy', settings.privacy_policy)" class="glass p-4 rounded-xl flex items-center gap-4 active:scale-95 transition hover:bg-gray-800 cursor-pointer">
             <div class="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400"><i class="fa-solid fa-shield-halved"></i></div>
             <div class="flex-1"><h3 class="font-bold text-sm">Privacy Policy</h3><p class="text-[10px] text-gray-400">Read our terms</p></div>
             <i class="fa-solid fa-chevron-right text-gray-500 text-xs"></i>
         </div>
 
+        <!-- About Us -->
         <div onclick="showInfo('About Us', settings.about_us)" class="glass p-4 rounded-xl flex items-center gap-4 active:scale-95 transition hover:bg-gray-800 cursor-pointer">
             <div class="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center text-green-400"><i class="fa-solid fa-circle-info"></i></div>
             <div class="flex-1"><h3 class="font-bold text-sm">About Us</h3><p class="text-[10px] text-gray-400" id="app_version">Version 1.0.0</p></div>
@@ -63,12 +72,29 @@
         </div>
     </div>
 
+    <!-- Bottom Navigation (FIXED) -->
     <nav class="fixed bottom-0 w-full bg-[#0f172a]/95 backdrop-blur-lg border-t border-gray-800 flex justify-around py-3 z-50 pb-6">
-        <a href="/home" class="text-gray-500 hover:text-white flex flex-col items-center group transition"><i class="fa-solid fa-house text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Home</span></a>
-        <a href="/support" class="text-gray-500 hover:text-white flex flex-col items-center group transition"><i class="fa-solid fa-headset text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Support</span></a>
-        <a href="/wallet" class="text-gray-500 hover:text-white flex flex-col items-center group transition"><i class="fa-solid fa-wallet text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Wallet</span></a>
-        <a href="/profile" class="text-gray-500 hover:text-white flex flex-col items-center group transition"><i class="fa-solid fa-user text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Profile</span></a>
-        <a href="/menu" class="text-blue-500 flex flex-col items-center group transition"><i class="fa-solid fa-bars text-xl mb-1 group-active:scale-90"></i><span class="text-[10px] font-bold">Menu</span></a>
+        <a href="/home" class="text-gray-500 hover:text-white flex flex-col items-center group transition">
+            <i class="fa-solid fa-house text-xl mb-1 group-active:scale-90"></i>
+            <span class="text-[10px]">Home</span>
+        </a>
+        <a href="/support" class="text-gray-500 hover:text-white flex flex-col items-center group transition">
+            <i class="fa-solid fa-headset text-xl mb-1 group-active:scale-90"></i>
+            <span class="text-[10px]">Support</span>
+        </a>
+        <a href="/wallet" class="text-gray-500 hover:text-white flex flex-col items-center group transition">
+            <i class="fa-solid fa-wallet text-xl mb-1 group-active:scale-90"></i>
+            <span class="text-[10px]">Wallet</span>
+        </a>
+        <a href="/profile" class="text-gray-500 hover:text-white flex flex-col items-center group transition">
+            <i class="fa-solid fa-user text-xl mb-1 group-active:scale-90"></i>
+            <span class="text-[10px]">Profile</span>
+        </a>
+        <!-- Active Menu Tab -->
+        <a href="/menu" class="text-blue-500 flex flex-col items-center group transition">
+            <i class="fa-solid fa-bars text-xl mb-1 group-active:scale-90"></i>
+            <span class="text-[10px] font-bold">Menu</span>
+        </a>
     </nav>
 
     <script>
