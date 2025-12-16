@@ -9,10 +9,8 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
         .glass { background: rgba(31, 41, 55, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        
-        /* Animation */
-        @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
         .animate-zoom { animation: zoomIn 0.2s ease-out forwards; }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body class="bg-gray-900 text-white pb-24 select-none">
@@ -23,7 +21,6 @@
             <a href="/home" class="bg-black/30 p-2 rounded-full backdrop-blur-sm"><i class="fa-solid fa-arrow-left"></i></a>
         </div>
         
-        <!-- Avatar & Name -->
         <div class="absolute -bottom-12 left-1/2 transform -translate-x-1/2 flex flex-col items-center">
             <div class="w-24 h-24 rounded-full border-4 border-gray-900 bg-gray-800 flex items-center justify-center shadow-xl overflow-hidden relative">
                 <i class="fa-solid fa-user text-4xl text-gray-500" id="avatar_icon"></i>
@@ -53,39 +50,26 @@
         </div>
     </div>
 
-    <!-- Menu List -->
+    <!-- Info & History -->
     <div class="px-4 space-y-3 mt-2">
-        
-        <!-- Info Cards -->
         <div class="glass p-4 rounded-xl flex items-center justify-between shadow-md">
             <div class="flex items-center gap-4">
                 <div class="w-10 h-10 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-400"><i class="fa-solid fa-phone"></i></div>
-                <div>
-                    <p class="text-[10px] text-gray-400 uppercase font-bold">Phone Number</p>
-                    <p class="font-bold text-sm tracking-wide" id="phone">...</p>
-                </div>
+                <div><p class="text-[10px] text-gray-400 uppercase font-bold">Phone Number</p><p class="font-bold text-sm tracking-wide" id="phone">...</p></div>
             </div>
         </div>
-
         <div class="glass p-4 rounded-xl flex items-center justify-between shadow-md">
             <div class="flex items-center gap-4">
                 <div class="w-10 h-10 bg-purple-500/10 rounded-full flex items-center justify-center text-purple-400"><i class="fa-solid fa-calendar-days"></i></div>
-                <div>
-                    <p class="text-[10px] text-gray-400 uppercase font-bold">Joined Since</p>
-                    <p class="font-bold text-sm tracking-wide" id="joined_date">...</p>
-                </div>
+                <div><p class="text-[10px] text-gray-400 uppercase font-bold">Joined Since</p><p class="font-bold text-sm tracking-wide" id="joined_date">...</p></div>
             </div>
         </div>
 
-        <!-- Recent Matches -->
         <div class="mt-6">
             <h3 class="text-sm font-bold text-gray-300 mb-3 ml-1 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-blue-500"></i> Recent History</h3>
-            <div id="recent_list" class="space-y-2">
-                <div class="h-16 bg-gray-800 rounded-xl animate-pulse"></div>
-            </div>
+            <div id="recent_list" class="space-y-2"><div class="h-16 bg-gray-800 rounded-xl animate-pulse"></div></div>
         </div>
 
-        <!-- Logout Button -->
         <button onclick="openLogoutModal()" class="w-full bg-red-600/10 border border-red-600/30 text-red-500 py-3.5 rounded-xl font-bold mt-8 hover:bg-red-600 hover:text-white transition shadow-lg active:scale-95 flex items-center justify-center gap-2">
             <i class="fa-solid fa-right-from-bracket"></i> Logout
         </button>
@@ -93,15 +77,12 @@
         <p class="text-center text-[10px] text-gray-600 mt-6 pb-4">Version 1.0.0 | Knockout Esports</p>
     </div>
 
-    <!-- LOGOUT MODAL (CUSTOM) -->
+    <!-- LOGOUT MODAL -->
     <div id="logoutModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[100] p-4 backdrop-blur-sm">
         <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-xs border border-gray-700 text-center shadow-2xl relative animate-zoom">
-            <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fa-solid fa-power-off text-3xl text-red-500"></i>
-            </div>
+            <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-power-off text-3xl text-red-500"></i></div>
             <h3 class="text-xl font-bold mb-2 text-white">Logout?</h3>
             <p class="text-sm text-gray-400 mb-6">Are you sure you want to sign out?</p>
-            
             <div class="flex gap-3">
                 <button onclick="closeLogoutModal()" class="flex-1 bg-gray-700 py-2.5 rounded-xl font-bold text-gray-300 hover:bg-gray-600 transition">Cancel</button>
                 <button onclick="performLogout()" class="flex-1 bg-red-600 py-2.5 rounded-xl font-bold text-white hover:bg-red-700 transition shadow-lg">Logout</button>
@@ -109,12 +90,29 @@
         </div>
     </div>
 
-    <!-- Bottom Nav -->
+    <!-- ✅ BOTTOM NAVIGATION (UPDATED & MATCHING HOME) -->
     <nav class="fixed bottom-0 w-full bg-[#0f172a]/95 backdrop-blur-lg border-t border-gray-800 flex justify-around py-3 z-50 pb-6">
-        <a href="/home" class="text-gray-500 hover:text-blue-500 flex flex-col items-center group transition"><i class="fa-solid fa-house text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Home</span></a>
-        <a href="#" class="text-gray-500 hover:text-blue-500 flex flex-col items-center group transition"><i class="fa-solid fa-fire text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Live</span></a>
-        <a href="/wallet" class="text-gray-500 hover:text-blue-500 flex flex-col items-center group transition"><i class="fa-solid fa-wallet text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Wallet</span></a>
-        <a href="/profile" class="text-blue-500 flex flex-col items-center group transition"><i class="fa-solid fa-user text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Profile</span></a>
+        <a href="/home" class="text-gray-500 hover:text-white flex flex-col items-center group transition">
+            <i class="fa-solid fa-house text-xl mb-1 group-active:scale-90"></i>
+            <span class="text-[10px]">Home</span>
+        </a>
+        <a href="/support" class="text-gray-500 hover:text-white flex flex-col items-center group transition">
+            <i class="fa-solid fa-headset text-xl mb-1 group-active:scale-90"></i>
+            <span class="text-[10px]">Support</span>
+        </a>
+        <a href="/wallet" class="text-gray-500 hover:text-white flex flex-col items-center group transition">
+            <i class="fa-solid fa-wallet text-xl mb-1 group-active:scale-90"></i>
+            <span class="text-[10px]">Wallet</span>
+        </a>
+        <!-- Active Profile Tab -->
+        <a href="/profile" class="text-blue-500 flex flex-col items-center group transition">
+            <i class="fa-solid fa-user text-xl mb-1 group-active:scale-90"></i>
+            <span class="text-[10px] font-bold">Profile</span>
+        </a>
+        <a href="/menu" class="text-gray-500 hover:text-white flex flex-col items-center group transition">
+            <i class="fa-solid fa-bars text-xl mb-1 group-active:scale-90"></i>
+            <span class="text-[10px]">Menu</span>
+        </a>
     </nav>
 
     <script>
@@ -130,53 +128,31 @@
                 });
                 const data = await res.json();
                 
-                // Info
                 document.getElementById('username').innerText = data.user.username;
                 document.getElementById('email').innerText = data.user.email;
                 document.getElementById('phone').innerText = data.user.phone || 'Not Set';
                 document.getElementById('balance').innerText = parseFloat(data.user.wallet_balance).toFixed(2);
                 document.getElementById('joined_date').innerText = new Date(data.user.created_at).toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
 
-                // Stats
                 document.getElementById('total_matches').innerText = data.stats.total_matches || 0;
                 document.getElementById('total_kills').innerText = data.stats.total_kills || 0;
                 document.getElementById('total_won').innerText = parseFloat(data.stats.total_winnings || 0).toFixed(0);
 
-                // History
                 const list = document.getElementById('recent_list');
                 if(data.recent_matches.length > 0) {
                     list.innerHTML = data.recent_matches.map(m => `
                         <div class="glass p-3 rounded-xl flex justify-between items-center border-l-4 border-blue-500">
-                            <div>
-                                <p class="font-bold text-xs text-white truncate w-40">${m.title}</p>
-                                <p class="text-[10px] text-gray-400 mt-0.5">${new Date(m.schedule_time).toLocaleDateString()}</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-sm font-black text-green-400">+৳${m.prize_won}</p>
-                                <p class="text-[10px] text-gray-500 font-bold bg-gray-800 px-1.5 py-0.5 rounded inline-block mt-0.5">${m.kills} Kills</p>
-                            </div>
-                        </div>
-                    `).join('');
-                } else {
-                    list.innerHTML = `
-                        <div class="text-center text-gray-500 py-6 bg-gray-800/30 rounded-xl border border-dashed border-gray-700">
-                            <i class="fa-solid fa-gamepad text-2xl mb-2 opacity-50"></i>
-                            <p class="text-xs">No matches played yet.</p>
-                        </div>`;
-                }
+                            <div><p class="font-bold text-xs text-white truncate w-40">${m.title}</p><p class="text-[10px] text-gray-400 mt-0.5">${new Date(m.schedule_time).toLocaleDateString()}</p></div>
+                            <div class="text-right"><p class="text-sm font-black text-green-400">+৳${m.prize_won}</p><p class="text-[10px] text-gray-500 font-bold bg-gray-800 px-1.5 py-0.5 rounded inline-block mt-0.5">${m.kills} Kills</p></div>
+                        </div>`).join('');
+                } else { list.innerHTML = '<p class="text-center text-xs text-gray-500 py-2">No matches played yet.</p>'; }
 
             } catch (e) { console.error(e); }
         }
 
-        // --- LOGOUT LOGIC ---
         function openLogoutModal() { document.getElementById('logoutModal').style.display = 'flex'; }
         function closeLogoutModal() { document.getElementById('logoutModal').style.display = 'none'; }
-        
-        function performLogout() {
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = '/';
-        }
+        function performLogout() { localStorage.clear(); sessionStorage.clear(); window.location.href = '/'; }
 
         loadProfile();
     </script>
