@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .expand-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .expanded { max-height: 500px; }
+        @keyframes slideOut { to { transform: translateX(100%); opacity: 0; } }
+        .removing { animation: slideOut 0.3s forwards; }
+    </style>
+</head>
+<body class="bg-[#0f172a] text-white pb-24 select-none">
+
+    <header class="p-4 bg-gray-900/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-800 flex items-center">
+        <a href="/home" class="mr-4 text-gray-400 active:scale-90 transition"><i class="fa-solid fa-arrow-left text-xl"></i></a>
+        <div class="text-xl font-bold">Notifications</div>
+    </header>
+
+    <div class="p-4 space-y-3" id="noti_list">
+        <p class="text-center text-gray-500 mt-10 animate-pulse">Loading...</p>
+    </div>
+
+    <!-- Bottom Nav -->
+    <nav class="fixed bottom-0 w-full bg-[#0f172a]/95 backdrop-blur-lg border-t border-gray-800 flex justify-around py-3 z-50 pb-6">
+        <a href="/home" class="text-blue-500 flex flex-col items-center group transition"><i class="fa-solid fa-house text-xl mb-1 group-active:scale-90"></i><span class="text-[10px] font-bold">Home</span></a>
+        <a href="/support" class="text-gray-500 hover:text-white flex flex-col items-center group transition"><i class="fa-solid fa-headset text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Support</span></a>
+        <a href="/wallet" class="text-gray-500 hover:text-white flex flex-col items-center group transition"><i class="fa-solid fa-wallet text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Wallet</span></a>
+        <a href="/profile" class="text-gray-500 hover:text-white flex flex-col items-center group transition"><i class="fa-solid fa-user text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Profile</span></a>
+        <a href="/menu" class="text-gray-500 hover:text-white flex flex-col items-center group transition"><i class="fa-solid fa-bars text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Menu</span></a>
+    </nav>
+
+    <script>
+        async function loadNotis() {
+            try {
+                const res = await fetch('/api/user', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'get_notifications' })
+                });
+                const data = await res.json();
+                const list = document.getElementById('noti_list');
+
+                // Filter Deleted Notis
+                const deletedIds = JSON.parse(localStorage.getItem('deleted_notis') || '[]');
+                const visibleNotis = data.filter(n => !deletedIds.includes(n.id));
+
+                if(visibleNotis.length > 0) {
+                    list.innerHTML = visibleNotis.map((n, i) => `
+                        <div id="noti_${n.id}" class="bg-gray-800 p-4 rounded-xl border border-gray-700 relative group transition hover:border-gray-600 shadow-md">
+                            
+                            <!-- Header (Click to Expand) -->
+                            <div onclick="toggleNoti(${n.id})" class="cursor-pointer pr-8">
+                                <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-bell text-yellow-500 text-xs"></i> ${n.title}
+                                </h3>
+                                <p class="text-[10px] text-gray-400 mt-1 ml-5">${new Date(n.created_at).toLocaleString()}</p>
+                            </div>
+
+                            <!-- Delete Button -->
+                            <button onclick="deleteNoti(${n.id})" class="absolute top-4 right-4 text-gray-500 hover:text-red-500 p-1 transition active:scale-90">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </button>
+
+                            <!-- Body -->
+                            <div id="content_${n.id}" class="expand-content text-xs text-gray-300 mt-0 leading-relaxed border-t border-gray-700/50 ml-5">
+                                <div class="pt-3">
+                                    ${n.message.replace(/\n/g, '<br>')}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    list.innerHTML = '<div class="text-center text-gray-500 mt-20"><i class="fa-regular fa-bell-slash text-4xl mb-2 opacity-50"></i><p>No new notifications.</p></div>';
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function toggleNoti(id) {
+            const content = document.getElementById(`content_${id}`);
+            if(content.classList.contains('expanded')) content.classList.remove('expanded');
+            else content.classList.add('expanded');
+        }
+
+        function deleteNoti(id) {
+            if(!confirm("Remove this notification?")) return;
+
+            let deletedIds = JSON.parse(localStorage.getItem('deleted_notis') || '[]');
+            deletedIds.push(id);
+            localStorage.setItem('deleted_notis', JSON.stringify(deletedIds));
+
+            const element = document.getElementById(`noti_${id}`);
+            element.classList.add('removing');
+            setTimeout(() => {
+                element.remove();
+                if(document.getElementById('noti_list').children.length === 0) {
+                    document.getElementById('noti_list').innerHTML = '<div class="text-center text-gray-500 mt-20"><i class="fa-regular fa-bell-slash text-4xl mb-2 opacity-50"></i><p>No new notifications.</p></div>';
+                }
+            }, 300);
+        }
+
+        loadNotis();
+    </script>
+</body>
+</html>
