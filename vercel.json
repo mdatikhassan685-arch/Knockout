@@ -25,6 +25,7 @@
     { "source": "/matches", "destination": "/matches.html" },
     { "source": "/profile", "destination": "/profile.html" },
     { "source": "/leaderboard", "destination": "/leaderboard.html" },
+    { "source": "/support", "destination": "/support.html" },
     
     { "source": "/", "destination": "/index.html" },
     { "source": "/(.*)", "destination": "/$1" }
