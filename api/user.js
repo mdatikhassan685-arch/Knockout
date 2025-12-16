@@ -115,6 +115,24 @@ module.exports = async (req, res) => {
                 recent_matches: recent
             });
         }
+                // =======================
+        // 🏆 LEADERBOARD DATA
+        // =======================
+        if (type === 'leaderboard') {
+            // যাদের Winnings সবচেয়ে বেশি তাদের টপ ১০ লিস্ট
+            const [topPlayers] = await db.execute(`
+                SELECT u.username, 
+                COALESCE(SUM(p.prize_won), 0) as total_won,
+                COALESCE(SUM(p.kills), 0) as total_kills
+                FROM users u
+                LEFT JOIN participants p ON u.id = p.user_id
+                GROUP BY u.id
+                ORDER BY total_won DESC
+                LIMIT 10
+            `);
+            
+            return res.status(200).json(topPlayers);
+        }
 
         // =======================
         // 📤 WITHDRAW REQUEST
