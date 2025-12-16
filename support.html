@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .glass { background: rgba(31, 41, 55, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="bg-[#0f172a] text-white pb-24 select-none">
+
+    <!-- Header -->
+    <header class="p-4 bg-gray-900/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-800 flex items-center">
+        <a href="/home" class="mr-4 text-gray-400 active:scale-90 transition"><i class="fa-solid fa-arrow-left text-xl"></i></a>
+        <div class="text-xl font-black uppercase tracking-widest italic text-blue-500">Support</div>
+    </header>
+
+    <!-- Support Content -->
+    <div class="p-6 text-center">
+        <div class="w-24 h-24 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+            <i class="fa-solid fa-headset text-5xl text-blue-500"></i>
+        </div>
+        <h2 class="text-2xl font-bold mb-2">How can we help?</h2>
+        <p class="text-gray-400 text-sm mb-8">Contact us for any issues regarding deposit, withdraw, or match joining.</p>
+
+        <div class="space-y-4">
+            <!-- WhatsApp -->
+            <a href="https://wa.me/+8801322415927" target="_blank" class="glass p-4 rounded-xl flex items-center gap-4 transition active:scale-95 hover:bg-gray-800">
+                <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white text-2xl"><i class="fa-brands fa-whatsapp"></i></div>
+                <div class="text-left">
+                    <h3 class="font-bold text-lg">WhatsApp</h3>
+                    <p class="text-xs text-gray-400">Chat with Admin (10am - 10pm)</p>
+                </div>
+                <i class="fa-solid fa-chevron-right ml-auto text-gray-500"></i>
+            </a>
+
+            <!-- Telegram -->
+            <a href="https://t.me/your_channel" target="_blank" class="glass p-4 rounded-xl flex items-center gap-4 transition active:scale-95 hover:bg-gray-800">
+                <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl"><i class="fa-brands fa-telegram"></i></div>
+                <div class="text-left">
+                    <h3 class="font-bold text-lg">Telegram</h3>
+                    <p class="text-xs text-gray-400">Join Official Channel</p>
+                </div>
+                <i class="fa-solid fa-chevron-right ml-auto text-gray-500"></i>
+            </a>
+
+            <!-- YouTube -->
+            <a href="https://youtube.com/@your_channel" target="_blank" class="glass p-4 rounded-xl flex items-center gap-4 transition active:scale-95 hover:bg-gray-800">
+                <div class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-white text-2xl"><i class="fa-brands fa-youtube"></i></div>
+                <div class="text-left">
+                    <h3 class="font-bold text-lg">YouTube</h3>
+                    <p class="text-xs text-gray-400">Watch Tutorials & Gameplay</p>
+                </div>
+                <i class="fa-solid fa-chevron-right ml-auto text-gray-500"></i>
+            </a>
+
+            <!-- Email -->
+            <a href="mailto:support@knockout.com" class="glass p-4 rounded-xl flex items-center gap-4 transition active:scale-95 hover:bg-gray-800">
+                <div class="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center text-white text-2xl"><i class="fa-solid fa-envelope"></i></div>
+                <div class="text-left">
+                    <h3 class="font-bold text-lg">Email Us</h3>
+                    <p class="text-xs text-gray-400">support@knockout.com</p>
+                </div>
+                <i class="fa-solid fa-chevron-right ml-auto text-gray-500"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <nav class="fixed bottom-0 w-full bg-[#0f172a]/95 backdrop-blur-lg border-t border-gray-800 flex justify-around py-3 z-50 pb-6">
+        <a href="/home" class="text-gray-500 hover:text-blue-500 flex flex-col items-center group transition"><i class="fa-solid fa-house text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Home</span></a>
+        
+        <!-- Active Support Tab -->
+        <a href="/support" class="text-blue-500 flex flex-col items-center group transition"><i class="fa-solid fa-headset text-xl mb-1 group-active:scale-90"></i><span class="text-[10px] font-bold">Support</span></a>
+        
+        <a href="/wallet" class="text-gray-500 hover:text-blue-500 flex flex-col items-center group transition"><i class="fa-solid fa-wallet text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Wallet</span></a>
+        <a href="/profile" class="text-gray-500 hover:text-blue-500 flex flex-col items-center group transition"><i class="fa-solid fa-user text-xl mb-1 group-active:scale-90"></i><span class="text-[10px]">Profile</span></a>
+    </nav>
+
+</body>
+</html>
