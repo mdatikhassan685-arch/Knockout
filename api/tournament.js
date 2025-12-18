@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
 
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    const { type, category_id, user_id, tournament_id, team_name, players, game_name, game_uid, game_level } = req.body;
+    const { type, category_id, user_id, tournament_id, team_name, players } = req.body;
 
     try {
         // ============================
@@ -30,54 +30,106 @@ module.exports = async (req, res) => {
         }
 
         // ============================
-        // 2. JOIN MATCH (Universal)
+        // 2. JOIN MATCH (SECURE TRANSACTION)
         // ============================
         if (type === 'join_match') {
-            // ১. প্লেয়ার ডাটা চেক
-            if (!players || !Array.isArray(players) || players.length === 0) {
-                return res.status(400).json({ error: 'Player details required!' });
+            const connection = await db.getConnection(); // Get a dedicated connection
+
+            try {
+                // ১. ইনপুট ভ্যালিডেশন
+                if (!players || !Array.isArray(players) || players.length === 0) {
+                    return res.status(400).json({ error: 'Player details required!' });
+                }
+
+                for (let i = 0; i < players.length; i++) {
+                    const p = players[i];
+                    if (!p.name || !p.uid || !p.level) {
+                        connection.release();
+                        return res.status(400).json({ error: `Details missing for Player ${i+1}` });
+                    }
+                    if (parseInt(p.level) < 40) {
+                        connection.release();
+                        return res.status(400).json({ error: `Player ${i+1} needs Level 40+` });
+                    }
+                }
+
+                // ২. ট্রানজ্যাকশন শুরু
+                await connection.beginTransaction();
+
+                // ৩. চেক: ম্যাচ আছে কি?
+                const [matchData] = await connection.execute('SELECT entry_fee, total_spots, match_type FROM tournaments WHERE id = ? FOR UPDATE', [tournament_id]);
+                if (matchData.length === 0) {
+                    await connection.rollback();
+                    connection.release();
+                    return res.status(404).json({ error: 'Match not found' });
+                }
+                const match = matchData[0];
+
+                if (match.match_type !== 'Solo' && !team_name) {
+                    await connection.rollback();
+                    connection.release();
+                    return res.status(400).json({ error: 'Team Name is required!' });
+                }
+
+                // ৪. চেক: ইউজার ব্যালেন্স এবং অলরেডি জয়েন
+                const [userData] = await connection.execute('SELECT wallet_balance FROM users WHERE id = ? FOR UPDATE', [user_id]);
+                const [checkJoin] = await connection.execute('SELECT id FROM participants WHERE user_id = ? AND tournament_id = ?', [user_id, tournament_id]);
+                const [countJoin] = await connection.execute('SELECT COUNT(*) as c FROM participants WHERE tournament_id = ?', [tournament_id]);
+
+                if (checkJoin.length > 0) {
+                    await connection.rollback();
+                    connection.release();
+                    return res.status(400).json({ error: 'Already Joined!' });
+                }
+                if (countJoin[0].c >= match.total_spots) {
+                    await connection.rollback();
+                    connection.release();
+                    return res.status(400).json({ error: 'Match is Full!' });
+                }
+                
+                const fee = parseFloat(match.entry_fee);
+                const currentBalance = parseFloat(userData[0].wallet_balance);
+
+                if (currentBalance < fee) {
+                    await connection.rollback();
+                    connection.release();
+                    return res.status(400).json({ error: 'Insufficient Balance!' });
+                }
+
+                // ৫. টাকা কাটা এবং জয়েন করানো
+                const leader = players[0];
+                const otherPlayers = players.slice(1); 
+                const teamMembersStr = JSON.stringify(otherPlayers);
+                const finalTeamName = match.match_type === 'Solo' ? leader.name : team_name;
+
+                // ব্যালেন্স আপডেট
+                await connection.execute('UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?', [fee, user_id]);
+                
+                // পার্টিসিপেন্ট এড
+                await connection.execute(
+                    `INSERT INTO participants 
+                    (user_id, tournament_id, in_game_name, in_game_uid, game_level, team_name, team_members, joined_at) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`, 
+                    [user_id, tournament_id, leader.name, leader.uid, leader.level, finalTeamName, teamMembersStr]
+                );
+                
+                // ট্রানজ্যাকশন হিস্ট্রি এড (যদি ফি থাকে)
+                if(fee > 0) {
+                    await connection.execute('INSERT INTO transactions (user_id, amount, type, created_at) VALUES (?, ?, "Match Join", NOW())', [user_id, fee]);
+                }
+
+                // ৬. সব ঠিক থাকলে কমিট
+                await connection.commit();
+                connection.release();
+
+                return res.status(200).json({ success: true, message: 'Joined Successfully' });
+
+            } catch (err) {
+                // কোনো এরর হলে রোলব্যাক (টাকা ফেরত যাবে)
+                await connection.rollback();
+                connection.release();
+                throw err;
             }
-
-            for (let i = 0; i < players.length; i++) {
-                const p = players[i];
-                if (!p.name || !p.uid || !p.level) return res.status(400).json({ error: `Details missing for Player ${i+1}` });
-                if (parseInt(p.level) < 40) return res.status(400).json({ error: `Player ${i+1} needs Level 40+` });
-            }
-
-            const [matchData] = await db.execute('SELECT entry_fee, total_spots, match_type FROM tournaments WHERE id = ?', [tournament_id]);
-            if (matchData.length === 0) return res.status(404).json({ error: 'Match not found' });
-            const match = matchData[0];
-
-            if (match.match_type !== 'Solo' && !team_name) return res.status(400).json({ error: 'Team Name is required!' });
-
-            const [userData] = await db.execute('SELECT wallet_balance FROM users WHERE id = ?', [user_id]);
-            const [checkJoin] = await db.execute('SELECT id FROM participants WHERE user_id = ? AND tournament_id = ?', [user_id, tournament_id]);
-            const [countJoin] = await db.execute('SELECT COUNT(*) as c FROM participants WHERE tournament_id = ?', [tournament_id]);
-
-            if (checkJoin.length > 0) return res.status(400).json({ error: 'Already Joined!' });
-            if (countJoin[0].c >= match.total_spots) return res.status(400).json({ error: 'Match is Full!' });
-            
-            const fee = parseFloat(match.entry_fee);
-            if (parseFloat(userData[0].wallet_balance) < fee) return res.status(400).json({ error: 'Insufficient Balance!' });
-
-            // ডাটা প্রস্তুত
-            const leader = players[0];
-            const otherPlayers = players.slice(1); 
-            const teamMembersStr = JSON.stringify(otherPlayers);
-            const finalTeamName = match.match_type === 'Solo' ? leader.name : team_name;
-
-            await db.execute('UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?', [fee, user_id]);
-            
-            await db.execute(
-                `INSERT INTO participants 
-                (user_id, tournament_id, in_game_name, in_game_uid, game_level, team_name, team_members, joined_at) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`, 
-                [user_id, tournament_id, leader.name, leader.uid, leader.level, finalTeamName, teamMembersStr]
-            );
-            
-            if(fee > 0) await db.execute('INSERT INTO transactions (user_id, amount, type, created_at) VALUES (?, ?, "Match Join", NOW())', [user_id, fee]);
-
-            return res.status(200).json({ success: true, message: 'Joined Successfully' });
         }
 
         // ============================
@@ -92,7 +144,7 @@ module.exports = async (req, res) => {
         }
 
         // ============================
-        // 4. GET PLAYERS & RESULTS (Updated with Team Info)
+        // 4. GET PLAYERS & RESULTS
         // ============================
         if (type === 'get_result_board') {
             const [results] = await db.execute(`
@@ -105,7 +157,7 @@ module.exports = async (req, res) => {
         }
 
     } catch (error) {
-        console.error(error);
+        console.error("Tournament API Error:", error);
         return res.status(500).json({ error: error.message });
     }
 };
