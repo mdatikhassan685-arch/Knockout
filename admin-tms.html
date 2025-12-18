@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMS - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>body { user-select: none; }</style>
+</head>
+<body class="bg-gray-100 pb-20 text-gray-800">
+
+    <!-- Header -->
+    <div class="bg-blue-800 text-white p-4 sticky top-0 z-50 shadow-md flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <a href="/admin-matches"><i class="fa-solid fa-arrow-left text-xl"></i></a>
+            <div>
+                <h1 class="font-bold text-lg leading-tight" id="t_title">TMS Loading...</h1>
+                <p class="text-[10px] text-gray-300">Tournament Management System</p>
+            </div>
+        </div>
+        <div class="bg-white/10 px-3 py-1 rounded text-xs font-bold border border-white/20" id="total_teams">0 Teams</div>
+    </div>
+
+    <!-- Actions Grid -->
+    <div class="p-4 grid grid-cols-2 gap-3">
+        <!-- Manage Groups -->
+        <button onclick="openModal('groupModal')" class="bg-white p-4 rounded-xl shadow-md border border-gray-200 flex flex-col items-center justify-center active:scale-95 transition">
+            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl mb-2"><i class="fa-solid fa-layer-group"></i></div>
+            <span class="font-bold text-sm">Manage Groups</span>
+        </button>
+        
+        <!-- Add Schedule -->
+        <button onclick="openModal('scheduleModal')" class="bg-white p-4 rounded-xl shadow-md border border-gray-200 flex flex-col items-center justify-center active:scale-95 transition">
+            <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xl mb-2"><i class="fa-solid fa-calendar-plus"></i></div>
+            <span class="font-bold text-sm">Add Schedule</span>
+        </button>
+
+        <!-- Update Points -->
+        <button onclick="goToPoints()" class="bg-white p-4 rounded-xl shadow-md border border-gray-200 flex flex-col items-center justify-center active:scale-95 transition">
+            <div class="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center text-xl mb-2"><i class="fa-solid fa-star"></i></div>
+            <span class="font-bold text-sm">Update Points</span>
+        </button>
+
+        <!-- View Result -->
+        <button onclick="window.location.href='/tournament-details?id=' + tId" class="bg-white p-4 rounded-xl shadow-md border border-gray-200 flex flex-col items-center justify-center active:scale-95 transition">
+            <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl mb-2"><i class="fa-solid fa-eye"></i></div>
+            <span class="font-bold text-sm">View User Page</span>
+        </button>
+    </div>
+
+    <!-- Quick Preview List -->
+    <div class="px-4 mt-2">
+        <h3 class="font-bold text-gray-700 mb-3 pl-2 border-l-4 border-blue-600">Upcoming Schedule</h3>
+        <div id="dashboard_list" class="space-y-3 pb-10">
+            <p class="text-center text-gray-400 py-10">No schedule found.</p>
+        </div>
+    </div>
+
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- Group Modal -->
+    <div id="groupModal" class="fixed inset-0 bg-black/90 hidden z-[60] overflow-y-auto backdrop-blur-sm">
+        <div class="min-h-screen p-4">
+            <div class="flex justify-between items-center text-white mb-6">
+                <h2 class="text-xl font-bold">Groups & Teams</h2>
+                <button onclick="closeModal('groupModal')" class="bg-gray-800 w-8 h-8 rounded-full"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <!-- Step 1: Create Group -->
+            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 mb-5">
+                <p class="text-xs text-blue-400 font-bold uppercase mb-2">Create New Group</p>
+                <div class="flex gap-2">
+                    <input type="text" id="new_group_name" placeholder="Name (e.g. Group A)" class="flex-1 bg-gray-900 text-white p-3 rounded-lg border border-gray-600 outline-none">
+                    <button onclick="createGroup()" class="bg-blue-600 px-4 rounded-lg text-white font-bold text-sm">Add</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Assign Teams -->
+            <div class="bg-white rounded-xl overflow-hidden shadow-2xl h-[60vh] flex flex-col">
+                <div class="bg-gray-100 p-3 border-b flex justify-between items-center">
+                    <span class="text-xs font-bold text-gray-500 uppercase">Select Teams</span>
+                    <select id="assign_group_select" class="bg-white border text-sm p-1.5 rounded">
+                        <option value="">Select Group...</option>
+                    </select>
+                </div>
+                <div id="team_list_check" class="overflow-y-auto flex-1 p-2 bg-gray-50">Loading teams...</div>
+                <div class="p-3 bg-white border-t">
+                    <button onclick="assignTeams()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold shadow-lg">Assign Selected</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Modal -->
+    <div id="scheduleModal" class="fixed inset-0 bg-black/90 hidden z-[60] overflow-y-auto backdrop-blur-sm">
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="bg-gray-800 w-full max-w-sm rounded-2xl p-6 border border-gray-700 shadow-2xl relative">
+                <button onclick="closeModal('scheduleModal')" class="absolute top-4 right-4 text-gray-500 hover:text-white"><i class="fa-solid fa-times text-lg"></i></button>
+                <h3 class="text-xl font-bold text-white mb-6">Add Schedule</h3>
+                
+                <input type="text" id="sch_day" placeholder="Day Title (e.g. Day 1)" class="w-full bg-gray-900 text-white p-3 rounded-lg border border-gray-600 mb-3 outline-none">
+                
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <input type="text" id="sch_match" placeholder="Match No." class="bg-gray-900 text-white p-3 rounded-lg border border-gray-600 outline-none">
+                    <input type="text" id="sch_map" placeholder="Map" class="bg-gray-900 text-white p-3 rounded-lg border border-gray-600 outline-none">
+                </div>
+
+                <select id="sch_grp" class="w-full bg-gray-900 text-white p-3 rounded-lg border border-gray-600 mb-3 outline-none">
+                    <option value="">All Groups</option>
+                </select>
+
+                <input type="datetime-local" id="sch_time" class="w-full bg-gray-900 text-white p-3 rounded-lg border border-gray-600 mb-5 outline-none text-gray-400">
+
+                <button onclick="addSchedule()" class="w-full bg-green-600 py-3.5 rounded-xl font-bold text-white shadow-lg hover:bg-green-700 transition">Save Schedule</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // INIT
+        const urlParams = new URLSearchParams(window.location.search);
+        const tId = urlParams.get('id');
+        const tName = urlParams.get('name');
+        
+        if(tName) document.getElementById('t_title').innerText = tName;
+        if(!tId) { alert("Missing ID"); window.history.back(); }
+
+        function openModal(id) { document.getElementById(id).style.display = 'block'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function goToPoints() { window.location.href = `/admin-points.html?id=${tId}`; } // You may need admin-points page separately or merge here
+
+        let groups = [];
+        let teams = [];
+
+        // LOAD DATA
+        async function loadAll() {
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'get_manager_data', tournament_id: tId })
+                });
+                const data = await res.json();
+                
+                if(data.success) {
+                    groups = data.groups;
+                    teams = data.teams;
+                    document.getElementById('total_teams').innerText = teams.length + " Joined";
+                    
+                    renderGroups();
+                    renderTeams();
+                    renderSchedule(data.schedules);
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        // RENDERERS
+        function renderGroups() {
+            const list = `<option value="">Select Group...</option>` + groups.map(g => `<option value="${g.id}">${g.group_name}</option>`).join('');
+            document.getElementById('assign_group_select').innerHTML = list;
+            
+            const listSch = `<option value="">All Groups</option>` + groups.map(g => `<option value="${g.id}">${g.group_name}</option>`).join('');
+            document.getElementById('sch_grp').innerHTML = listSch;
+        }
+
+        function renderTeams() {
+            document.getElementById('team_list_check').innerHTML = teams.map(t => `
+                <div class="flex items-center p-3 border-b hover:bg-gray-100 transition">
+                    <input type="checkbox" class="team-cb w-5 h-5 rounded text-blue-600" value="${t.id}">
+                    <div class="ml-3 flex-1">
+                        <p class="font-bold text-sm text-gray-800">${t.team_name || t.in_game_name}</p>
+                        <p class="text-[10px] text-gray-500">UID: ${t.in_game_uid}</p>
+                    </div>
+                    ${t.group_name ? `<span class="text-[10px] bg-purple-100 text-purple-600 font-bold px-2 py-1 rounded border border-purple-200">${t.group_name}</span>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function renderSchedule(list) {
+            const el = document.getElementById('dashboard_list');
+            if(list.length === 0) return el.innerHTML = '<p class="text-center text-gray-400 py-10">No matches scheduled yet.</p>';
+            
+            el.innerHTML = list.map(s => `
+                <div class="bg-white p-3 rounded-lg shadow-sm border-l-4 border-blue-500 relative group">
+                    <button onclick="delSchedule(${s.id})" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 p-2"><i class="fa-solid fa-trash"></i></button>
+                    <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1">${s.day_title}</p>
+                    <div class="flex items-center gap-2 mb-1">
+                        <h3 class="font-bold text-gray-800 text-lg">${s.match_title}</h3>
+                        <span class="bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded font-bold border">${s.group_name || 'ALL'}</span>
+                    </div>
+                    <p class="text-xs text-gray-500 flex items-center gap-2">
+                        <span><i class="fa-solid fa-map"></i> ${s.map_name}</span> • 
+                        <span><i class="fa-regular fa-clock"></i> ${new Date(s.start_time).toLocaleString()}</span>
+                    </p>
+                </div>
+            `).join('');
+        }
+
+        // ACTIONS
+        async function createGroup() {
+            const name = document.getElementById('new_group_name').value;
+            if(!name) return;
+            await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'create_group', tournament_id:tId, name }) });
+            document.getElementById('new_group_name').value = '';
+            loadAll();
+        }
+
+        async function assignTeams() {
+            const grp = document.getElementById('assign_group_select').value;
+            const checks = Array.from(document.querySelectorAll('.team-cb:checked')).map(c => c.value);
+            if(!grp || checks.length === 0) return alert("Select Group and Teams!");
+            await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'assign_team_group', team_ids:checks, group_id:grp }) });
+            alert("Assigned!"); loadAll();
+        }
+
+        async function addSchedule() {
+            const d={ type:'add_schedule', tournament_id:tId, day_title:document.getElementById('sch_day').value, match_title:document.getElementById('sch_match').value, map_name:document.getElementById('sch_map').value, start_time:document.getElementById('sch_time').value, group_id:document.getElementById('sch_grp').value };
+            if(!d.day_title || !d.match_title || !d.start_time) return alert("Fill fields!");
+            await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d) });
+            alert("Added!"); closeModal('scheduleModal'); loadAll();
+        }
+
+        async function delSchedule(id) {
+            if(confirm("Delete schedule?")) {
+                await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'delete_schedule', id }) });
+                loadAll();
+            }
+        }
+
+        loadAll();
+    </script>
+</body>
+  </html>
