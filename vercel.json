@@ -17,6 +17,7 @@
     { "source": "/admin-deposits", "destination": "/admin-deposits.html" },
     { "source": "/admin-withdrawals", "destination": "/admin-withdrawals.html" },
     { "source": "/admin-categories", "destination": "/admin-categories.html" },
+    { "source": "/admin-matches", "destination": "/admin-matches.html" },
     
     { "source": "/home", "destination": "/home.html" },
     { "source": "/signup", "destination": "/signup.html" },
