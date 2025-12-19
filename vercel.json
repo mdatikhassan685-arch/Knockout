@@ -25,7 +25,10 @@
     { "source": "/signup", "destination": "/signup.html" },
     { "source": "/wallet", "destination": "/wallet.html" },
     { "source": "/matches", "destination": "/matches.html" },
+    
+    { "source": "/official-tournaments", "destination": "/official-tournaments.html" },
     { "source": "/tournament-details", "destination": "/tournament-details.html" },
+
     { "source": "/profile", "destination": "/profile.html" },
     { "source": "/leaderboard", "destination": "/leaderboard.html" },
     { "source": "/support", "destination": "/support.html" },
