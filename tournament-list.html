@@ -10,8 +10,8 @@
 <body class="bg-gray-900 text-white pb-20">
 
     <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50">
-        <a href="/home" class="mr-4 text-gray-400"><i class="fa-solid fa-arrow-left"></i></a>
-        <div class="text-xl font-bold" id="page_title">Tournaments</div>
+        <a href="/home" class="mr-4 text-gray-400"><i class="fa-solid fa-arrow-left text-xl"></i></a>
+        <div class="text-xl font-bold">Matches</div>
     </header>
 
     <div class="p-4 space-y-4" id="match_list">
@@ -19,7 +19,6 @@
     </div>
 
     <script>
-        // URL থেকে category_id নেওয়া
         const urlParams = new URLSearchParams(window.location.search);
         const categoryId = urlParams.get('cat_id');
 
@@ -35,27 +34,29 @@
                 const data = await res.json();
                 
                 const list = document.getElementById('match_list');
-                if (data.tournaments.length > 0) {
-                    list.innerHTML = data.tournaments.map(t => {
-                        const isFull = false; // লজিক পরে আসবে
-                        return `
-                        <div onclick="window.location.href='/match-details.html?id=${t.id}'" class="bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 active:scale-95 transition cursor-pointer">
+                if (data.tournaments && data.tournaments.length > 0) {
+                    list.innerHTML = data.tournaments.map(t => `
+                        <div onclick="window.location.href='/tournament-details?id=${t.id}'" class="bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 active:scale-95 transition cursor-pointer">
                             <img src="${t.image}" class="w-full h-32 object-cover">
                             <div class="p-4">
                                 <h3 class="font-bold text-lg mb-1">${t.title}</h3>
                                 <div class="flex justify-between text-sm text-gray-400 mb-3">
-                                    <span><i class="fa-solid fa-calendar text-blue-500"></i> ${new Date(t.start_time).toLocaleString()}</span>
+                                    <span><i class="fa-solid fa-calendar text-blue-500"></i> ${new Date(t.start_time).toLocaleDateString()}</span>
                                     <span class="text-yellow-400 font-bold">Prize: ৳${t.prize_pool}</span>
                                 </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="bg-gray-700 px-3 py-1 rounded text-xs">Fee: ৳${t.entry_fee}</span>
-                                    <button class="bg-blue-600 px-4 py-1.5 rounded-lg text-sm font-bold">View</button>
+                                <div class="flex justify-between items-center border-t border-gray-700 pt-3">
+                                    <span class="bg-gray-700 px-3 py-1 rounded text-xs text-white font-mono">Fee: ৳${t.entry_fee}</span>
+                                    <button class="bg-blue-600 px-6 py-1.5 rounded-lg text-sm font-bold shadow-lg shadow-blue-600/20">Join</button>
                                 </div>
                             </div>
                         </div>
-                    `}).join('');
+                    `).join('');
                 } else {
-                    list.innerHTML = '<div class="text-center text-gray-500 mt-10"><p>No upcoming matches.</p></div>';
+                    list.innerHTML = `
+                        <div class="text-center text-gray-500 mt-20">
+                            <i class="fa-solid fa-ghost text-5xl mb-3 opacity-50"></i>
+                            <p>No matches available.</p>
+                        </div>`;
                 }
             } catch (e) { console.error(e); }
         }
@@ -63,4 +64,4 @@
         loadMatches();
     </script>
 </body>
-  </html>
+</html>
