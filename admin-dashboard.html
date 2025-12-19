@@ -7,77 +7,106 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
-<body class="bg-gray-900 text-white font-sans pb-20 select-none">
+<body class="bg-gray-900 text-white font-sans pb-20">
 
-    <header class="p-4 bg-gray-800 shadow-md flex justify-between items-center sticky top-0 z-50">
-        <div class="text-xl font-bold text-red-500">ADMIN PANEL</div>
-        <button onclick="logout()" class="bg-red-600 px-3 py-1 rounded text-sm font-bold hover:bg-red-700 transition">Logout</button>
+    <!-- Header -->
+    <header class="p-4 bg-gray-800 shadow-md flex justify-between items-center sticky top-0 z-50 border-b border-gray-700">
+        <div class="text-xl font-extrabold text-blue-500 tracking-wider">ADMIN PANEL</div>
+        <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-4 py-1.5 rounded-lg text-sm font-bold transition">
+            <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
+        </button>
     </header>
 
+    <!-- Stats Grid -->
     <div class="p-4 grid grid-cols-2 gap-4">
+        <!-- Users -->
         <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-blue-500 shadow-lg">
             <p class="text-gray-400 text-xs uppercase font-bold">Total Users</p>
-            <h2 class="text-2xl font-bold mt-1" id="total_users">...</h2>
+            <h2 class="text-3xl font-bold mt-1" id="total_users">...</h2>
         </div>
-        <div onclick="window.location.href='/admin-deposits'" class="bg-gray-800 p-4 rounded-xl border-l-4 border-yellow-500 shadow-lg cursor-pointer">
-            <p class="text-gray-400 text-xs uppercase font-bold">Deposits</p>
-            <h2 class="text-2xl font-bold mt-1 text-yellow-400" id="pending_deposits">...</h2>
+
+        <!-- Pending Deposits (Clickable) -->
+        <div onclick="window.location.href='/admin-deposits'" class="bg-gray-800 p-4 rounded-xl border-l-4 border-yellow-500 shadow-lg cursor-pointer active:scale-95 transition hover:bg-gray-750">
+            <div class="flex justify-between items-center">
+                <p class="text-gray-400 text-xs uppercase font-bold">Deposits</p>
+                <i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>
+            </div>
+            <h2 class="text-3xl font-bold mt-1 text-yellow-400" id="pending_deposits">...</h2>
+        </div>
+
+        <!-- Tournaments -->
+        <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-purple-500 shadow-lg">
+            <p class="text-gray-400 text-xs uppercase font-bold">Tournaments</p>
+            <h2 class="text-3xl font-bold mt-1" id="total_tournaments">0</h2>
+        </div>
+
+        <!-- Withdrawals (Clickable) -->
+        <div onclick="window.location.href='/admin-withdrawals'" class="bg-gray-800 p-4 rounded-xl border-l-4 border-red-500 shadow-lg cursor-pointer active:scale-95 transition hover:bg-gray-750">
+            <div class="flex justify-between items-center">
+                <p class="text-gray-400 text-xs uppercase font-bold">Withdrawals</p>
+                <i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>
+            </div>
+            <h2 class="text-3xl font-bold mt-1 text-red-400" id="pending_withdraws">...</h2>
         </div>
     </div>
 
-    <!-- MAIN BUTTONS SECTION (Updated Link Logic) -->
+    <!-- Quick Actions -->
     <div class="p-4">
-        <h3 class="font-bold text-lg mb-3 border-l-4 border-gray-500 pl-2">Games</h3>
-        
-        <div class="grid grid-cols-2 gap-4 mb-4">
-            
-            <!-- Button 1: Normal Matches -->
-            <a href="/admin-categories?mode=normal" class="block bg-blue-600 p-5 rounded-2xl text-center shadow-lg active:scale-95 transition no-underline text-white">
-                <i class="fa-solid fa-gamepad text-4xl mb-3"></i>
-                <h3 class="font-bold text-md leading-none">Normal<br>Matches</h3>
-                <span class="text-[10px] text-blue-200 block mt-2">Create Regular Lobby</span>
-            </a>
-            
-            <!-- Button 2: Official Tournaments -->
-            <a href="/admin-categories?mode=official" class="block bg-yellow-600 p-5 rounded-2xl text-center shadow-lg active:scale-95 transition no-underline text-white">
-                <i class="fa-solid fa-trophy text-4xl mb-3 text-white"></i>
-                <h3 class="font-bold text-md leading-none">Official<br>Tournaments</h3>
-                <span class="text-[10px] text-yellow-100 block mt-2">Manage Big Events</span>
-            </a>
+        <h3 class="font-bold text-lg mb-3 border-l-4 border-gray-500 pl-3">Quick Actions</h3>
+        <div class="grid grid-cols-2 gap-3">
+            <!-- Add Tournament (Now Active) -->
+            <button onclick="window.location.href='/admin/add-tournament'" class="bg-blue-600 p-3 rounded-xl flex flex-col items-center justify-center h-28 hover:bg-blue-700 transition shadow-lg shadow-blue-900/20 active:scale-95">
+                <div class="bg-white/20 p-2 rounded-full mb-2">
+                    <i class="fa-solid fa-plus text-2xl text-white"></i>
+                </div>
+                <span class="text-xs font-bold text-white">Create Tournament</span>
+            </button>
 
-        </div>
+            <!-- Add Category -->
+            <button onclick="window.location.href='/admin-categories'" class="bg-gray-700 p-3 rounded-xl flex flex-col items-center justify-center h-28 hover:bg-gray-600 transition shadow-lg active:scale-95">
+                <div class="bg-gray-600 p-2 rounded-full mb-2">
+                    <i class="fa-solid fa-gamepad text-2xl text-purple-400"></i>
+                </div>
+                <span class="text-xs font-bold text-gray-300">Manage Games</span>
+            </button>
 
-        <!-- Other System Buttons -->
-        <h3 class="font-bold text-lg mb-3 border-l-4 border-gray-500 pl-2">System</h3>
-        <div class="grid grid-cols-2 gap-4">
-            <a href="/admin-users" class="bg-gray-800 p-4 rounded-xl flex flex-col items-center justify-center border border-gray-700">
-                <i class="fa-solid fa-users text-2xl text-gray-400 mb-1"></i>
-                <span class="text-xs font-bold text-gray-300">Users</span>
-            </a>
-            <a href="/settings" class="bg-purple-600 p-4 rounded-xl flex flex-col items-center justify-center shadow-lg">
-                <i class="fa-solid fa-sliders text-2xl text-white mb-1"></i>
-                <span class="text-xs font-bold text-white">Settings</span>
-            </a>
+            <!-- Manage Users -->
+            <button onclick="window.location.href='/admin-users'" class="bg-gray-700 p-3 rounded-xl flex flex-col items-center justify-center h-24 hover:bg-gray-600 transition shadow-lg active:scale-95 col-span-2 flex-row gap-3">
+                <i class="fa-solid fa-users text-2xl text-green-400"></i>
+                <span class="text-sm font-bold text-gray-300">Manage All Users</span>
+            </button>
         </div>
-        
-        <button onclick="window.location.href='/admin-dashboard.html'" class="w-full bg-red-800/80 text-red-100 mt-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 border border-red-700">
-            <i class="fa-solid fa-bell"></i> Send Notification
-        </button>
     </div>
 
     <script>
+        // Check Admin Login
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || user.role !== 'admin') window.location.href = '/';
 
         async function loadStats() {
             try {
-                const res = await fetch('/api/admin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'dashboard_stats' }) });
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'dashboard_stats' })
+                });
                 const data = await res.json();
+                
                 document.getElementById('total_users').innerText = data.total_users;
                 document.getElementById('pending_deposits').innerText = data.pending_deposits;
-            } catch (e) {}
+                document.getElementById('pending_withdraws').innerText = data.pending_withdraws;
+                document.getElementById('total_tournaments').innerText = data.total_tournaments;
+            } catch (e) { console.error("Stats Error:", e); }
         }
-        function logout() { localStorage.removeItem('user'); window.location.href = '/'; }
+
+        function logout() {
+            if(confirm("Logout from Admin Panel?")) {
+                localStorage.removeItem('user');
+                window.location.href = '/';
+            }
+        }
+
+        // Initial Load
         loadStats();
     </script>
 </body>
