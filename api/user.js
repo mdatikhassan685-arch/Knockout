@@ -12,6 +12,21 @@ module.exports = async (req, res) => {
     const { type, user_id, amount, method, account_number, sender_number, trx_id } = req.body;
 
     try {
+        // ========== TOURNAMENT LIST (Updated) ==========
+        if (type === 'tournament_list') {
+            const { category_id } = req.body;
+            
+            if (!category_id) {
+                return res.status(400).json({ error: 'Category ID required' });
+            }
+
+            // টুর্নামেন্টগুলো লোড করা (is_category = 0 মানে এগুলো ম্যাচ)
+            const [tournaments] = await db.execute(
+                'SELECT * FROM tournaments WHERE parent_id = ? AND is_category = 0 ORDER BY start_time DESC',
+                [category_id]
+            );
+            return res.status(200).json({ tournaments });
+        }
         // =======================
         // 🔔 GET NOTIFICATIONS (FIXED)
         // =======================
