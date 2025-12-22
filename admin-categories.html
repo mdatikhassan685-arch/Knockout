@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Categories</title>
+    <title>Categories</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
@@ -11,40 +11,38 @@
 
     <!-- Header -->
     <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50 border-b border-gray-700">
-        <a href="/admin" class="mr-4 text-gray-400"><i class="fa-solid fa-arrow-left text-xl"></i></a>
+        <a href="/admin" class="mr-4 text-gray-400 active:scale-90"><i class="fa-solid fa-arrow-left text-xl"></i></a>
         <div>
-            <div class="text-xl font-bold" id="page_title">Games</div>
-            <p class="text-[10px] text-gray-400" id="page_sub">Management</p>
+            <div class="text-xl font-bold" id="page_title">Categories</div>
+            <p class="text-[10px] text-gray-400" id="page_sub">Setup & Manage</p>
         </div>
     </header>
 
-    <!-- Create/Edit Form -->
-    <div class="p-4 bg-gray-800 m-4 rounded-xl border border-gray-700 shadow-lg">
-        <h3 class="font-bold text-md mb-3 border-b border-gray-600 pb-2 text-gray-300">Add / Edit Category</h3>
+    <!-- CREATE FORM (Only Visible in Manage Mode) -->
+    <div class="p-4 bg-gray-800 m-4 rounded-xl border border-gray-700 shadow-lg" id="create_section">
+        <h3 class="font-bold text-md mb-3 border-b border-gray-600 pb-2 text-white">Create New Category</h3>
         
         <input type="hidden" id="edit_id">
-        <input type="hidden" id="cat_mode"> 
 
-        <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">Title</label>
-        <input type="text" id="cat_title" class="w-full bg-gray-900 p-3 rounded-lg mb-3 border border-gray-600 outline-none text-white focus:border-blue-500">
-        
-        <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">Image URL</label>
-        <input type="text" id="cat_img" class="w-full bg-gray-900 p-3 rounded-lg mb-3 border border-gray-600 outline-none text-white focus:border-blue-500">
-        
-        <!-- Status Dropdown (New Feature) -->
-        <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">Availability Status</label>
-        <select id="cat_status" class="w-full bg-gray-900 p-3 rounded-lg mb-4 border border-gray-600 outline-none text-white focus:border-blue-500">
-            <option value="open">🟢 Open (User Can Click)</option>
-            <option value="coming_soon">🟡 Coming Soon (Locked)</option>
+        <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">Type</label>
+        <select id="cat_type" class="w-full bg-gray-900 p-3 rounded-lg mb-3 border border-gray-600 outline-none text-white focus:border-indigo-500">
+            <option value="normal">Daily Match (Normal)</option>
+            <option value="official">Official Tournament</option>
         </select>
 
-        <button onclick="handleCategory()" id="submit_btn" class="w-full bg-blue-600 py-3 rounded-lg font-bold shadow-lg transition">Create Category</button>
-        <button onclick="resetForm()" id="cancel_btn" class="hidden w-full mt-2 bg-gray-700 py-2 rounded-lg text-sm text-gray-300">Cancel Edit</button>
+        <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">Title</label>
+        <input type="text" id="cat_title" placeholder="Ex: FreeFire, Ludo, World Cup" class="w-full bg-gray-900 p-3 rounded-lg mb-3 border border-gray-600 outline-none text-white focus:border-indigo-500">
+        
+        <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">Image URL</label>
+        <input type="text" id="cat_img" placeholder="https://..." class="w-full bg-gray-900 p-3 rounded-lg mb-4 border border-gray-600 outline-none text-white focus:border-indigo-500">
+        
+        <button onclick="handleCategory()" id="submit_btn" class="w-full bg-indigo-600 py-3 rounded-lg font-bold shadow-lg transition hover:bg-indigo-700">Create Category</button>
+        <button onclick="resetForm()" id="cancel_btn" class="hidden w-full mt-2 text-xs text-red-400 bg-gray-700 py-2 rounded">Cancel Edit</button>
     </div>
 
-    <!-- Active List -->
+    <!-- LIST SECTION -->
     <div class="px-4">
-        <h3 class="font-bold text-lg mb-3 pl-2 border-l-4 border-blue-500">Active List</h3>
+        <h3 class="font-bold text-lg mb-3 pl-2 border-l-4 border-indigo-500" id="list_title">All Categories</h3>
         <div id="cat_list" class="space-y-3 pb-10">
             <p class="text-center text-gray-500 mt-10">Loading...</p>
         </div>
@@ -52,87 +50,104 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        let mode = urlParams.get('mode') || 'normal'; // Default normal
+        const mode = urlParams.get('mode'); // 'select' OR null
+        const filterType = urlParams.get('type'); // 'normal' OR 'official'
 
-        // UI Setup
-        if(mode === 'official') {
-            document.getElementById('page_title').innerText = "Official Tournaments";
-            document.getElementById('submit_btn').className = "w-full bg-yellow-600 py-3 rounded-lg font-bold shadow-lg";
-        } else {
-            document.getElementById('page_title').innerText = "Daily Matches";
-        }
+        // UI Setup Logic
+        if (mode === 'select') {
+            // SELECTOR MODE (Daily Match/Official ক্লিক করলে এটা হবে)
+            document.getElementById('create_section').style.display = 'none'; // ফর্ম লুকাবে
+            document.getElementById('page_title').innerText = filterType === 'official' ? 'Select Tournament' : 'Select Game';
+            document.getElementById('page_sub').innerText = 'Click to manage matches inside';
+            document.getElementById('list_title').innerText = "Choose One to Continue";
+        } 
 
         async function loadData() {
             try {
                 const res = await fetch('/api/admin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'get_categories' }) });
-                const allData = await res.json();
+                const data = await res.json();
                 
-                const filtered = allData.filter(c => {
-                    if(mode === 'official') return c.type === 'official';
-                    return c.type === 'normal' || !c.type;
-                });
-
                 const list = document.getElementById('cat_list');
                 
-                if (filtered.length > 0) {
-                    list.innerHTML = filtered.map(c => `
-                        <div class="bg-gray-800 p-3 rounded-xl border border-gray-700 flex justify-between items-center group relative overflow-hidden">
-                            <div class="flex items-center gap-3 pl-2">
-                                <img src="${c.image}" class="w-12 h-12 rounded bg-black/20 object-cover border border-gray-600">
+                // Filter Logic:
+                const filtered = data.filter(c => {
+                    // যদি 'select' মোডে থাকে, তাহলে শুধু সেই টাইপ দেখাবে
+                    if (mode === 'select') {
+                        if (filterType === 'official') return c.type === 'official';
+                        if (filterType === 'normal') return c.type === 'normal' || !c.type;
+                    }
+                    return true; // ম্যানেজ মোডে সব দেখাবে
+                });
+
+                if(filtered.length > 0) {
+                    list.innerHTML = filtered.map(c => {
+                        
+                        // Badge color
+                        const badgeClass = c.type === 'official' ? 'bg-yellow-600 text-black' : 'bg-blue-600 text-white';
+                        
+                        // Action Logic:
+                        // Select Mode -> ক্লিক করলে ম্যাচেস পেজে যাবে
+                        // Manage Mode -> Edit/Delete বাটন দেখাবে
+                        
+                        let cardAction = '';
+                        let buttons = '';
+
+                        if (mode === 'select') {
+                            cardAction = `onclick="window.location.href='/admin-matches?cat_id=${c.id}&name=${c.title}'"`;
+                        } else {
+                            buttons = `
+                            <div class="flex flex-col gap-2 border-l border-gray-700 pl-3 ml-2">
+                                <button onclick="editCat(${c.id}, '${c.title}', '${c.image}', '${c.type}')" class="text-yellow-500 p-1 bg-gray-700 rounded hover:bg-yellow-600 hover:text-black"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteCat(${c.id})" class="text-red-500 p-1 bg-gray-700 rounded hover:bg-red-600 hover:text-white"><i class="fa-solid fa-trash"></i></button>
+                            </div>`;
+                        }
+
+                        return `
+                        <div ${cardAction} class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center group relative overflow-hidden active:scale-95 transition ${mode==='select'?'cursor-pointer hover:border-indigo-500 shadow-md':''}">
+                            
+                            <span class="absolute top-0 left-0 ${badgeClass} text-[8px] font-bold px-2 py-0.5 rounded-br-lg uppercase">${c.type || 'Normal'}</span>
+
+                            <div class="flex items-center gap-4 pl-1">
+                                <img src="${c.image}" class="w-14 h-14 rounded-lg object-cover bg-black/20" onerror="this.src='https://placehold.co/100?text=GAME'">
                                 <div>
-                                    <h4 class="font-bold text-white text-sm">${c.title}</h4>
-                                    <!-- Status Badge -->
-                                    <span class="text-[9px] px-2 py-0.5 rounded font-bold uppercase ${c.status === 'coming_soon' ? 'bg-yellow-500 text-black' : 'bg-green-600 text-white'}">
-                                        ${c.status || 'open'}
-                                    </span>
+                                    <h4 class="font-bold text-white text-md">${c.title}</h4>
+                                    <p class="text-[10px] text-gray-400">ID: ${c.id}</p>
                                 </div>
                             </div>
-                            
-                            <div class="flex gap-2">
-                                <!-- Manage Matches Button -->
-                                <button onclick="window.location.href='/admin-matches?cat_id=${c.id}&name=${c.title}'" class="bg-gray-700 text-gray-300 p-2 rounded text-xs border border-gray-600 hover:bg-gray-600">
-                                    <i class="fa-solid fa-list"></i>
-                                </button>
-                                
-                                <!-- Edit Button -->
-                                <button onclick="editMode(${c.id}, '${c.title}', '${c.image}', '${c.status}')" class="bg-yellow-600/20 text-yellow-500 p-2 rounded hover:bg-yellow-600 hover:text-black">
-                                    <i class="fa-solid fa-pen"></i>
-                                </button>
-                                
-                                <!-- Delete Button -->
-                                <button onclick="deleteCat(${c.id})" class="bg-red-600/20 text-red-500 p-2 rounded hover:bg-red-600 hover:text-white">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `).join('');
-                } else { list.innerHTML = `<p class="text-center text-gray-500 py-10 opacity-50">No games found.</p>`; }
+                            ${buttons}
+                        </div>`;
+                    }).join('');
+                } else {
+                    list.innerHTML = `<div class="text-center text-gray-500 mt-10 py-10 border-2 border-dashed border-gray-700 rounded-xl">No games found.<br>${mode === 'select' ? 'Create new from Setup.' : ''}</div>`;
+                }
             } catch(e) {}
         }
 
         async function handleCategory() {
             const title = document.getElementById('cat_title').value;
             const img = document.getElementById('cat_img').value;
-            const status = document.getElementById('cat_status').value; // New Status
+            const typeVal = document.getElementById('cat_type').value;
             const id = document.getElementById('edit_id').value;
 
-            const body = { 
-                type: id ? 'edit_category' : 'add_category', 
-                id: id, title, image: img, 
-                cat_type: mode, 
-                status: status 
-            };
+            if(!title || !img) return alert("Fill Inputs");
 
-            await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+            const apiType = id ? 'edit_category' : 'add_category';
+            const btn = document.getElementById('submit_btn');
+            btn.innerText = "Processing...";
+            
+            await fetch('/api/admin', { 
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ type: apiType, id, title, image: img, cat_type: typeVal }) 
+            });
             resetForm(); loadData();
         }
 
-        function editMode(id, t, i, s) {
+        function editCat(id, t, i, type) {
             document.getElementById('edit_id').value = id;
             document.getElementById('cat_title').value = t;
             document.getElementById('cat_img').value = i;
-            document.getElementById('cat_status').value = s || 'open'; // Set status dropdown
-            document.getElementById('submit_btn').innerText = "Update Now";
+            document.getElementById('cat_type').value = type || 'normal';
+            document.getElementById('submit_btn').innerText = "Update Category";
             document.getElementById('cancel_btn').classList.remove('hidden');
             window.scrollTo({top:0, behavior:'smooth'});
         }
@@ -141,16 +156,14 @@
             document.getElementById('edit_id').value = '';
             document.getElementById('cat_title').value = '';
             document.getElementById('cat_img').value = '';
-            document.getElementById('cat_status').value = 'open';
             document.getElementById('submit_btn').innerText = "Create Category";
             document.getElementById('cancel_btn').classList.add('hidden');
         }
 
         async function deleteCat(id) {
-            if(confirm("⚠️ Delete Category?")) {
-                await fetch('/api/admin', { method:'POST', body: JSON.stringify({ type:'delete_category', id }) });
-                loadData();
-            }
+            if(!confirm("⚠️ Delete Category?\nNote: Matches inside will be lost.")) return;
+            await fetch('/api/admin', { method: 'POST', body: JSON.stringify({ type: 'delete_category', id }) });
+            loadData();
         }
 
         loadData();
