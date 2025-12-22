@@ -8,81 +8,96 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        body { font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
-<body class="bg-gray-900 text-white pb-24">
+<body class="bg-[#0f172a] text-white pb-24 select-none">
 
     <!-- Header -->
-    <header class="flex justify-between items-center p-4 bg-gray-800 shadow-md sticky top-0 z-50">
-        <div class="flex items-center gap-2">
-            <div class="bg-blue-600 w-8 h-8 rounded-full flex items-center justify-center">
-                <i class="fa-solid fa-gamepad text-white"></i>
+    <header class="flex justify-between items-center p-4 bg-gray-900/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-800">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-600 w-10 h-10 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/40">
+                <i class="fa-solid fa-gamepad text-white text-xl"></i>
             </div>
-            <div class="text-xl font-bold uppercase tracking-wider">Knockout</div>
+            <div>
+                <h1 class="text-xl font-black tracking-widest uppercase italic">Knockout</h1>
+                <p class="text-[10px] text-gray-400 font-bold -mt-1 tracking-wide">ESPORTS</p>
+            </div>
         </div>
         
         <div class="flex items-center gap-3">
-            <a href="/wallet" class="bg-gray-700/50 border border-gray-600 px-3 py-1.5 rounded-full flex items-center gap-2 active:scale-95 transition">
+            <a href="/wallet" class="bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-full flex items-center gap-2 active:scale-95 transition hover:bg-gray-700">
                 <i class="fa-solid fa-coins text-yellow-400"></i>
-                <span id="balance" class="font-bold text-yellow-400">Loading...</span> 
+                <span class="text-yellow-400 font-bold text-sm">৳ <span id="balance">...</span></span>
             </a>
-            <button onclick="window.location.href='/notifications'" class="relative text-gray-400 hover:text-white">
+            
+            <button onclick="window.location.href='/notifications'" class="relative w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 hover:text-white text-gray-400 transition active:scale-90">
                 <i class="fa-regular fa-bell text-xl"></i>
-                <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                <span class="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-gray-800 animate-pulse"></span>
             </button>
         </div>
     </header>
 
     <!-- Marquee -->
-    <div class="bg-blue-600/10 border-y border-blue-500/20 text-blue-200 text-xs py-2">
-        <marquee id="announcement" behavior="scroll" direction="left">Welcome to Knockout Esports! Join tournaments and win real money.</marquee>
+    <div class="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-y border-white/5 py-2">
+        <marquee id="announcement" behavior="scroll" direction="left" class="text-xs font-bold text-blue-200 tracking-wide">
+            Welcome to Knockout Esports! Join tournaments and win real money.
+        </marquee>
     </div>
 
     <!-- Banners -->
-    <div class="p-4 overflow-x-auto whitespace-nowrap scrollbar-hide flex gap-3" id="banners">
-        <div class="w-80 h-40 bg-gray-800 rounded-xl animate-pulse flex-shrink-0"></div>
+    <div class="p-4 overflow-x-auto whitespace-nowrap scrollbar-hide flex gap-4" id="banners">
+        <div class="w-80 h-40 bg-gray-800 rounded-2xl animate-pulse border border-gray-700 flex-shrink-0 text-center flex items-center justify-center text-gray-600 text-sm">Loading Banners...</div>
     </div>
 
     <!-- Quick Actions -->
     <div class="px-4 flex gap-3 mb-6">
-        <a href="/wallet" class="flex-1 bg-blue-600 hover:bg-blue-700 py-3 rounded-xl flex items-center justify-center gap-2 font-bold shadow-lg shadow-blue-600/20 transition active:scale-95">
+        <a href="/wallet" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition text-sm">
             <i class="fa-solid fa-plus-circle"></i> Add Money
         </a>
-        <a href="/leaderboard" class="flex-1 bg-gray-800 hover:bg-gray-700 border border-gray-700 py-3 rounded-xl flex items-center justify-center gap-2 font-bold transition active:scale-95">
+        <a href="/leaderboard" class="flex-1 bg-gray-800 border border-gray-700 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold active:scale-95 transition hover:bg-gray-750 text-sm">
             <i class="fa-solid fa-trophy text-yellow-500"></i> Leaderboard
         </a>
     </div>
 
-    <!-- OFFICIAL TOURNAMENTS -->
-    <div class="px-4 pb-4">
-        <h2 class="text-lg font-bold border-l-4 border-yellow-500 pl-3 mb-4 text-yellow-400">Official Tournaments</h2>
-        <div class="grid grid-cols-1 gap-4" id="official_list">
-            <div class="bg-gray-800 h-32 rounded-xl animate-pulse border border-gray-700"></div>
+    <!-- Official Tournaments -->
+    <div class="px-4 mb-6">
+        <h2 class="text-xl font-bold border-l-4 border-yellow-500 pl-3 leading-none mb-4 text-yellow-100">Official Tournaments</h2>
+        <div class="grid grid-cols-1 gap-5" id="official_list">
+            <div class="w-full h-32 bg-gray-800 rounded-2xl animate-pulse text-center pt-10 text-gray-600 text-sm">Checking official events...</div>
         </div>
     </div>
 
-    <!-- DAILY MATCHES -->
-    <div class="px-4 pb-4">
-        <h2 class="text-lg font-bold border-l-4 border-green-500 pl-3 mb-4 text-green-400">Daily Matches</h2>
-        <div class="grid grid-cols-1 gap-3" id="daily_list">
-            <p class="text-gray-500 text-sm">Loading...</p>
+    <!-- Daily Matches -->
+    <div class="px-4">
+        <h2 class="text-xl font-bold border-l-4 border-green-500 pl-3 leading-none mb-4 text-green-100">Daily Matches</h2>
+        <div class="grid grid-cols-2 gap-3" id="normal_list">
+            <div class="h-28 bg-gray-800 rounded-xl animate-pulse text-center pt-10 text-gray-600 text-sm">Loading games...</div>
+            <div class="h-28 bg-gray-800 rounded-xl animate-pulse"></div>
         </div>
     </div>
 
     <!-- Bottom Nav -->
-    <nav class="fixed bottom-0 w-full bg-gray-900/95 backdrop-blur border-t border-gray-800 flex justify-around py-3 z-40 pb-5">
-        <a href="/home" class="text-blue-500 flex flex-col items-center">
-            <i class="fa-solid fa-house text-xl mb-1"></i><span class="text-[10px] font-bold">Home</span>
+    <nav class="fixed bottom-0 w-full bg-[#0f172a]/95 backdrop-blur-lg border-t border-gray-800 flex justify-around py-3 z-50 pb-6">
+        <a href="/home" class="text-blue-500 flex flex-col items-center transition group">
+            <i class="fa-solid fa-house text-xl mb-1 group-active:scale-90 transition"></i>
+            <span class="text-[10px] font-bold">Home</span>
         </a>
-        <a href="#" class="text-gray-500 hover:text-blue-500 transition flex flex-col items-center">
-            <i class="fa-solid fa-fire text-xl mb-1"></i><span class="text-[10px] font-bold">Live</span>
+        <a href="/support" class="text-gray-500 hover:text-white flex flex-col items-center transition group">
+            <i class="fa-solid fa-headset text-xl mb-1 group-active:scale-90 transition"></i>
+            <span class="text-[10px] font-bold">Support</span>
         </a>
-        <a href="/wallet" class="text-gray-500 hover:text-blue-500 transition flex flex-col items-center">
-            <i class="fa-solid fa-wallet text-xl mb-1"></i><span class="text-[10px] font-bold">Wallet</span>
+        <a href="/wallet" class="text-gray-500 hover:text-white flex flex-col items-center transition group">
+            <i class="fa-solid fa-wallet text-xl mb-1 group-active:scale-90 transition"></i>
+            <span class="text-[10px] font-bold">Wallet</span>
         </a>
-        <a href="/profile" class="text-gray-500 hover:text-blue-500 transition flex flex-col items-center">
-            <i class="fa-solid fa-user text-xl mb-1"></i><span class="text-[10px] font-bold">Profile</span>
+        <a href="/profile" class="text-gray-500 hover:text-white flex flex-col items-center transition group">
+            <i class="fa-solid fa-user text-xl mb-1 group-active:scale-90 transition"></i>
+            <span class="text-[10px] font-bold">Profile</span>
+        </a>
+        <a href="/menu" class="text-gray-500 hover:text-white flex flex-col items-center transition group">
+            <i class="fa-solid fa-bars text-xl mb-1 group-active:scale-90 transition"></i>
+            <span class="text-[10px] font-bold">Menu</span>
         </a>
     </nav>
 
@@ -92,80 +107,86 @@
 
         async function loadHomeData() {
             try {
+                // ১. API থেকে ডাটা আনা হচ্ছে
                 const res = await fetch('/api/user', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ type: 'home', user_id: user.id })
                 });
+
+                if (!res.ok) return;
                 const data = await res.json();
 
-                if (res.ok) {
-                    // Balance & Announcement
-                    const balance = data.wallet !== undefined ? data.wallet : (user.wallet_balance || 0);
-                    document.getElementById('balance').innerText = parseFloat(balance).toFixed(2);
-                    if(data.announcement) document.getElementById('announcement').innerText = data.announcement;
-
-                    // Banners
-                    const bannerContainer = document.getElementById('banners');
-                    if (data.banners && data.banners.length > 0) {
-                        bannerContainer.innerHTML = data.banners.map(b => 
-                            `<div class="w-80 h-40 rounded-xl overflow-hidden shadow-lg flex-shrink-0 relative">
-                                <img src="${b.image}" class="w-full h-full object-cover">
-                            </div>`
-                        ).join('');
-                    } else {
-                        bannerContainer.innerHTML = `<div class="w-full h-40 bg-gray-800 rounded-xl flex items-center justify-center text-gray-500 border border-gray-700">No Banners</div>`;
-                    }
-
-                    // SEPARATE CATEGORIES
-                    const officialContainer = document.getElementById('official_list');
-                    const dailyContainer = document.getElementById('daily_list');
-
-                    if (data.categories && data.categories.length > 0) {
-                        const officials = data.categories.filter(c => c.is_official === 1);
-                        const normals = data.categories.filter(c => c.is_official === 0);
-
-                        // Official Render (Big Card)
-                        if(officials.length > 0) {
-                            officialContainer.innerHTML = officials.map(c => `
-                                <div onclick="window.location.href='/tournament-list?cat_id=${c.id}'" class="bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 active:scale-95 transition cursor-pointer relative">
-                                    <img src="${c.image}" class="w-full h-36 object-cover opacity-90 hover:opacity-100 transition">
-                                    <div class="absolute bottom-0 w-full bg-gradient-to-t from-black via-black/80 to-transparent p-4 pt-10">
-                                        <h3 class="font-bold text-xl text-white mb-1">${c.title}</h3>
-                                        <p class="text-xs text-yellow-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                                            <i class="fa-solid fa-trophy"></i> Major Event
-                                        </p>
-                                    </div>
-                                </div>
-                            `).join('');
-                        } else {
-                            officialContainer.innerHTML = '<p class="text-gray-500 text-center text-sm">No official tournaments running.</p>';
-                        }
-
-                        // Daily Render (Small List)
-                        if(normals.length > 0) {
-                            dailyContainer.innerHTML = normals.map(c => `
-                                <div onclick="window.location.href='/tournament-list?cat_id=${c.id}'" class="bg-gray-800 p-3 rounded-lg border border-gray-700 flex items-center gap-4 active:scale-95 transition cursor-pointer hover:bg-gray-750">
-                                    <img src="${c.image}" class="w-14 h-14 rounded-lg object-cover shadow-md">
-                                    <div class="flex-1">
-                                        <h4 class="font-bold text-base text-white">${c.title}</h4>
-                                        <p class="text-xs text-green-400 font-bold flex items-center gap-1">
-                                            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Join Now
-                                        </p>
-                                    </div>
-                                    <button class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded text-xs font-bold border border-blue-500/30">Play</button>
-                                </div>
-                            `).join('');
-                        } else {
-                            dailyContainer.innerHTML = '<p class="text-gray-500 text-center text-sm">No daily matches available.</p>';
-                        }
-
-                    } else {
-                        officialContainer.innerHTML = '<p class="text-center text-gray-500">No games found.</p>';
-                        dailyContainer.innerHTML = '';
-                    }
+                // ২. ব্যালেন্স এবং নোটিস সেট করা
+                if (data.wallet !== undefined) {
+                    document.getElementById('balance').innerText = parseFloat(data.wallet).toFixed(2);
+                    // ব্যালেন্স আপডেট করে লোকাল স্টোরেজে রাখা
+                    user.wallet_balance = parseFloat(data.wallet);
+                    localStorage.setItem('user', JSON.stringify(user));
                 }
-            } catch (err) { console.error("Home Error:", err); }
+                
+                if(data.announcement) document.getElementById('announcement').innerText = data.announcement;
+
+                // ৩. ব্যানার সেট করা
+                const bannerContainer = document.getElementById('banners');
+                if (data.banners && data.banners.length > 0) {
+                    bannerContainer.innerHTML = data.banners.map(b => 
+                        `<div class="w-80 h-40 rounded-2xl overflow-hidden shadow-lg flex-shrink-0 relative border border-gray-700 group bg-gray-900">
+                            <img src="${b.image}" class="w-full h-full object-cover">
+                        </div>`
+                    ).join('');
+                } else {
+                    bannerContainer.innerHTML = `<div class="w-full h-24 flex items-center justify-center text-gray-500 text-xs border border-dashed border-gray-700 rounded-xl">No active offers</div>`;
+                }
+
+                // ৪. ক্যাটাগরি সেট করা (Normal & Official আলাদা করা)
+                const officialList = document.getElementById('official_list');
+                const normalList = document.getElementById('normal_list');
+
+                if (data.categories && data.categories.length > 0) {
+                    // লজিক: 'official' হলে Official সেকশনে, 'normal' বা টাইপ না থাকলে Daily Matches এ।
+                    const officialData = data.categories.filter(c => c.type && c.type.toLowerCase() === 'official');
+                    const normalData = data.categories.filter(c => !c.type || c.type.toLowerCase() === 'normal');
+
+                    // --- Official Tournaments Display ---
+                    if(officialData.length > 0) {
+                        officialList.innerHTML = officialData.map(c => `
+                            <div onclick="window.location.href='/official-tournaments?cat_id=${c.id}&name=${c.title}'" class="relative w-full h-40 bg-gray-800 rounded-2xl overflow-hidden shadow-xl border border-gray-700 active:scale-95 transition cursor-pointer group">
+                                <img src="${c.image}" class="w-full h-full object-cover transition transform group-hover:scale-105" onerror="this.src='https://placehold.co/600x400/222/fff?text=No+Image'">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90"></div>
+                                <div class="absolute bottom-0 left-0 p-4 w-full">
+                                    <span class="bg-yellow-500 text-black text-[9px] px-2 py-0.5 rounded font-bold uppercase mb-1 inline-block">OFFICIAL</span>
+                                    <h3 class="text-xl font-black text-white uppercase leading-none mb-1 shadow-black drop-shadow-md">${c.title}</h3>
+                                    <p class="text-[10px] text-gray-300 flex items-center gap-1"><span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Tap to View</p>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else { 
+                        officialList.innerHTML = '<p class="text-gray-500 text-sm py-4 text-center border border-dashed border-gray-800 rounded-lg">No official tournaments running.</p>'; 
+                    }
+
+                    // --- Daily Matches Display ---
+                    if(normalData.length > 0) {
+                        normalList.innerHTML = normalData.map(c => `
+                            <div onclick="window.location.href='/matches?cat_id=${c.id}&name=${c.title}'" class="relative w-full h-32 bg-gray-800 rounded-xl overflow-hidden shadow-md border border-gray-700/50 active:scale-95 transition cursor-pointer group">
+                                <img src="${c.image}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500" onerror="this.src='https://placehold.co/200x300?text=Game'">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
+                                <div class="absolute bottom-0 left-0 w-full p-2 text-center">
+                                    <h3 class="text-xs font-bold text-white uppercase tracking-wider truncate leading-tight drop-shadow-md">${c.title}</h3>
+                                    <p class="text-[9px] text-green-300">Play Now</p>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else { 
+                        normalList.innerHTML = '<p class="text-gray-500 text-xs col-span-2 text-center py-4">No daily matches found.</p>'; 
+                    }
+
+                } else {
+                    officialList.innerHTML = '<p class="text-gray-500 text-sm">Checking data...</p>';
+                    normalList.innerHTML = '<p class="text-gray-500 text-xs">Checking data...</p>';
+                }
+
+            } catch (err) { console.error(err); }
         }
 
         loadHomeData();
