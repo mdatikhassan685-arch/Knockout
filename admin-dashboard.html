@@ -31,68 +31,64 @@
         </div>
     </div>
 
-    <!-- ✅ UPDATE STARTS HERE ✅ -->
-    <!-- Management Section -->
+    <!-- ✅ UPDATE START: Main Navigation Logic ✅ -->
     <div class="p-4">
         
-        <!-- 1. Category Management Button (NEW) -->
-        <h3 class="font-bold text-lg mb-3 border-l-4 border-gray-500 pl-2">Setup</h3>
-        <button onclick="window.location.href='/admin-categories?mode=normal'" class="w-full bg-indigo-600 p-4 rounded-xl mb-4 shadow-lg active:scale-95 transition flex items-center justify-between">
+        <!-- 1. CATEGORY MANAGEMENT (Create Games) -->
+        <h3 class="font-bold text-lg mb-3 border-l-4 border-gray-500 pl-2">System Setup</h3>
+        <button onclick="window.location.href='/admin-categories'" class="w-full bg-indigo-600 p-4 rounded-xl mb-4 shadow-lg active:scale-95 transition flex items-center justify-between border border-indigo-500 hover:bg-indigo-700">
             <div class="flex items-center gap-3">
-                <i class="fa-solid fa-layer-group text-2xl text-indigo-200"></i>
+                <div class="bg-white/20 p-2 rounded-full"><i class="fa-solid fa-layer-group text-xl text-white"></i></div>
                 <div class="text-left">
-                    <h3 class="font-bold text-md">Manage Game Category</h3>
-                    <p class="text-[10px] text-indigo-200">Create new game titles (Ludo, FreeFire)</p>
+                    <h3 class="font-bold text-md text-white">Manage Game Titles</h3>
+                    <p class="text-[10px] text-indigo-200">Create New Games / Tournaments</p>
                 </div>
             </div>
             <i class="fa-solid fa-chevron-right text-sm"></i>
         </button>
 
-        <!-- 2. Match Management Grid -->
-        <h3 class="font-bold text-lg mb-3 border-l-4 border-gray-500 pl-2">Operations</h3>
+        <!-- 2. MATCH OPERATIONS (Create Matches Inside Games) -->
+        <h3 class="font-bold text-lg mb-3 border-l-4 border-gray-500 pl-2">Match Operations</h3>
         <div class="grid grid-cols-2 gap-4 mb-4">
-            <!-- DAILY MATCHES -> Go directly to Matches Page -->
-            <a href="/admin-matches" class="block bg-blue-600 p-5 rounded-2xl text-center shadow-lg active:scale-95 transition no-underline text-white">
-                <i class="fa-solid fa-gamepad text-4xl mb-3"></i>
-                <h3 class="font-bold text-md leading-none">Daily<br>Matches</h3>
-                <span class="text-[10px] text-blue-200 block mt-2">Add Matches</span>
+            
+            <!-- DAILY MATCHES -> Select Category Mode -->
+            <a href="/admin-categories?mode=select&type=normal" class="block bg-blue-600 p-5 rounded-2xl text-center shadow-lg active:scale-95 transition no-underline text-white relative overflow-hidden group hover:bg-blue-700">
+                <i class="fa-solid fa-gamepad text-4xl mb-3 relative z-10"></i>
+                <h3 class="font-bold text-md leading-none relative z-10">Daily<br>Matches</h3>
             </a>
             
-            <!-- OFFICIAL TOURNAMENTS -->
-            <a href="/admin-categories?mode=official" class="block bg-yellow-600 p-5 rounded-2xl text-center shadow-lg active:scale-95 transition no-underline text-white">
-                <i class="fa-solid fa-trophy text-4xl mb-3 text-white"></i>
-                <h3 class="font-bold text-md leading-none">Official<br>Tournaments</h3>
-                <span class="text-[10px] text-yellow-100 block mt-2">Manage Events</span>
+            <!-- OFFICIAL -> Select Tournament Mode -->
+            <a href="/admin-categories?mode=select&type=official" class="block bg-yellow-600 p-5 rounded-2xl text-center shadow-lg active:scale-95 transition no-underline text-white relative overflow-hidden group hover:bg-yellow-700">
+                <i class="fa-solid fa-trophy text-4xl mb-3 text-white relative z-10"></i>
+                <h3 class="font-bold text-md leading-none relative z-10">Official<br>Events</h3>
             </a>
+
         </div>
 
-        <!-- System Section -->
-        <h3 class="font-bold text-lg mb-3 border-l-4 border-gray-500 pl-2">System</h3>
+        <!-- 3. USERS & SETTINGS -->
+        <h3 class="font-bold text-lg mb-3 border-l-4 border-gray-500 pl-2">Users & Settings</h3>
         <div class="grid grid-cols-2 gap-4">
-            <a href="/admin-users" class="bg-gray-800 p-4 rounded-xl flex flex-col items-center justify-center border border-gray-700">
+            <a href="/admin-users" class="bg-gray-800 p-4 rounded-xl flex flex-col items-center justify-center border border-gray-700 active:scale-95 hover:bg-gray-700">
                 <i class="fa-solid fa-users text-2xl text-gray-400 mb-1"></i>
                 <span class="text-xs font-bold text-gray-300">Users</span>
             </a>
-            <a href="#" onclick="openSettings()" class="bg-purple-600 p-4 rounded-xl flex flex-col items-center justify-center shadow-lg">
-                <i class="fa-solid fa-sliders text-2xl text-white mb-1"></i>
-                <span class="text-xs font-bold text-white">Settings</span>
-            </a>
+            <button onclick="openNotiModal()" class="bg-red-800 p-4 rounded-xl flex flex-col items-center justify-center border border-red-700 active:scale-95 hover:bg-red-700">
+                <i class="fa-solid fa-bell text-2xl text-white mb-1"></i>
+                <span class="text-xs font-bold text-white">Notify</span>
+            </button>
         </div>
         
-        <button onclick="openNotiModal()" class="w-full bg-red-800/80 text-red-100 mt-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 border border-red-700">
-            <i class="fa-solid fa-bell"></i> Send Notification
+        <button onclick="openSettings()" class="w-full bg-purple-700 p-3 mt-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:bg-purple-600">
+            <i class="fa-solid fa-sliders"></i> App Settings
         </button>
     </div>
-    <!-- ✅ UPDATE ENDS HERE ✅ -->
+    <!-- ✅ UPDATE END ✅ -->
 
-    <!-- (Keep Modals & Script Below As Is) -->
-    
-    <!-- MODALS Placeholders (Keep your previous modals code here) -->
+    <!-- Placeholders for Modals -->
     <!-- SETTINGS MODAL -->
     <div id="settingsModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
         <div class="bg-gray-800 p-6 rounded-xl w-full max-w-md border border-gray-600 shadow-2xl h-[85vh] flex flex-col">
             <h3 class="text-xl font-bold mb-4 text-white border-b border-gray-600 pb-2">App Settings</h3>
-            
             <div class="overflow-y-auto flex-1 space-y-3 pr-2 custom-scroll">
                 <div><label class="text-[10px] text-blue-400 uppercase font-bold ml-1">YouTube Link</label><input type="text" id="set_youtube" class="w-full bg-gray-900 p-2.5 rounded-lg border border-gray-600 text-white text-sm outline-none focus:border-blue-500"></div>
                 <div><label class="text-[10px] text-blue-400 uppercase font-bold ml-1">Telegram Link</label><input type="text" id="set_telegram" class="w-full bg-gray-900 p-2.5 rounded-lg border border-gray-600 text-white text-sm outline-none focus:border-blue-500"></div>
@@ -103,7 +99,6 @@
                 <div><label class="text-[10px] text-green-400 uppercase font-bold ml-1">Privacy Policy</label><textarea id="set_policy" rows="2" class="w-full bg-gray-900 p-2.5 rounded-lg border border-gray-600 text-white text-sm outline-none focus:border-green-500"></textarea></div>
                 <div><label class="text-[10px] text-gray-400 uppercase font-bold ml-1">App Version</label><input type="text" id="set_version" class="w-full bg-gray-900 p-2.5 rounded-lg border border-gray-600 text-white text-sm outline-none focus:border-gray-500"></div>
             </div>
-
             <div class="flex gap-3 mt-4">
                 <button onclick="document.getElementById('settingsModal').style.display='none'" class="flex-1 bg-gray-700 py-3 rounded-lg font-bold hover:bg-gray-600">Cancel</button>
                 <button onclick="saveSettings()" class="flex-1 bg-blue-600 py-3 rounded-lg font-bold hover:bg-blue-700">Save</button>
@@ -111,7 +106,7 @@
         </div>
     </div>
 
-    <!-- NOTIFICATION MODAL (ADVANCED) -->
+    <!-- NOTIFICATION MODAL -->
     <div id="notiModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
         <div class="bg-gray-800 p-6 rounded-xl w-full max-w-md border border-gray-600 shadow-2xl h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
@@ -123,13 +118,12 @@
                 <input type="text" id="noti_title" placeholder="Notice Title" class="w-full bg-gray-900 p-3 rounded-lg mb-3 border border-gray-600 text-white outline-none focus:border-blue-500">
                 <label class="text-[10px] text-gray-400 uppercase font-bold ml-1">Message</label>
                 <textarea id="noti_msg" rows="3" placeholder="Type here..." class="w-full bg-gray-900 p-3 rounded-lg mb-4 border border-gray-600 text-white outline-none focus:border-blue-500"></textarea>
-                <!-- Search Box -->
                 <div class="bg-gray-900 p-3 rounded-lg border border-gray-700">
                     <div class="flex justify-between items-center mb-2">
-                        <label class="text-[10px] text-gray-400 uppercase font-bold">Select Users</label>
+                        <label class="text-[10px] text-gray-400 uppercase font-bold">Target Audience</label>
                         <div class="flex items-center gap-2">
-                            <input type="checkbox" id="send_all" class="w-4 h-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500">
-                            <label for="send_all" class="text-xs text-white cursor-pointer select-none">Send to All</label>
+                            <input type="checkbox" id="send_all" class="w-4 h-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500" checked>
+                            <label for="send_all" class="text-xs text-white cursor-pointer select-none">All Users</label>
                         </div>
                     </div>
                 </div>
@@ -141,12 +135,8 @@
     </div>
 
     <script>
-        // Use user object logic instead of just token if auth is different
-        const userData = localStorage.getItem('user');
-        if (!userData) { window.location.href = 'index.html'; }
-        
-        const user = JSON.parse(userData);
-        if (user.role !== 'admin') { window.location.href = 'index.html'; }
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || user.role !== 'admin') window.location.href = '/';
 
         async function loadStats() {
             try {
@@ -154,21 +144,43 @@
                 const data = await res.json();
                 document.getElementById('total_users').innerText = data.total_users;
                 document.getElementById('pending_deposits').innerText = data.pending_deposits;
-                document.getElementById('pending_withdraws').innerText = data.pending_withdraws;
-                document.getElementById('total_tournaments').innerText = data.total_tournaments;
             } catch (e) {}
         }
 
-        // Functions needed
+        // Functions
         function logout() { localStorage.removeItem('user'); window.location.href = '/'; }
-        async function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; await fetchSettings(); } // Add fetchSettings logic
+        async function openSettings() { 
+            document.getElementById('settingsModal').style.display = 'flex'; 
+            const res = await fetch('/api/admin', { method:'POST', body: JSON.stringify({type:'get_settings'})});
+            const data = await res.json();
+            if(data) {
+                document.getElementById('set_youtube').value = data.youtube_link || '';
+                document.getElementById('set_telegram').value = data.telegram_link || '';
+                document.getElementById('set_whatsapp').value = data.whatsapp_number || '';
+                document.getElementById('set_announcement').value = data.announcement || '';
+                document.getElementById('set_notification').value = data.notification_msg || '';
+                document.getElementById('set_about').value = data.about_us || '';
+                document.getElementById('set_policy').value = data.privacy_policy || '';
+                document.getElementById('set_version').value = data.app_version || '';
+            }
+        }
+        
+        async function saveSettings() {
+            const body = { type:'update_settings', youtube: document.getElementById('set_youtube').value, telegram: document.getElementById('set_telegram').value, whatsapp: document.getElementById('set_whatsapp').value, announcement: document.getElementById('set_announcement').value, notification: document.getElementById('set_notification').value, about: document.getElementById('set_about').value, policy: document.getElementById('set_policy').value, version: document.getElementById('set_version').value };
+            await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+            alert("Updated!"); document.getElementById('settingsModal').style.display='none';
+        }
+
         function openNotiModal() { document.getElementById('notiModal').style.display = 'flex'; }
         function closeNotiModal() { document.getElementById('notiModal').style.display = 'none'; }
         
-        // Re-adding essential save/load setting functions minimally if missing
-        async function fetchSettings() { /* Call api get_settings */ }
-        async function saveSettings() { /* Call api update_settings */ }
-        async function sendNoti() { /* Call api send_notification */ }
+        async function sendNoti() {
+            const t = document.getElementById('noti_title').value;
+            const m = document.getElementById('noti_msg').value;
+            if(!t || !m) return alert("Fill details");
+            await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'send_notification', title:t, message:m, send_to_all:true }) });
+            alert("Sent!"); closeNotiModal();
+        }
 
         loadStats();
     </script>
