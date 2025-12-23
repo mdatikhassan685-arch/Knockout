@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Matches Manager</title>
+    <title>Match Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>.custom-scroll::-webkit-scrollbar { width: 4px; background: #374151; } .custom-scroll::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 4px; }</style>
 </head>
 <body class="bg-gray-900 text-white pb-24 select-none">
@@ -14,12 +14,12 @@
     <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50 border-b border-gray-700">
         <a href="/admin-dashboard.html" class="mr-4 text-gray-400 active:scale-90"><i class="fa-solid fa-arrow-left text-xl"></i></a>
         <div>
-            <h1 class="font-bold text-lg leading-tight truncate w-64" id="cat_title">Manage Daily Matches</h1>
-            <p class="text-[10px] text-gray-400">Add & Edit</p>
+            <h1 class="font-bold text-lg leading-tight truncate w-64" id="cat_title">Manage Matches</h1>
+            <p class="text-[10px] text-gray-400">Match Operations</p>
         </div>
     </header>
 
-    <!-- Create Match Form -->
+    <!-- Create/Edit Form -->
     <div class="p-4 bg-gray-800 m-4 rounded-xl border border-gray-700 shadow-lg">
         <h3 class="font-bold text-md mb-3 border-b border-gray-600 pb-2 flex justify-between items-center text-white">
             <span id="form_title">Create New Match</span>
@@ -28,15 +28,15 @@
         
         <input type="hidden" id="match_id">
 
-        <!-- Category Dropdown (Automatically Loaded) -->
+        <!-- Category Dropdown (Fix Added) -->
         <select id="cat_id" class="w-full bg-gray-900 p-3 mb-2 rounded-lg border border-gray-600 outline-none text-white focus:border-blue-500">
-            <option value="">Select Game...</option>
+            <option value="">Loading Games...</option>
         </select>
 
         <input type="text" id="m_title" placeholder="Match Title (e.g. Solo Rush #1)" class="w-full bg-gray-900 p-3 rounded-lg mb-2 text-sm border border-gray-600 outline-none text-white focus:border-blue-500 transition">
         
         <div class="grid grid-cols-2 gap-2 mb-2">
-            <input type="number" id="m_fee" placeholder="Entry Fee (0 for Free)" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
+            <input type="number" id="m_fee" placeholder="Entry Fee" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
             <input type="number" id="m_prize" placeholder="Winning Prize" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
         </div>
 
@@ -45,9 +45,8 @@
                 <option value="Solo">Solo</option>
                 <option value="Duo">Duo</option>
                 <option value="Squad">Squad</option>
-                <option value="Clash Squad">Clash Squad</option>
             </select>
-            <input type="number" id="m_spots" placeholder="Total Spots (e.g 48)" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
+            <input type="number" id="m_spots" placeholder="Total Spots" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
         </div>
 
         <div class="grid grid-cols-2 gap-2 mb-2">
@@ -55,7 +54,6 @@
             <input type="text" id="m_map" placeholder="Map Name" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
         </div>
 
-        <!-- Date Input (Formatted for correct DB Storage) -->
         <input type="datetime-local" id="m_time" class="w-full bg-gray-900 p-3 rounded-lg mb-4 border border-gray-600 outline-none text-gray-400 text-sm focus:border-blue-500">
 
         <button onclick="handleMatch()" id="submit_btn" class="w-full bg-blue-600 py-3 rounded-lg font-bold shadow-lg hover:bg-blue-700 transition transform active:scale-95 text-white">Publish Match</button>
@@ -70,108 +68,107 @@
     </div>
 
     <script>
-        // ✅ Authentication Check
+        // Authentication Check
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || user.role !== 'admin') window.location.href = 'index.html';
 
         const urlParams = new URLSearchParams(window.location.search);
         const urlCatId = urlParams.get('cat_id');
+        if(urlParams.get('name')) document.getElementById('cat_title').innerText = decodeURIComponent(urlParams.get('name'));
 
-        // 1. Load Categories for Dropdown
-        async function loadCats() {
-            const res = await fetch('/api/admin', { method: 'POST', body: JSON.stringify({ type: 'get_categories' }) });
-            const data = await res.json();
-            const sel = document.getElementById('cat_id');
-            sel.innerHTML = '<option value="">Select Game...</option>';
-            data.forEach(c => {
-                if (c.type !== 'official') {
-                    // Auto-select if came from dashboard
-                    const selected = (c.id == urlCatId) ? 'selected' : '';
-                    sel.innerHTML += `<option value="${c.id}" ${selected}>${c.title}</option>`;
-                }
-            });
+        // 1. Load Categories with Async Fix
+        async function loadCatsAndMatches() {
+            try {
+                // Categories load
+                const res = await fetch('/api/admin', { method: 'POST', body: JSON.stringify({ type: 'get_categories' }) });
+                const data = await res.json();
+                
+                const sel = document.getElementById('cat_id');
+                sel.innerHTML = '<option value="">Select Game...</option>';
+                
+                data.forEach(c => {
+                    if (c.type !== 'official') {
+                        // Auto-select if matches URL cat_id
+                        const selected = (c.id == urlCatId) ? 'selected' : '';
+                        sel.innerHTML += `<option value="${c.id}" ${selected}>${c.title}</option>`;
+                    }
+                });
+
+                // After Cats loaded, Load Matches
+                loadMatches();
+
+            } catch(e) { console.error(e); }
         }
 
         // 2. Load Matches List
         async function loadMatches() {
-            // Load all or filter by category if needed
-            // Currently loading all daily matches for admin view
             try {
                 const res = await fetch('/api/admin', { 
                     method: 'POST', 
                     headers: {'Content-Type':'application/json'}, 
                     body: JSON.stringify({ type: 'get_admin_matches', category_id: urlCatId }) 
                 });
-                
                 const matches = await res.json();
                 const list = document.getElementById('match_list');
                 
                 if(matches.length > 0) {
-                    list.innerHTML = matches.map((m, i) => {
-                        // Date Formatting for Display
-                        const displayDate = new Date(m.match_time).toLocaleString('en-US', { 
-                            day: 'numeric', month: 'short', year: 'numeric', 
-                            hour: 'numeric', minute: 'numeric', hour12: true 
-                        });
-
-                        return `
-                        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 relative shadow-md hover:border-blue-500 transition group">
-                            <!-- Header -->
+                    list.innerHTML = matches.map(m => `
+                        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 relative shadow-md group hover:border-blue-500 transition">
                             <div class="flex justify-between items-start mb-3">
                                 <div>
                                     <h4 class="font-bold text-white text-md tracking-wide">#${m.id} ${m.title}</h4>
-                                    <p class="text-xs text-blue-300 mt-1 flex items-center gap-1 font-mono"><i class="fa-regular fa-clock"></i> ${displayDate}</p>
+                                    <p class="text-xs text-blue-300 mt-1 font-mono"><i class="fa-regular fa-clock"></i> ${new Date(m.match_time).toLocaleString()}</p>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button onclick='editMatch(${JSON.stringify(m)})' class="bg-yellow-600/20 text-yellow-500 p-2 rounded hover:bg-yellow-600 hover:text-black transition"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick='editMatch(${JSON.stringify(m).replace(/'/g, "&#39;")})' class="bg-yellow-600/20 text-yellow-500 p-2 rounded hover:bg-yellow-600 hover:text-black transition"><i class="fa-solid fa-pen"></i></button>
                                     <button onclick="deleteMatch(${m.id})" class="bg-red-600/20 text-red-500 p-2 rounded hover:bg-red-600 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             </div>
-
+                            
                             <div class="grid grid-cols-2 gap-2 items-center mt-4">
                                 <select onchange="updateStatus(${m.id}, this.value)" class="w-full bg-black/20 text-xs p-2 rounded border border-gray-600 text-white outline-none focus:border-blue-500 font-bold uppercase">
                                     <option value="upcoming" ${m.status==='upcoming'?'selected':''}>🔵 Upcoming</option>
-                                    <option value="open" ${m.status==='open'?'selected':''}>🟢 Open (Join ON)</option>
+                                    <option value="open" ${m.status==='open'?'selected':''}>🟢 Open</option>
                                     <option value="live" ${m.status==='live'?'selected':''}>🔴 Live</option>
-                                    <option value="completed" ${m.status==='completed'?'selected':''}>🏁 Completed</option>
+                                    <option value="completed" ${m.status==='completed'?'selected':''}>🏁 Done</option>
                                 </select>
-                                <button onclick="alert('Player list logic needed')" class="bg-gray-700 border border-gray-600 py-2 rounded text-xs font-bold hover:bg-gray-600 text-gray-300">View Players</button>
+                                <button onclick="alert('Result Feature is Next')" class="bg-gray-700 border border-gray-600 py-2 rounded text-xs font-bold hover:bg-gray-600 text-gray-300">Set Result</button>
                             </div>
-                        </div>`;
-                    }).join('');
+                        </div>
+                    `).join('');
                 } else {
                     list.innerHTML = `<div class="text-center py-10 opacity-50 border-2 border-dashed border-gray-700 rounded-xl"><p>No matches found.</p></div>`;
                 }
-            } catch(e) { console.error(e); }
+            } catch(e) {}
         }
 
-        // 3. 🔥 FIX: Handle Match (Timezone Fixed)
+        // 3. Create or Update Match
         async function handleMatch() {
             const id = document.getElementById('match_id').value;
-            const timeVal = document.getElementById('m_time').value;
+            let timeVal = document.getElementById('m_time').value;
 
             // Date Correction Logic
-            let formattedTime = timeVal; 
-            // Input 'datetime-local' sends format 'YYYY-MM-DDTHH:MM'. DB needs 'YYYY-MM-DD HH:MM:SS'
-            if (timeVal) {
-                formattedTime = timeVal.replace('T', ' ') + ':00';
-            }
+            if (timeVal) timeVal = timeVal.replace('T', ' ') + ':00';
+
+            const cat = document.getElementById('cat_id').value;
+            const title = document.getElementById('m_title').value;
+
+            if(!cat) return alert("Select a Game Category first!");
+            if(!title || !timeVal) return alert("Fill required fields (Title, Date)");
 
             const body = {
                 type: id ? 'edit_match' : 'create_daily_match', 
                 match_id: id,
-                category_id: document.getElementById('cat_id').value,
-                title: document.getElementById('m_title').value,
+                category_id: cat,
+                title: title,
                 entry_fee: document.getElementById('m_fee').value || 0,
-                prize_pool: document.getElementById('m_prize').value || 0, 
-                per_kill: document.getElementById('m_kill').value || 0,    
-                map: document.getElementById('m_map').value,          
-                match_time: formattedTime, // 🔥 Sending corrected format
+                prize_pool: document.getElementById('m_prize').value || 0,
+                per_kill: document.getElementById('m_kill').value || 0,
+                map: document.getElementById('m_map').value,
+                match_time: timeVal,
                 match_type: document.getElementById('m_type').value,
                 total_spots: document.getElementById('m_spots').value || 48
             };
-
-            if(!body.title || !body.match_time || !body.category_id) return alert("Fill required fields (Category, Title, Date)");
 
             const btn = document.getElementById('submit_btn');
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing...`;
@@ -196,14 +193,18 @@
         }
 
         async function deleteMatch(id) {
-            if(!confirm("⚠️ Delete this match?")) return;
+            if(!confirm("⚠️ Delete match?")) return;
             await fetch('/api/admin', { method:'POST', body: JSON.stringify({ type:'delete_match', id:id }) });
             loadMatches();
         }
 
         function editMatch(m) {
             document.getElementById('match_id').value = m.id;
-            document.getElementById('cat_id').value = m.category_id; // Set Correct Category
+            
+            // ✅ Fix: Set Dropdown Value Safely
+            const catSel = document.getElementById('cat_id');
+            if (catSel) catSel.value = m.category_id;
+
             document.getElementById('m_title').value = m.title;
             document.getElementById('m_fee').value = m.entry_fee;
             document.getElementById('m_prize').value = m.prize_pool; 
@@ -211,20 +212,18 @@
             document.getElementById('m_map').value = m.map || '';
             document.getElementById('m_type').value = m.match_type;
             
-            // 🔥 Timezone Aware Edit Fill
+            // 🔥 Timezone Fix for Edit Input
             if(m.match_time) {
-                // DB gives UTC string or Local string depending on setup.
-                // We convert it to a local 'YYYY-MM-DDTHH:MM' format for the input field.
-                const d = new Date(m.match_time);
-                // Trick to format local time correctly for input
-                const pad = (n) => n < 10 ? '0'+n : n;
-                const localStr = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
-                document.getElementById('m_time').value = localStr;
+                const dt = new Date(m.match_time);
+                // Correct local timezone offset
+                const offset = dt.getTimezoneOffset() * 60000;
+                const localISOTime = (new Date(dt - offset)).toISOString().slice(0, 16);
+                document.getElementById('m_time').value = localISOTime;
             }
 
             document.getElementById('submit_btn').innerText = "Update Match";
-            document.getElementById('submit_btn').classList.remove('bg-blue-600', 'hover:bg-blue-700');
-            document.getElementById('submit_btn').classList.add('bg-green-600', 'hover:bg-green-700');
+            document.getElementById('submit_btn').className = "w-full bg-green-600 py-3 rounded-lg font-bold shadow-lg text-white hover:bg-green-700";
+            
             document.getElementById('cancel_btn').classList.remove('hidden');
             document.getElementById('form_title').innerText = "Edit Mode";
             window.scrollTo({top:0, behavior:'smooth'});
@@ -239,17 +238,19 @@
             document.getElementById('m_kill').value = '';
             document.getElementById('m_map').value = '';
             
+            // Re-select category from URL if present
+            if(urlCatId) document.getElementById('cat_id').value = urlCatId;
+
             const btn = document.getElementById('submit_btn');
             btn.innerText = "Publish Match";
-            btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-            btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            btn.className = "w-full bg-blue-600 py-3 rounded-lg font-bold shadow-lg text-white hover:bg-blue-700";
             
             document.getElementById('cancel_btn').classList.add('hidden');
             document.getElementById('form_title').innerText = "Create New Match";
         }
 
-        loadCats();
-        loadMatches();
+        // Initialize (Load categories first, then matches)
+        loadCatsAndMatches();
     </script>
 </body>
 </html>
