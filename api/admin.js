@@ -91,18 +91,44 @@ module.exports = async (req, res) => {
             return res.status(200).json({ success: true, message: 'Updated Successfully' }); 
         }
 
-        // 4. Delete Category (🔥🔥🔥 FIXED FOR SAFETY 🔥🔥🔥)
+        // ============================
+        // 🗑️ SUPER FORCE DELETE CATEGORY
+        // ============================
         if (type === 'delete_category') {
-            // স্টেপ ১: এই ক্যাটাগরির সব ম্যাচের সব প্লেয়ার আগে ডিলিট করা
-            await db.execute('DELETE mp FROM match_participants mp JOIN matches m ON mp.match_id = m.id WHERE m.category_id = ?', [id]);
+            try {
+                // ১. চেক করি আগে কোন কোন ম্যাচের সাথে এটা যুক্ত আছে
+                const [matches] = await db.execute('SELECT id FROM matches WHERE category_id = ?', [id]);
+                
+                // যদি ম্যাচ পাওয়া যায়, তাহলে সেই ম্যাচগুলো আগে লুপ করে তাদের প্লেয়ার ডিলিট করি
+                if (matches.length > 0) {
+                    const matchIds = matches.map(m => m.id);
+                    // ইন (IN) কুয়েরি ব্যবহার করে একবারে সব প্লেয়ার ডিলিট
+                    await db.execute(`DELETE FROM match_participants WHERE match_id IN (${matchIds.join(',')})`);
+                    // এবার ম্যাচগুলো ডিলিট
+                    await db.execute(`DELETE FROM matches WHERE id IN (${matchIds.join(',')})`);
+                }
 
-            // স্টেপ ২: এই ক্যাটাগরির সব ম্যাচ ডিলিট করা
-            await db.execute('DELETE FROM matches WHERE category_id = ?', [id]);
+                // ২. যদি আগের লজিকে কাজ না করে, ডাইরেক্ট কনস্ট্রেইন্ট বাদে ফোর্স ডিলিট
+                // (Optional: কিন্তু আপনার সিস্টেমে কাজ করবে)
+                await db.execute('DELETE FROM matches WHERE category_id = ?', [id]);
 
-            // স্টেপ ৩: এবার ক্যাটাগরি ডিলিট করা (কোনো এরর ছাড়াই হবে)
-            await db.execute('DELETE FROM categories WHERE id = ?', [id]);
+                // ৩. অবশেষে ক্যাটাগরি ডিলিট
+                const [result] = await db.execute('DELETE FROM categories WHERE id = ?', [id]);
 
-            return res.status(200).json({ success: true, message: 'Deleted Successfully' }); 
+                if (result.affectedRows > 0) {
+                    return res.status(200).json({ success: true, message: 'Deleted Successfully!' });
+                } else {
+                    return res.status(400).json({ error: 'Category ID not found or already deleted.' });
+                }
+
+            } catch (error) {
+                console.error("Delete Error:", error);
+                // যদি Foreign Key সমস্যা হয়
+                if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+                    return res.status(400).json({ error: 'Cannot delete: Matches are linked. Try clearing matches first.' });
+                }
+                return res.status(500).json({ error: 'Database delete failed: ' + error.message });
+            }
         }
 
 
