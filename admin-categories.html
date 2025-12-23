@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Categories</title>
+    <title>Categories Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>body { user-select: none; }</style>
@@ -14,18 +14,18 @@
     <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50 border-b border-gray-700">
         <a href="/admin" class="mr-4 text-gray-400 active:scale-90"><i class="fa-solid fa-arrow-left text-xl"></i></a>
         <div>
-            <div class="text-xl font-bold" id="page_title">Game Categories</div>
-            <p class="text-[10px] text-gray-400" id="page_sub">Manage Games & Tournaments</p>
+            <div class="text-xl font-bold" id="page_title">Manage Categories</div>
+            <p class="text-[10px] text-gray-400" id="page_sub">Setup Games</p>
         </div>
     </header>
 
-    <!-- Create Form (Hidden in Select Mode) -->
+    <!-- CREATE FORM (Only Visible when managing categories) -->
     <div class="p-4 bg-gray-800 m-4 rounded-xl border border-gray-700 shadow-lg" id="create_section">
-        <h3 class="font-bold text-md mb-3 border-b border-gray-600 pb-2 text-white">Add New Category</h3>
+        <h3 class="font-bold text-md mb-3 border-b border-gray-600 pb-2 text-white">Create New Category</h3>
         
         <input type="hidden" id="edit_id">
 
-        <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">Category Type</label>
+        <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">Type</label>
         <select id="cat_type" class="w-full bg-gray-900 p-3 rounded-lg mb-3 border border-gray-600 outline-none text-white focus:border-indigo-500">
             <option value="normal">Daily Match (Normal)</option>
             <option value="official">Official Tournament</option>
@@ -38,14 +38,14 @@
         <input type="text" id="cat_img" placeholder="https://..." class="w-full bg-gray-900 p-3 rounded-lg mb-4 border border-gray-600 outline-none text-white focus:border-indigo-500">
         
         <button onclick="handleCategory()" id="submit_btn" class="w-full bg-indigo-600 py-3 rounded-lg font-bold shadow-lg transition hover:bg-indigo-700 text-white">Create Category</button>
-        <button onclick="resetForm()" id="cancel_btn" class="hidden w-full mt-2 text-xs text-red-400 bg-gray-700 py-2 rounded">Cancel Edit</button>
+        <button onclick="resetForm()" id="cancel_btn" class="hidden w-full mt-2 text-xs text-red-400 bg-gray-700 py-2 rounded border border-red-900">Cancel Edit</button>
     </div>
 
-    <!-- Category List -->
+    <!-- LIST SECTION -->
     <div class="px-4">
-        <h3 class="font-bold text-lg mb-3 pl-2 border-l-4 border-indigo-500" id="list_title">Category List</h3>
+        <h3 class="font-bold text-lg mb-3 pl-2 border-l-4 border-indigo-500" id="list_title">All Categories</h3>
         <div id="cat_list" class="space-y-3 pb-10">
-            <p class="text-center text-gray-500 mt-10">Loading...</p>
+            <p class="text-center text-gray-500 mt-10 animate-pulse">Loading data...</p>
         </div>
     </div>
 
@@ -54,12 +54,14 @@
         const mode = urlParams.get('mode'); // 'select' or null
         const filterType = urlParams.get('type'); // 'normal' or 'official'
 
-        // UI Initialization
+        // UI Initialization Logic
         if (mode === 'select') {
+            // SELECT MODE: Hide form, Change titles
             document.getElementById('create_section').style.display = 'none';
-            document.getElementById('page_title').innerText = filterType === 'official' ? 'Select Tournament' : 'Select Game';
-            document.getElementById('page_sub').innerText = 'Click to open match manager';
-            document.getElementById('list_title').innerText = "Tap to Manage Matches";
+            const typeText = filterType === 'official' ? 'Official Tournaments' : 'Daily Matches';
+            document.getElementById('page_title').innerText = "Select Game";
+            document.getElementById('page_sub').innerText = `Tap to manage ${typeText}`;
+            document.getElementById('list_title').innerText = "Tap a Game to Continue";
         }
 
         async function loadData() {
@@ -75,63 +77,62 @@
                 
                 const list = document.getElementById('cat_list');
                 
-                // Filter logic
+                // Filter Categories based on URL type
                 const filtered = data.filter(c => {
                     if (mode === 'select') {
                         if (filterType === 'official') return c.type === 'official';
                         if (filterType === 'normal') return c.type === 'normal' || !c.type;
                     }
-                    return true;
+                    return true; // Show all in Manage Mode
                 });
 
                 if(filtered.length > 0) {
                     list.innerHTML = filtered.map(c => {
-                        const badgeColor = c.type === 'official' ? 'bg-yellow-600 text-black' : 'bg-blue-600 text-white';
-                        let actionHTML = '';
-
-                        // Decide actions based on mode
-                        if (mode === 'select') {
-                            // If selector mode, click opens match list
-                            // Daily matches go to admin-matches.html
-                            // Official goes to same (but filtered inside)
-                            actionHTML = `onclick="window.location.href='/admin-matches?cat_id=${c.id}&name=${c.title}'"`;
-                        }
-
-                        // Edit/Delete buttons (Only in Manage Mode)
+                        const badgeColor = c.type === 'official' ? 'bg-yellow-500 text-black' : 'bg-blue-600 text-white';
+                        const badgeText = c.type === 'official' ? 'OFFICIAL' : 'NORMAL';
+                        
+                        let cardOnClick = '';
                         let manageButtons = '';
-                        if (mode !== 'select') {
-                            // Notice: using encodeURIComponent for safe string passing
-                            const safeTitle = c.title.replace(/'/g, "\\'"); 
+
+                        // 🔥 IMPORTANT LOGIC HERE 🔥
+                        if (mode === 'select') {
+                            // If select mode, entire card is clickable -> Go to Matches Page
+                            // Use encodeURIComponent to handle spaces in names
+                            cardOnClick = `onclick="window.location.href='/admin-matches?cat_id=${c.id}&name=${encodeURIComponent(c.title)}'"`;
+                        } else {
+                            // If manage mode, show Edit/Delete buttons
+                            const safeTitle = c.title.replace(/'/g, "\\'"); // Prevent JS break on single quotes
                             manageButtons = `
-                            <div class="flex flex-col gap-2 border-l border-gray-700 pl-3 ml-2">
-                                <button onclick="editCat(${c.id}, '${safeTitle}', '${c.image}', '${c.type}')" class="text-yellow-500 p-1 bg-gray-800 rounded hover:bg-yellow-600 hover:text-black"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="deleteCat(${c.id})" class="text-red-500 p-1 bg-gray-800 rounded hover:bg-red-600 hover:text-white"><i class="fa-solid fa-trash"></i></button>
+                            <div class="flex flex-col gap-2 border-l border-gray-700 pl-3 ml-2" onclick="event.stopPropagation()">
+                                <button onclick="editCat(${c.id}, '${safeTitle}', '${c.image}', '${c.type}')" class="text-yellow-400 bg-gray-900 p-1.5 rounded hover:bg-yellow-500 hover:text-black transition"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteCat(${c.id})" class="text-red-400 bg-gray-900 p-1.5 rounded hover:bg-red-500 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
                             </div>`;
                         }
 
                         return `
-                        <div ${actionHTML} class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center group relative overflow-hidden active:scale-95 transition ${mode==='select'?'cursor-pointer hover:border-indigo-500 shadow-md':''}">
-                            <span class="absolute top-0 left-0 ${badgeColor} text-[9px] font-bold px-2 py-0.5 rounded-br-lg uppercase tracking-wide">${c.type || 'Normal'}</span>
-                            <div class="flex items-center gap-4 pl-1">
-                                <img src="${c.image}" class="w-14 h-14 rounded-lg object-cover bg-black/30 border border-gray-600" onerror="this.src='https://placehold.co/100?text=GAME'">
+                        <div ${cardOnClick} class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center group relative overflow-hidden active:scale-95 transition shadow-lg ${mode === 'select' ? 'cursor-pointer hover:border-indigo-500 hover:bg-gray-750' : ''}">
+                            <span class="absolute top-0 left-0 ${badgeColor} text-[9px] font-bold px-2 py-0.5 rounded-br-lg uppercase tracking-wide shadow-sm">${badgeText}</span>
+                            
+                            <div class="flex items-center gap-4 pl-2 flex-1">
+                                <img src="${c.image}" class="w-14 h-14 rounded-lg object-cover bg-black/40 border border-gray-600 shadow-md" onerror="this.src='https://placehold.co/100?text=GAME'">
                                 <div>
-                                    <h4 class="font-bold text-white text-md tracking-wide">${c.title}</h4>
-                                    <p class="text-[10px] text-gray-400 font-mono">ID: ${c.id}</p>
+                                    <h4 class="font-bold text-white text-md tracking-wide leading-tight mb-1">${c.title}</h4>
+                                    <p class="text-[10px] text-gray-400 font-mono bg-gray-900 inline px-1.5 py-0.5 rounded border border-gray-700">ID: ${c.id}</p>
                                 </div>
                             </div>
                             ${manageButtons}
                         </div>`;
                     }).join('');
                 } else {
-                    list.innerHTML = `<div class="text-center py-10 opacity-50 border-2 border-dashed border-gray-700 rounded-xl mx-4 text-sm text-gray-400">No games found.<br>${mode !== 'select' ? 'Create new from form above.' : ''}</div>`;
+                    list.innerHTML = `<div class="text-center py-10 opacity-50 border-2 border-dashed border-gray-700 rounded-xl mx-4 text-sm text-gray-400"><i class="fa-solid fa-box-open text-3xl mb-2"></i><br>No ${filterType || ''} games found.<br>${mode !== 'select' ? 'Create new from form above.' : ''}</div>`;
                 }
             } catch(e) { 
                 console.error(e);
-                document.getElementById('cat_list').innerHTML = `<p class="text-center text-red-400 text-sm py-4">Failed to load data.</p>`;
+                document.getElementById('cat_list').innerHTML = `<p class="text-center text-red-400 text-sm py-4">Failed to load data. Server Error.</p>`;
             }
         }
 
-        // Add / Update
+        // CREATE / UPDATE FUNCTION
         async function handleCategory() {
             const title = document.getElementById('cat_title').value;
             const img = document.getElementById('cat_img').value;
@@ -141,6 +142,7 @@
             if(!title || !img) return alert("Please fill Title and Image URL");
 
             const btn = document.getElementById('submit_btn');
+            const originalText = btn.innerText;
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing...`;
             btn.disabled = true;
 
@@ -161,22 +163,25 @@
                     alert("Error: " + data.error);
                 }
             } catch(e) {
-                alert("Request Failed!");
+                alert("Network Request Failed!");
             }
             
-            btn.innerHTML = "Create Category";
+            btn.innerText = originalText; // Reset text depending on mode? No just revert logic
+            // But we have separate text for Create vs Update.
+            // Reset form handles text.
             btn.disabled = false;
         }
 
-        // Edit Helper
         function editCat(id, t, i, type) {
             document.getElementById('edit_id').value = id;
             document.getElementById('cat_title').value = t;
             document.getElementById('cat_img').value = i;
             document.getElementById('cat_type').value = type || 'normal';
             
-            document.getElementById('submit_btn').innerText = "Update Category";
-            document.getElementById('submit_btn').className = "w-full bg-yellow-600 py-3 rounded-lg font-bold shadow-lg transition text-white hover:bg-yellow-700";
+            const btn = document.getElementById('submit_btn');
+            btn.innerText = "Update Category";
+            btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+            btn.classList.add('bg-green-600', 'hover:bg-green-700');
             
             document.getElementById('cancel_btn').classList.remove('hidden');
             window.scrollTo({top:0, behavior:'smooth'});
@@ -187,15 +192,16 @@
             document.getElementById('cat_title').value = '';
             document.getElementById('cat_img').value = '';
             
-            document.getElementById('submit_btn').innerText = "Create Category";
-            document.getElementById('submit_btn').className = "w-full bg-indigo-600 py-3 rounded-lg font-bold shadow-lg transition hover:bg-indigo-700 text-white";
+            const btn = document.getElementById('submit_btn');
+            btn.innerText = "Create Category";
+            btn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            btn.classList.remove('bg-green-600', 'hover:bg-green-700');
             
             document.getElementById('cancel_btn').classList.add('hidden');
         }
 
-        // Delete Helper
         async function deleteCat(id) {
-            if(!confirm("⚠️ ATTENTION: Deleting this category will delete ALL MATCHES inside it. Continue?")) return;
+            if(!confirm("⚠️ ATTENTION: Deleting this category will delete ALL MATCHES inside it forever. Are you sure?")) return;
             
             try {
                 const res = await fetch('/api/admin', { 
@@ -210,7 +216,7 @@
                 } else {
                     alert("Delete Failed: " + data.error);
                 }
-            } catch(e) { alert("Delete Error"); }
+            } catch(e) { alert("Delete Network Error"); }
         }
 
         loadData();
