@@ -28,14 +28,15 @@
         
         <input type="hidden" id="match_id">
 
+        <!-- Category Dropdown -->
         <select id="cat_id" class="w-full bg-gray-900 p-3 mb-2 rounded-lg border border-gray-600 outline-none text-white focus:border-blue-500">
-            <option value="">Loading Games...</option>
+            <option value="">Select Game...</option>
         </select>
 
         <input type="text" id="m_title" placeholder="Match Title (e.g. Solo Rush #1)" class="w-full bg-gray-900 p-3 rounded-lg mb-2 text-sm border border-gray-600 outline-none text-white focus:border-blue-500 transition">
         
         <div class="grid grid-cols-2 gap-2 mb-2">
-            <input type="number" id="m_fee" placeholder="Entry Fee" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
+            <input type="number" id="m_fee" placeholder="Entry Fee (0 for Free)" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
             <input type="number" id="m_prize" placeholder="Winning Prize" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
         </div>
 
@@ -44,8 +45,9 @@
                 <option value="Solo">Solo</option>
                 <option value="Duo">Duo</option>
                 <option value="Squad">Squad</option>
+                <option value="Clash Squad">Clash Squad</option>
             </select>
-            <input type="number" id="m_spots" placeholder="Total Spots (e.g. 48)" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
+            <input type="number" id="m_spots" placeholder="Total Spots" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
         </div>
 
         <div class="grid grid-cols-2 gap-2 mb-2">
@@ -67,7 +69,7 @@
     </div>
 
     <script>
-        // Authentication
+        // Authentication Check
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || user.role !== 'admin') window.location.href = 'index.html';
 
@@ -77,88 +79,135 @@
 
         if(urlCatName) document.getElementById('cat_title').innerText = decodeURIComponent(urlCatName);
 
-        // 1. Load Categories
+        // 1. SAFE LOAD FUNCTION (Async/Await Fixed)
         async function loadCatsAndMatches() {
             try {
-                const res = await fetch('/api/admin', { method: 'POST', body: JSON.stringify({ type: 'get_categories' }) });
-                const data = await res.json();
+                // CATEGORIES LOAD FIRST
+                const res = await fetch('/api/admin', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'get_categories' }) 
+                });
                 
+                if(!res.ok) throw new Error("Server Error");
+
+                const data = await res.json();
                 const sel = document.getElementById('cat_id');
                 sel.innerHTML = '<option value="">Select Game...</option>';
                 
                 let foundSelected = false;
-                data.forEach(c => {
-                    if (c.type !== 'official') {
-                        const isSelected = (c.id == urlCatId);
-                        if (isSelected) foundSelected = true;
-                        sel.innerHTML += `<option value="${c.id}" ${isSelected ? 'selected' : ''}>${c.title}</option>`;
-                    }
-                });
+                
+                if(Array.isArray(data)) {
+                    data.forEach(c => {
+                        // Only show Normal Games (Daily Match)
+                        if (!c.type || c.type !== 'official') {
+                            const isSelected = (urlCatId && c.id == urlCatId);
+                            if(isSelected) foundSelected = true;
+                            sel.innerHTML += `<option value="${c.id}" ${isSelected ? 'selected' : ''}>${c.title}</option>`;
+                        }
+                    });
+                }
 
+                // If loaded from URL, disable dropdown to prevent error
                 if(urlCatId && foundSelected) {
                     sel.value = urlCatId;
-                    sel.disabled = true; // লক করে দিলাম যাতে অন্য গেমে অ্যাড না হয়
+                    sel.disabled = true;
                     sel.classList.add("bg-gray-800", "text-gray-500");
                 }
 
+                // NOW LOAD MATCHES (After Cats Loaded)
                 loadMatches();
-            } catch(e) { console.error(e); }
+
+            } catch(e) { 
+                console.error("Init Error:", e);
+                // Even if categories fail, try loading matches
+                loadMatches();
+            }
         }
 
-        // 2. Load Matches (Safe & Fixed)
+        // 2. MATCH LOAD FUNCTION (Safe Mode)
         async function loadMatches() {
             try {
+                // Get active category ID
                 const activeCatId = urlCatId || document.getElementById('cat_id').value;
+                
+                // If not URL driven, check if dropdown has value, else load ALL matches
+                // Sending 'null' explicitly if no cat selected
+                const payload = { 
+                    type: 'get_admin_matches',
+                    category_id: activeCatId ? activeCatId : null 
+                };
+
                 const res = await fetch('/api/admin', { 
                     method: 'POST', 
                     headers: {'Content-Type':'application/json'}, 
-                    body: JSON.stringify({ type: 'get_admin_matches', category_id: activeCatId || null }) // null হ্যান্ডেলিং করা হলো
+                    body: JSON.stringify(payload) 
                 });
                 
-                if (!res.ok) throw new Error('API Failed');
+                if (!res.ok) throw new Error('API Response Error');
                 
                 const matches = await res.json();
                 const list = document.getElementById('match_list');
                 
-                if (matches && matches.length > 0) {
+                if (Array.isArray(matches) && matches.length > 0) {
                     list.innerHTML = matches.map(m => `
-                        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 relative shadow-md mb-3">
+                        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 relative shadow-md mb-3 group hover:border-blue-500 transition">
                             <div class="flex justify-between items-start mb-2">
                                 <div>
                                     <h4 class="font-bold text-white text-sm tracking-wide">#${m.id} ${m.title}</h4>
-                                    <p class="text-[10px] text-blue-300 font-mono">${new Date(m.match_time).toLocaleString()}</p>
+                                    <!-- টাইম ফরম্যাটিং ফিক্স (স্থানীয় সময়) -->
+                                    <p class="text-xs text-blue-300 mt-1 font-mono"><i class="fa-regular fa-clock"></i> ${new Date(m.match_time).toLocaleString()}</p>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button onclick='editMatch(${JSON.stringify(m).replace(/'/g, "&#39;")})' class="bg-yellow-600/20 text-yellow-500 p-1.5 rounded"><i class="fa-solid fa-pen"></i></button>
-                                    <button onclick="deleteMatch(${m.id})" class="bg-red-600/20 text-red-500 p-1.5 rounded"><i class="fa-solid fa-trash"></i></button>
+                                    <!-- Replace used for safe string escaping -->
+                                    <button onclick='editMatch(${JSON.stringify(m).replace(/'/g, "&#39;")})' class="bg-yellow-600/20 text-yellow-500 p-1.5 rounded hover:bg-yellow-600 hover:text-black transition"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="deleteMatch(${m.id})" class="bg-red-600/20 text-red-500 p-1.5 rounded hover:bg-red-600 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-2 gap-2 mt-2">
-                                <select onchange="updateStatus(${m.id}, this.value)" class="w-full bg-black/20 text-xs p-1 rounded border border-gray-600 text-white">
-                                    <option value="upcoming" ${m.status==='upcoming'?'selected':''}>Upcoming</option>
-                                    <option value="open" ${m.status==='open'?'selected':''}>Open</option>
-                                    <option value="live" ${m.status==='live'?'selected':''}>Live</option>
-                                    <option value="completed" ${m.status==='completed'?'selected':''}>Completed</option>
+                            <div class="flex gap-2 text-[10px] font-bold uppercase mb-3 text-gray-400">
+                                <span class="bg-black/30 p-1 rounded">Fee: ${m.entry_fee}</span>
+                                <span class="bg-black/30 p-1 rounded">Win: ${m.prize_pool}</span>
+                                <span class="bg-black/30 p-1 rounded">Type: ${m.match_type}</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <select onchange="updateStatus(${m.id}, this.value)" class="w-full bg-black/20 text-xs p-1 rounded border border-gray-600 text-white font-bold uppercase outline-none focus:border-blue-500">
+                                    <option value="upcoming" ${m.status==='upcoming'?'selected':''}>🔵 Upcoming</option>
+                                    <option value="open" ${m.status==='open'?'selected':''}>🟢 Open</option>
+                                    <option value="live" ${m.status==='live'?'selected':''}>🔴 Live</option>
+                                    <option value="completed" ${m.status==='completed'?'selected':''}>🏁 Done</option>
                                 </select>
+                                <button onclick="window.location.href='/admin-match-players.html?id=${m.id}'" class="bg-gray-700 text-gray-300 rounded text-xs font-bold border border-gray-600 hover:bg-gray-600">Details</button>
                             </div>
                         </div>
                     `).join('');
                 } else {
-                    list.innerHTML = `<div class="text-center py-10 opacity-50"><p class="text-sm">No matches found.</p></div>`;
+                    list.innerHTML = `<div class="text-center py-10 opacity-50 border-2 border-dashed border-gray-700 rounded-xl mx-2"><p class="text-gray-400 text-sm">No matches found.<br>Create a new one above.</p></div>`;
                 }
-            } catch(e) { console.error(e); }
+
+            } catch(e) { 
+                console.error(e);
+                document.getElementById('match_list').innerHTML = `<p class="text-center text-red-400 text-sm py-10">Failed to load matches.</p>`;
+            }
         }
 
-        // 3. Create or Update (With Timezone Fix)
+        // 3. CREATE / UPDATE Logic
         async function handleMatch() {
             const id = document.getElementById('match_id').value;
             let timeVal = document.getElementById('m_time').value;
-            const categoryId = document.getElementById('cat_id').value || urlCatId;
 
-            if (timeVal) timeVal = timeVal.replace('T', ' ') + ':00'; // DB Format YYYY-MM-DD HH:MM:SS
+            // ক্যাটাগরি আইডি নেয়া (লকড হলেও ভ্যালু যেন নেয়)
+            const sel = document.getElementById('cat_id');
+            const categoryId = sel.value || urlCatId;
+
+            // Date Correction Logic
+            if (timeVal) {
+                // T সরিয়ে স্পেস দেওয়া, এবং সেকেন্ড না থাকলে :00 যোগ করা
+                timeVal = timeVal.replace('T', ' '); 
+                if(timeVal.length === 16) timeVal += ':00';
+            }
 
             if(!categoryId || !document.getElementById('m_title').value || !timeVal) {
-                return alert("Fill Title, Date & Ensure Category Selected");
+                return alert("⚠️ Please fill Game Category, Title & Date!");
             }
 
             const body = {
@@ -175,8 +224,10 @@
                 total_spots: document.getElementById('m_spots').value || 48
             };
 
-            document.getElementById('submit_btn').disabled = true;
-            document.getElementById('submit_btn').innerText = "...";
+            const btn = document.getElementById('submit_btn');
+            const originalTxt = btn.innerText;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing...`;
+            btn.disabled = true;
 
             try {
                 const res = await fetch('/api/admin', { 
@@ -184,32 +235,39 @@
                     headers:{'Content-Type':'application/json'}, 
                     body:JSON.stringify(body) 
                 });
+
+                const data = await res.json();
                 
-                if(res.ok) {
+                if(data.success) {
                     resetForm();
+                    // যদি URL থেকে না হয়, ড্রপডাউনের বর্তমান সিলেক্ট দিয়েই লোড করব
                     loadMatches();
-                } else { alert("Failed. Check inputs."); }
-            } catch(e) { alert("Network Error"); }
+                } else {
+                    alert("Error: " + (data.error || data.message || "Unknown"));
+                }
+            } catch(e) { alert("Request Failed!"); }
             
-            document.getElementById('submit_btn').disabled = false;
-            document.getElementById('submit_btn').innerText = "Publish Match";
+            btn.innerText = "Publish Match";
+            btn.disabled = false;
         }
 
+        // Helpers
         async function updateStatus(id, st) {
             await fetch('/api/admin', { method:'POST', body: JSON.stringify({ type:'update_match_status', match_id:id, new_status:st }) });
         }
-
+        
         async function deleteMatch(id) {
-            if(!confirm("Delete match?")) return;
+            if(!confirm("⚠️ Delete this match? Player data will be lost.")) return;
             await fetch('/api/admin', { method:'POST', body: JSON.stringify({ type:'delete_match', id:id }) });
             loadMatches();
         }
 
         function editMatch(m) {
             document.getElementById('match_id').value = m.id;
-            // ক্যাটাগরি সেট করা (যদি ড্রপডাউনে থাকে)
+            
+            // Dropdown selection fix
             const sel = document.getElementById('cat_id');
-            if(!sel.disabled) sel.value = m.category_id;
+            if(!sel.disabled) sel.value = m.category_id; 
 
             document.getElementById('m_title').value = m.title;
             document.getElementById('m_fee').value = m.entry_fee;
@@ -218,16 +276,23 @@
             document.getElementById('m_map').value = m.map || '';
             document.getElementById('m_type').value = m.match_type;
             
-            // Timezone Fix (Local time display)
+            // 🔥 Timezone Fixed Logic
             if(m.match_time) {
                 const dt = new Date(m.match_time);
-                const offset = dt.getTimezoneOffset() * 60000;
-                const localISOTime = (new Date(dt - offset)).toISOString().slice(0, 16);
+                // UTC to Local Input format YYYY-MM-DDTHH:MM
+                const year = dt.getFullYear();
+                const month = String(dt.getMonth() + 1).padStart(2, '0');
+                const day = String(dt.getDate()).padStart(2, '0');
+                const hours = String(dt.getHours()).padStart(2, '0');
+                const minutes = String(dt.getMinutes()).padStart(2, '0');
+                
+                const localISOTime = `${year}-${month}-${day}T${hours}:${minutes}`;
                 document.getElementById('m_time').value = localISOTime;
             }
             
             document.getElementById('submit_btn').innerText = "Update Match";
             document.getElementById('submit_btn').className = "w-full bg-green-600 py-3 rounded-lg font-bold shadow-lg hover:bg-green-700 text-white";
+            
             document.getElementById('cancel_btn').classList.remove('hidden');
             document.getElementById('form_title').innerText = "Edit Mode";
             window.scrollTo({top:0, behavior:'smooth'});
@@ -239,7 +304,12 @@
             document.getElementById('m_fee').value = '';
             document.getElementById('m_prize').value = '';
             document.getElementById('m_time').value = '';
+            document.getElementById('m_kill').value = '';
+            document.getElementById('m_map').value = '';
             
+            // If from specific category URL, don't reset dropdown
+            if(!urlCatId) document.getElementById('cat_id').value = '';
+
             const btn = document.getElementById('submit_btn');
             btn.innerText = "Publish Match";
             btn.className = "w-full bg-blue-600 py-3 rounded-lg font-bold shadow-lg hover:bg-blue-700 text-white";
@@ -248,7 +318,9 @@
             document.getElementById('form_title').innerText = "Create New Match";
         }
 
+        // Initialize (Load categories first, then matches)
         loadCatsAndMatches();
+
     </script>
 </body>
 </html>
