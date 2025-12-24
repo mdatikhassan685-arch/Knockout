@@ -1,10 +1,3 @@
-এই নিন সম্পূর্ণ **`admin-matches.html`** কোড। এতে টাইমজোন এবং সময়ের যোগ হয়ে যাওয়ার সমস্যা ১০০% ফিক্স করা হয়েছে। এখন আপনি যা সিলেক্ট করবেন, ঠিক সেটাই সেভ হবে এবং দেখাবে।
-
----
-
-### **📄 ফাইল: `admin-matches.html` (Full & Corrected)**
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -35,7 +28,6 @@
         
         <input type="hidden" id="match_id">
 
-        <!-- Category Dropdown -->
         <select id="cat_id" class="w-full bg-gray-900 p-3 mb-2 rounded-lg border border-gray-600 outline-none text-white focus:border-blue-500">
             <option value="">Loading Games...</option>
         </select>
@@ -52,9 +44,8 @@
                 <option value="Solo">Solo</option>
                 <option value="Duo">Duo</option>
                 <option value="Squad">Squad</option>
-                <option value="Clash Squad">Clash Squad</option>
             </select>
-            <input type="number" id="m_spots" placeholder="Total Spots" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
+            <input type="number" id="m_spots" placeholder="Total Spots (e.g. 48)" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
         </div>
 
         <div class="grid grid-cols-2 gap-2 mb-2">
@@ -62,7 +53,6 @@
             <input type="text" id="m_map" placeholder="Map Name" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
         </div>
 
-        <!-- TIME FIX: Using simple datetime-local -->
         <input type="datetime-local" id="m_time" class="w-full bg-gray-900 p-3 rounded-lg mb-4 border border-gray-600 outline-none text-gray-400 text-sm focus:border-blue-500">
 
         <button onclick="handleMatch()" id="submit_btn" class="w-full bg-blue-600 py-3 rounded-lg font-bold shadow-lg hover:bg-blue-700 transition transform active:scale-95 text-white">Publish Match</button>
@@ -77,18 +67,19 @@
     </div>
 
     <script>
-        // Authentication Check
+        // Authentication
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || user.role !== 'admin') window.location.href = 'index.html';
 
         const urlParams = new URLSearchParams(window.location.search);
         const urlCatId = urlParams.get('cat_id');
-        if(urlParams.get('name')) document.getElementById('cat_title').innerText = decodeURIComponent(urlParams.get('name'));
+        const urlCatName = urlParams.get('name');
 
-        // 1. Load Categories with Async Fix
+        if(urlCatName) document.getElementById('cat_title').innerText = decodeURIComponent(urlCatName);
+
+        // 1. Load Categories
         async function loadCatsAndMatches() {
             try {
-                // Categories load
                 const res = await fetch('/api/admin', { method: 'POST', body: JSON.stringify({ type: 'get_categories' }) });
                 const data = await res.json();
                 
@@ -98,86 +89,76 @@
                 let foundSelected = false;
                 data.forEach(c => {
                     if (c.type !== 'official') {
-                        // Auto-select if matches URL cat_id
-                        const selected = (c.id == urlCatId);
-                        if (selected) foundSelected = true;
-                        sel.innerHTML += `<option value="${c.id}" ${selected ? 'selected' : ''}>${c.title}</option>`;
+                        const isSelected = (c.id == urlCatId);
+                        if (isSelected) foundSelected = true;
+                        sel.innerHTML += `<option value="${c.id}" ${isSelected ? 'selected' : ''}>${c.title}</option>`;
                     }
                 });
 
-                if(foundSelected && urlCatId) {
-                    sel.disabled = true; // লক করে দিলাম যাতে ভুল ক্যাটাগরিতে অ্যাড না হয়
+                if(urlCatId && foundSelected) {
+                    sel.value = urlCatId;
+                    sel.disabled = true; // লক করে দিলাম যাতে অন্য গেমে অ্যাড না হয়
+                    sel.classList.add("bg-gray-800", "text-gray-500");
                 }
 
-                loadMatches(); // Load Matches
-
+                loadMatches();
             } catch(e) { console.error(e); }
         }
 
-        // 2. Load Matches List
+        // 2. Load Matches (Safe & Fixed)
         async function loadMatches() {
             try {
-                // আমরা catId বা dropdown value দিয়ে ম্যাচ ফেচ করব
-                // যদি URL বা ড্রপডাউনে কিছু না থাকে, তবে null পাঠাব
-                const activeCatId = urlCatId || document.getElementById('cat_id').value || null;
-
+                const activeCatId = urlCatId || document.getElementById('cat_id').value;
                 const res = await fetch('/api/admin', { 
                     method: 'POST', 
                     headers: {'Content-Type':'application/json'}, 
-                    body: JSON.stringify({ 
-                        type: 'get_admin_matches', 
-                        category_id: activeCatId 
-                    }) 
+                    body: JSON.stringify({ type: 'get_admin_matches', category_id: activeCatId || null }) // null হ্যান্ডেলিং করা হলো
                 });
                 
-                if(!res.ok) {
-                    throw new Error("Server API Error");
-                }
-
+                if (!res.ok) throw new Error('API Failed');
+                
                 const matches = await res.json();
                 const list = document.getElementById('match_list');
                 
                 if (matches && matches.length > 0) {
                     list.innerHTML = matches.map(m => `
-                        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 relative shadow-md group hover:border-blue-500 transition">
-                            <div class="flex justify-between items-start mb-3">
+                        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 relative shadow-md mb-3">
+                            <div class="flex justify-between items-start mb-2">
                                 <div>
-                                    <h4 class="font-bold text-white text-md tracking-wide">#${m.id} ${m.title}</h4>
-                                    <p class="text-xs text-blue-300 mt-1 font-mono"><i class="fa-regular fa-clock"></i> ${new Date(m.match_time).toLocaleString()}</p>
+                                    <h4 class="font-bold text-white text-sm tracking-wide">#${m.id} ${m.title}</h4>
+                                    <p class="text-[10px] text-blue-300 font-mono">${new Date(m.match_time).toLocaleString()}</p>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button onclick='editMatch(${JSON.stringify(m).replace(/'/g, "&#39;")})' class="bg-yellow-600/20 text-yellow-500 p-2 rounded hover:bg-yellow-600 hover:text-black transition"><i class="fa-solid fa-pen"></i></button>
-                                    <button onclick="deleteMatch(${m.id})" class="bg-red-600/20 text-red-500 p-2 rounded hover:bg-red-600 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
+                                    <button onclick='editMatch(${JSON.stringify(m).replace(/'/g, "&#39;")})' class="bg-yellow-600/20 text-yellow-500 p-1.5 rounded"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="deleteMatch(${m.id})" class="bg-red-600/20 text-red-500 p-1.5 rounded"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             </div>
-                            <!-- (বাকি ডিজাইন সেইম থাকবে) -->
-                            <!-- ... -->
+                            <div class="grid grid-cols-2 gap-2 mt-2">
+                                <select onchange="updateStatus(${m.id}, this.value)" class="w-full bg-black/20 text-xs p-1 rounded border border-gray-600 text-white">
+                                    <option value="upcoming" ${m.status==='upcoming'?'selected':''}>Upcoming</option>
+                                    <option value="open" ${m.status==='open'?'selected':''}>Open</option>
+                                    <option value="live" ${m.status==='live'?'selected':''}>Live</option>
+                                    <option value="completed" ${m.status==='completed'?'selected':''}>Completed</option>
+                                </select>
+                            </div>
                         </div>
                     `).join('');
                 } else {
-                    list.innerHTML = `<div class="text-center py-10 opacity-50 border-2 border-dashed border-gray-700 rounded-xl mx-2"><p class="text-gray-400 text-sm">No matches found.<br>Create a new one above.</p></div>`;
+                    list.innerHTML = `<div class="text-center py-10 opacity-50"><p class="text-sm">No matches found.</p></div>`;
                 }
-            } catch(e) {
-                console.error("Loading Failed:", e);
-                // এরর আসলে লোডিং টেক্সট বদলে দেবো
-                document.getElementById('match_list').innerHTML = `<p class="text-red-400 text-center py-10">Error loading data. Check console.</p>`;
-            }
+            } catch(e) { console.error(e); }
         }
-        // 3. Create or Update Match (🔥 FIXED TIMEZONE ISSUE 🔥)
+
+        // 3. Create or Update (With Timezone Fix)
         async function handleMatch() {
             const id = document.getElementById('match_id').value;
-            const timeInput = document.getElementById('m_time').value; // Example: "2025-12-25T16:00"
+            let timeVal = document.getElementById('m_time').value;
             const categoryId = document.getElementById('cat_id').value || urlCatId;
 
-            // Simple String Replacement (No Date object conversion issues)
-            let formattedTime = "";
-            if (timeInput) {
-                formattedTime = timeInput.replace('T', ' '); 
-                if (formattedTime.length === 16) formattedTime += ":00"; // Add seconds if missing
-            }
+            if (timeVal) timeVal = timeVal.replace('T', ' ') + ':00'; // DB Format YYYY-MM-DD HH:MM:SS
 
-            if(!categoryId || !document.getElementById('m_title').value || !formattedTime) {
-                return alert("Fill Category, Title, Date properly!");
+            if(!categoryId || !document.getElementById('m_title').value || !timeVal) {
+                return alert("Fill Title, Date & Ensure Category Selected");
             }
 
             const body = {
@@ -189,63 +170,29 @@
                 prize_pool: document.getElementById('m_prize').value || 0,
                 per_kill: document.getElementById('m_kill').value || 0,
                 map: document.getElementById('m_map').value,
-                match_time: formattedTime, // 🔥 Sending CLEAN STRING (No offset shift)
+                match_time: timeVal,
                 match_type: document.getElementById('m_type').value,
                 total_spots: document.getElementById('m_spots').value || 48
             };
 
-            const btn = document.getElementById('submit_btn');
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing...`;
-            btn.disabled = true;
+            document.getElementById('submit_btn').disabled = true;
+            document.getElementById('submit_btn').innerText = "...";
 
             try {
-                await fetch('/api/admin', { 
+                const res = await fetch('/api/admin', { 
                     method:'POST', 
                     headers:{'Content-Type':'application/json'}, 
                     body:JSON.stringify(body) 
                 });
-                resetForm();
-                loadMatches();
-            } catch(e) { alert("Request Failed!"); }
-            
-            btn.innerHTML = "Publish Match";
-            btn.disabled = false;
-        }
-
-        // 4. 🔥 FIXED: Edit Function (Display Time Correctly)
-        function editMatch(m) {
-            document.getElementById('match_id').value = m.id;
-            
-            const catSel = document.getElementById('cat_id');
-            if (catSel && !catSel.disabled) catSel.value = m.category_id;
-
-            document.getElementById('m_title').value = m.title;
-            document.getElementById('m_fee').value = m.entry_fee;
-            document.getElementById('m_prize').value = m.prize_pool; 
-            document.getElementById('m_kill').value = m.per_kill || '';
-            document.getElementById('m_map').value = m.map || '';
-            document.getElementById('m_type').value = m.match_type;
-            document.getElementById('m_spots').value = m.total_spots;
-            
-            // ম্যানুয়াল ডেট সেটআপ (No Timezone Offset used)
-            if(m.match_time) {
-                const d = new Date(m.match_time);
-                // "YYYY-MM-DDTHH:mm" স্ট্রিং নিজে তৈরি করছি যাতে লোকাল টাইমজোন ঝামেলা না করে
-                const year = d.getFullYear();
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const day = String(d.getDate()).padStart(2, '0');
-                const hours = String(d.getHours()).padStart(2, '0');
-                const mins = String(d.getMinutes()).padStart(2, '0');
                 
-                document.getElementById('m_time').value = `${year}-${month}-${day}T${hours}:${mins}`;
-            }
-
-            document.getElementById('submit_btn').innerText = "Update Match";
-            document.getElementById('submit_btn').classList.remove('bg-blue-600');
-            document.getElementById('submit_btn').classList.add('bg-green-600', 'hover:bg-green-700');
-            document.getElementById('cancel_btn').classList.remove('hidden');
-            document.getElementById('form_title').innerText = "Edit Mode";
-            window.scrollTo({top:0, behavior:'smooth'});
+                if(res.ok) {
+                    resetForm();
+                    loadMatches();
+                } else { alert("Failed. Check inputs."); }
+            } catch(e) { alert("Network Error"); }
+            
+            document.getElementById('submit_btn').disabled = false;
+            document.getElementById('submit_btn').innerText = "Publish Match";
         }
 
         async function updateStatus(id, st) {
@@ -253,20 +200,49 @@
         }
 
         async function deleteMatch(id) {
-            if(!confirm("⚠️ Delete this match?")) return;
+            if(!confirm("Delete match?")) return;
             await fetch('/api/admin', { method:'POST', body: JSON.stringify({ type:'delete_match', id:id }) });
             loadMatches();
+        }
+
+        function editMatch(m) {
+            document.getElementById('match_id').value = m.id;
+            // ক্যাটাগরি সেট করা (যদি ড্রপডাউনে থাকে)
+            const sel = document.getElementById('cat_id');
+            if(!sel.disabled) sel.value = m.category_id;
+
+            document.getElementById('m_title').value = m.title;
+            document.getElementById('m_fee').value = m.entry_fee;
+            document.getElementById('m_prize').value = m.prize_pool;
+            document.getElementById('m_kill').value = m.per_kill || '';
+            document.getElementById('m_map').value = m.map || '';
+            document.getElementById('m_type').value = m.match_type;
+            
+            // Timezone Fix (Local time display)
+            if(m.match_time) {
+                const dt = new Date(m.match_time);
+                const offset = dt.getTimezoneOffset() * 60000;
+                const localISOTime = (new Date(dt - offset)).toISOString().slice(0, 16);
+                document.getElementById('m_time').value = localISOTime;
+            }
+            
+            document.getElementById('submit_btn').innerText = "Update Match";
+            document.getElementById('submit_btn').className = "w-full bg-green-600 py-3 rounded-lg font-bold shadow-lg hover:bg-green-700 text-white";
+            document.getElementById('cancel_btn').classList.remove('hidden');
+            document.getElementById('form_title').innerText = "Edit Mode";
+            window.scrollTo({top:0, behavior:'smooth'});
         }
 
         function resetForm() {
             document.getElementById('match_id').value = '';
             document.getElementById('m_title').value = '';
+            document.getElementById('m_fee').value = '';
+            document.getElementById('m_prize').value = '';
             document.getElementById('m_time').value = '';
             
             const btn = document.getElementById('submit_btn');
             btn.innerText = "Publish Match";
-            btn.classList.add('bg-blue-600');
-            btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            btn.className = "w-full bg-blue-600 py-3 rounded-lg font-bold shadow-lg hover:bg-blue-700 text-white";
             
             document.getElementById('cancel_btn').classList.add('hidden');
             document.getElementById('form_title').innerText = "Create New Match";
