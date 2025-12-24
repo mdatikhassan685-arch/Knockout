@@ -12,10 +12,9 @@
 
     <!-- Header -->
     <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50 border-b border-gray-700">
-        <a href="javascript:history.back()" class="mr-4 text-gray-400 active:scale-90"><i class="fa-solid fa-arrow-left text-xl"></i></a>
+        <a href="/admin-dashboard.html" class="mr-4 text-gray-400 active:scale-90"><i class="fa-solid fa-arrow-left text-xl"></i></a>
         <div>
-            <!-- এখানে ডায়নামিক টাইটেল দেখাবে -->
-            <h1 class="font-bold text-lg leading-tight text-blue-400 uppercase tracking-wide" id="cat_title">Loading...</h1>
+            <h1 class="font-bold text-lg leading-tight truncate w-64" id="cat_title">Manage Matches</h1>
             <p class="text-[10px] text-gray-400">Match Operations</p>
         </div>
     </header>
@@ -29,17 +28,15 @@
         
         <input type="hidden" id="match_id">
 
-        <!-- Category Dropdown (Smart Handling: Hidden/Disabled if ID exists) -->
-        <div id="cat_select_container">
-            <select id="cat_id" class="w-full bg-gray-900 p-3 mb-2 rounded-lg border border-gray-600 outline-none text-white focus:border-blue-500">
-                <option value="">Loading Game List...</option>
-            </select>
-        </div>
+        <!-- Category Dropdown -->
+        <select id="cat_id" class="w-full bg-gray-900 p-3 mb-2 rounded-lg border border-gray-600 outline-none text-white focus:border-blue-500">
+            <option value="">Loading Games...</option>
+        </select>
 
         <input type="text" id="m_title" placeholder="Match Title (e.g. Solo Rush #1)" class="w-full bg-gray-900 p-3 rounded-lg mb-2 text-sm border border-gray-600 outline-none text-white focus:border-blue-500 transition">
         
         <div class="grid grid-cols-2 gap-2 mb-2">
-            <input type="number" id="m_fee" placeholder="Entry Fee (0 for Free)" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
+            <input type="number" id="m_fee" placeholder="Entry Fee" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
             <input type="number" id="m_prize" placeholder="Winning Prize" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
         </div>
 
@@ -50,7 +47,7 @@
                 <option value="Squad">Squad</option>
                 <option value="Clash Squad">Clash Squad</option>
             </select>
-            <input type="number" id="m_spots" placeholder="Total Spots (e.g 48)" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
+            <input type="number" id="m_spots" placeholder="Total Spots" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
         </div>
 
         <div class="grid grid-cols-2 gap-2 mb-2">
@@ -58,6 +55,7 @@
             <input type="text" id="m_map" placeholder="Map Name" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm focus:border-blue-500">
         </div>
 
+        <!-- TIME FIX: Using simple datetime-local -->
         <input type="datetime-local" id="m_time" class="w-full bg-gray-900 p-3 rounded-lg mb-4 border border-gray-600 outline-none text-gray-400 text-sm focus:border-blue-500">
 
         <button onclick="handleMatch()" id="submit_btn" class="w-full bg-blue-600 py-3 rounded-lg font-bold shadow-lg hover:bg-blue-700 transition transform active:scale-95 text-white">Publish Match</button>
@@ -72,78 +70,63 @@
     </div>
 
     <script>
-        // ✅ Auth Check
+        // Authentication Check
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || user.role !== 'admin') window.location.href = 'index.html';
 
         const urlParams = new URLSearchParams(window.location.search);
         const urlCatId = urlParams.get('cat_id');
-        const urlCatName = urlParams.get('name');
+        if(urlParams.get('name')) document.getElementById('cat_title').innerText = decodeURIComponent(urlParams.get('name'));
 
-        if(urlCatName) {
-            document.getElementById('cat_title').innerText = decodeURIComponent(urlCatName);
-        } else {
-            document.getElementById('cat_title').innerText = "All Matches";
-        }
-
-        // 1. Smart Category Loader (অটোমেটিক সিলেক্ট হবে এবং লক থাকবে)
+        // 1. Load Categories with Async Fix
         async function loadCatsAndMatches() {
             try {
-                const res = await fetch('/api/admin', { 
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ type: 'get_categories' }) 
-                });
-                
+                // Categories load
+                const res = await fetch('/api/admin', { method: 'POST', body: JSON.stringify({ type: 'get_categories' }) });
                 const data = await res.json();
+                
                 const sel = document.getElementById('cat_id');
-                const selContainer = document.getElementById('cat_select_container');
-
                 sel.innerHTML = '<option value="">Select Game...</option>';
                 
-                let found = false;
+                let foundSelected = false;
                 data.forEach(c => {
                     if (c.type !== 'official') {
-                        // যদি URL থেকে আইডি পাই, সেটা সিলেক্ট করব
-                        const isSelected = (c.id == urlCatId);
-                        if (isSelected) found = true;
-                        sel.innerHTML += `<option value="${c.id}" ${isSelected ? 'selected' : ''}>${c.title}</option>`;
+                        // Auto-select if matches URL cat_id
+                        const selected = (c.id == urlCatId);
+                        if (selected) foundSelected = true;
+                        sel.innerHTML += `<option value="${c.id}" ${selected ? 'selected' : ''}>${c.title}</option>`;
                     }
                 });
 
-                // 🔥 Fix: যদি URL থেকে আসি, তাহলে ড্রপডাউন দেখানোর দরকার নেই (বা লক করে রাখা ভালো)
-                if (urlCatId && found) {
-                    sel.value = urlCatId;
-                    sel.disabled = true; // লক করে দিলাম যাতে ভুল না হয়
-                    sel.classList.add("bg-gray-800", "text-gray-500");
+                if(foundSelected && urlCatId) {
+                    sel.disabled = true; // লক করে দিলাম যাতে ভুল ক্যাটাগরিতে অ্যাড না হয়
                 }
 
-                loadMatches();
+                loadMatches(); // Load Matches
 
-            } catch(e) { console.error("Error:", e); }
+            } catch(e) { console.error(e); }
         }
 
-        // 2. Load Matches (লিস্ট শো করবে)
+        // 2. Load Matches List
         async function loadMatches() {
             try {
-                // আমরা catId বা dropdown value দিয়ে ম্যাচ ফেচ করব
-                const activeCatId = urlCatId || document.getElementById('cat_id').value;
-
+                const currentCatId = urlCatId || document.getElementById('cat_id').value;
                 const res = await fetch('/api/admin', { 
                     method: 'POST', 
                     headers: {'Content-Type':'application/json'}, 
-                    body: JSON.stringify({ type: 'get_admin_matches', category_id: activeCatId }) 
+                    body: JSON.stringify({ type: 'get_admin_matches', category_id: currentCatId }) 
                 });
                 
                 const matches = await res.json();
                 const list = document.getElementById('match_list');
                 
-                if (matches && matches.length > 0) {
+                if(matches.length > 0) {
                     list.innerHTML = matches.map(m => `
                         <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 relative shadow-md group hover:border-blue-500 transition">
                             <div class="flex justify-between items-start mb-3">
                                 <div>
                                     <h4 class="font-bold text-white text-md tracking-wide">#${m.id} ${m.title}</h4>
+                                    <!-- টাইম ফরম্যাট ডিসপ্লে (শুধুমাত্র দেখার জন্য) -->
                                     <p class="text-xs text-blue-300 mt-1 font-mono"><i class="fa-regular fa-clock"></i> ${new Date(m.match_time).toLocaleString()}</p>
                                 </div>
                                 <div class="flex gap-2">
@@ -168,43 +151,44 @@
                         </div>
                     `).join('');
                 } else {
-                    list.innerHTML = `<div class="text-center py-10 opacity-50 border-2 border-dashed border-gray-700 rounded-xl mx-2"><p class="text-gray-400 text-sm">No matches yet. Add new above.</p></div>`;
+                    list.innerHTML = `<div class="text-center py-10 opacity-50 border-2 border-dashed border-gray-700 rounded-xl"><p>No matches found.</p></div>`;
                 }
             } catch(e) {}
         }
 
-        // 3. Create or Update Match (Smart Handling)
+        // 3. Create or Update Match (🔥 FIXED TIMEZONE ISSUE 🔥)
         async function handleMatch() {
             const id = document.getElementById('match_id').value;
-            const title = document.getElementById('m_title').value;
-            let timeVal = document.getElementById('m_time').value;
-            
-            // ক্যাটাগরি আইডি নেওয়া (Disabled হলেও value যাতে নেওয়া যায়)
-            const catSelect = document.getElementById('cat_id');
-            const categoryId = catSelect.value || urlCatId; // Fallback to URL if dropdown issue
+            const timeInput = document.getElementById('m_time').value; // Example: "2025-12-25T16:00"
+            const categoryId = document.getElementById('cat_id').value || urlCatId;
 
-            // Date Correction
-            if (timeVal) timeVal = timeVal.replace('T', ' ') + ':00';
+            // Simple String Replacement (No Date object conversion issues)
+            let formattedTime = "";
+            if (timeInput) {
+                formattedTime = timeInput.replace('T', ' '); 
+                if (formattedTime.length === 16) formattedTime += ":00"; // Add seconds if missing
+            }
 
-            if(!categoryId) return alert("System Error: No Category Selected.");
-            if(!title || !timeVal) return alert("Fill required fields (Title, Date)");
+            if(!categoryId || !document.getElementById('m_title').value || !formattedTime) {
+                return alert("Fill Category, Title, Date properly!");
+            }
 
             const body = {
                 type: id ? 'edit_match' : 'create_daily_match', 
                 match_id: id,
                 category_id: categoryId,
-                title: title,
+                title: document.getElementById('m_title').value,
                 entry_fee: document.getElementById('m_fee').value || 0,
                 prize_pool: document.getElementById('m_prize').value || 0,
                 per_kill: document.getElementById('m_kill').value || 0,
                 map: document.getElementById('m_map').value,
-                match_time: timeVal,
+                match_time: formattedTime, // 🔥 Sending CLEAN STRING (No offset shift)
                 match_type: document.getElementById('m_type').value,
                 total_spots: document.getElementById('m_spots').value || 48
             };
 
             const btn = document.getElementById('submit_btn');
-            btn.innerHTML = `Processing...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing...`;
             btn.disabled = true;
 
             try {
@@ -215,10 +199,46 @@
                 });
                 resetForm();
                 loadMatches();
-            } catch(e) { alert("Request Failed"); }
+            } catch(e) { alert("Request Failed!"); }
             
             btn.innerHTML = "Publish Match";
             btn.disabled = false;
+        }
+
+        // 4. 🔥 FIXED: Edit Function (Display Time Correctly)
+        function editMatch(m) {
+            document.getElementById('match_id').value = m.id;
+            
+            const catSel = document.getElementById('cat_id');
+            if (catSel && !catSel.disabled) catSel.value = m.category_id;
+
+            document.getElementById('m_title').value = m.title;
+            document.getElementById('m_fee').value = m.entry_fee;
+            document.getElementById('m_prize').value = m.prize_pool; 
+            document.getElementById('m_kill').value = m.per_kill || '';
+            document.getElementById('m_map').value = m.map || '';
+            document.getElementById('m_type').value = m.match_type;
+            document.getElementById('m_spots').value = m.total_spots;
+            
+            // ম্যানুয়াল ডেট সেটআপ (No Timezone Offset used)
+            if(m.match_time) {
+                const d = new Date(m.match_time);
+                // "YYYY-MM-DDTHH:mm" স্ট্রিং নিজে তৈরি করছি যাতে লোকাল টাইমজোন ঝামেলা না করে
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const hours = String(d.getHours()).padStart(2, '0');
+                const mins = String(d.getMinutes()).padStart(2, '0');
+                
+                document.getElementById('m_time').value = `${year}-${month}-${day}T${hours}:${mins}`;
+            }
+
+            document.getElementById('submit_btn').innerText = "Update Match";
+            document.getElementById('submit_btn').classList.remove('bg-blue-600');
+            document.getElementById('submit_btn').classList.add('bg-green-600', 'hover:bg-green-700');
+            document.getElementById('cancel_btn').classList.remove('hidden');
+            document.getElementById('form_title').innerText = "Edit Mode";
+            window.scrollTo({top:0, behavior:'smooth'});
         }
 
         async function updateStatus(id, st) {
@@ -231,40 +251,14 @@
             loadMatches();
         }
 
-        function editMatch(m) {
-            document.getElementById('match_id').value = m.id;
-            // No need to change category if locked
-            document.getElementById('m_title').value = m.title;
-            document.getElementById('m_fee').value = m.entry_fee;
-            document.getElementById('m_prize').value = m.prize_pool; 
-            document.getElementById('m_kill').value = m.per_kill || '';
-            document.getElementById('m_map').value = m.map || '';
-            document.getElementById('m_type').value = m.match_type;
-            
-            if(m.match_time) {
-                const dt = new Date(m.match_time);
-                const offset = dt.getTimezoneOffset() * 60000;
-                document.getElementById('m_time').value = new Date(dt - offset).toISOString().slice(0, 16);
-            }
-
-            document.getElementById('submit_btn').innerText = "Update Match";
-            document.getElementById('submit_btn').classList.add('bg-green-600', 'hover:bg-green-700');
-            document.getElementById('cancel_btn').classList.remove('hidden');
-            document.getElementById('form_title').innerText = "Edit Mode";
-            window.scrollTo({top:0, behavior:'smooth'});
-        }
-
         function resetForm() {
             document.getElementById('match_id').value = '';
             document.getElementById('m_title').value = '';
-            document.getElementById('m_fee').value = '';
-            document.getElementById('m_prize').value = '';
             document.getElementById('m_time').value = '';
-            document.getElementById('m_kill').value = '';
-            document.getElementById('m_map').value = '';
             
             const btn = document.getElementById('submit_btn');
             btn.innerText = "Publish Match";
+            btn.classList.add('bg-blue-600');
             btn.classList.remove('bg-green-600', 'hover:bg-green-700');
             
             document.getElementById('cancel_btn').classList.add('hidden');
