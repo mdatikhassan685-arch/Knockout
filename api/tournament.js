@@ -31,30 +31,39 @@ module.exports = async (req, res) => {
             try {
                 await connection.beginTransaction();
 
+                const { team_name, players } = req.body; // players array আসছে
+
+                // ম্যাচ চেক
                 const [matchData] = await connection.execute('SELECT entry_fee, match_type FROM matches WHERE id = ? FOR UPDATE', [match_id]);
                 if (matchData.length === 0) throw new Error('Match not found');
-                const match = matchData[0];
-
+                
+                // ডুপ্লিকেট চেক (যাতে একই টিম বা ইউজার দুবার না ঢুকতে পারে)
+                // এখানে সহজ করার জন্য লিডারের আইডি চেক করা হচ্ছে
                 const [joined] = await connection.execute('SELECT id FROM match_participants WHERE user_id = ? AND match_id = ?', [user_id, match_id]);
-                if (joined.length > 0) throw new Error('Already Joined!');
-
-                const [userData] = await connection.execute('SELECT wallet_balance FROM users WHERE id = ?', [user_id]);
-                const fee = parseFloat(match.entry_fee);
-                if (parseFloat(userData[0].wallet_balance) < fee) throw new Error('Insufficient Balance');
+                if (joined.length > 0) throw new Error('You have already joined!');
 
                 // ব্যালেন্স কাটা
+                const fee = parseFloat(matchData[0].entry_fee);
+                const [userData] = await connection.execute('SELECT wallet_balance FROM users WHERE id = ?', [user_id]);
+                
+                if (parseFloat(userData[0].wallet_balance) < fee) throw new Error('Insufficient Balance');
+
                 if (fee > 0) {
                     await connection.execute('UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?', [fee, user_id]);
-                    await connection.execute('INSERT INTO transactions (user_id, amount, type, description) VALUES (?, ?, "Match Fee", ?)', [user_id, fee, `Join #${match_id}`]);
+                    await connection.execute('INSERT INTO transactions (user_id, amount, type, description) VALUES (?, ?, "Match Fee", ?)', [user_id, fee, `Team Join #${match_id}`]);
                 }
 
-                // 🔥 Team Name Fix: যদি টিম নেম না দেয় তবে Solo হবে, দিলে সেটা সেভ হবে
-                const finalTeamName = (match.match_type !== 'Solo' && team_name) ? team_name : 'Solo';
+                // 🔥 Team Members Insert Loop
+                // players অ্যারে লুপ করে সব মেম্বারকে অ্যাড করছি
+                const finalTeamName = (matchData[0].match_type !== 'Solo') ? team_name : 'Solo';
 
-                await connection.execute(
-                    `INSERT INTO match_participants (match_id, user_id, game_name, game_uid, team_name, joined_at) VALUES (?, ?, ?, ?, ?, NOW())`,
-                    [match_id, user_id, game_name, game_uid, finalTeamName]
-                );
+                for (let p of players) {
+                    await connection.execute(
+                        `INSERT INTO match_participants (match_id, user_id, game_name, game_uid, team_name, joined_at) 
+                         VALUES (?, ?, ?, ?, ?, NOW())`,
+                        [match_id, user_id, p.name, p.uid, finalTeamName]
+                    );
+                }
 
                 await connection.commit();
                 connection.release();
@@ -66,7 +75,6 @@ module.exports = async (req, res) => {
                 return res.status(400).json({ error: err.message });
             }
         }
-
         // --- 3. Get Participants (with Teams) ---
         if (type === 'get_daily_participants') {
             // টিম অনুযায়ী সর্ট করে পাঠাচ্ছি
