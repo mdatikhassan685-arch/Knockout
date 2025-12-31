@@ -96,6 +96,29 @@ module.exports = async (req, res) => {
                 return res.status(200).json({ total_users: 0, pending_deposits: 0, pending_withdraws: 0 });
             }
         }
+                //Edit Match & Room ID (UPDATED)
+        if (type === 'edit_match') {
+            await db.execute(
+                `UPDATE matches SET 
+                title=?, entry_fee=?, prize_pool=?, per_kill=?, match_type=?, match_time=?, map=?, total_spots=?, 
+                room_id=?, room_pass=? 
+                WHERE id=?`, 
+                [
+                    body.title, 
+                    body.entry_fee || 0, 
+                    body.prize_pool || 0, 
+                    body.per_kill || 0, 
+                    body.match_type, 
+                    body.match_time, 
+                    body.map || '', 
+                    body.total_spots || 48,
+                    body.room_id || null,   // 🔥 Room ID added
+                    body.room_pass || null, // 🔥 Password added
+                    body.match_id
+                ]
+            );
+            return res.status(200).json({ success: true, message: 'Match Updated!' });
+        }
 
         return res.status(400).json({ error: 'Unknown Type: ' + type });
 
