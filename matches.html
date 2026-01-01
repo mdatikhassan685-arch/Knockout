@@ -6,7 +6,15 @@
     <title>Daily Matches</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>body { user-select: none; }</style>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        
+        /* Modal Animation */
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .animate-slide-up { animation: slideUp 0.3s ease-out; }
+    </style>
 </head>
 <body class="bg-gray-900 text-white pb-24">
 
@@ -19,230 +27,153 @@
         </div>
     </header>
 
+    <!-- Main List -->
     <div id="match_list" class="p-4 space-y-5 pb-10">
-        <div class="text-center mt-20 animate-pulse text-gray-500">Checking...</div>
+        <div class="text-center mt-20 text-gray-500 animate-pulse">Wait... Loading Matches...</div>
     </div>
 
-    <!-- Join Modal -->
-    <div id="joinModal" class="fixed inset-0 bg-black/95 hidden items-center justify-center z-[60] p-4 backdrop-blur-sm"></div>
+    <!-- JOIN MODAL -->
+    <div id="joinModal" class="fixed inset-0 bg-black/95 hidden items-center justify-center z-[60] p-0 md:p-4 backdrop-blur-sm flex align-bottom md:align-middle"></div>
 
     <!-- Players Modal -->
     <div id="playersListModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[70] p-4 backdrop-blur-sm">
-        <div class="bg-gray-800 p-5 rounded-2xl w-full max-w-sm h-[75vh] flex flex-col relative shadow-2xl border border-gray-700 animate-zoom">
+        <div class="bg-gray-800 p-5 rounded-2xl w-full max-w-sm h-[75vh] flex flex-col relative shadow-2xl border border-gray-700">
             <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
-                <div><h3 class="font-bold text-lg text-white">Participants</h3><p class="text-[10px] text-gray-400 uppercase font-bold" id="slot_info">Loading...</p></div>
-                <button onclick="document.getElementById('playersListModal').style.display='none'" class="text-gray-400 text-2xl hover:text-white transition">&times;</button>
+                <div><h3 class="font-bold text-lg text-white">Participants List</h3><p class="text-[10px] text-gray-400 uppercase font-bold" id="slot_info">Loading...</p></div>
+                <button onclick="document.getElementById('playersListModal').style.display='none'" class="text-gray-400 text-2xl">&times;</button>
             </div>
             <div id="joined_players_list" class="overflow-y-auto flex-1 space-y-2 pr-1 custom-scroll pb-5"></div>
         </div>
     </div>
     
-    <!-- 🔥 FIXED ROOM MODAL UI 🔥 -->
-    <div id="roomDetailsModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[60] p-4 backdrop-blur-sm">
-        <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-sm text-center shadow-lg relative border border-gray-600 animate-fade-in">
-            <button onclick="document.getElementById('roomDetailsModal').style.display='none'" class="absolute top-4 right-4 text-gray-400 hover:text-white transition"><i class="fa-solid fa-times text-lg"></i></button>
-            
+    <!-- Room Modal -->
+    <div id="roomDetailsModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[60] p-4">
+        <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-sm text-center shadow-lg relative border border-gray-700">
+            <button onclick="document.getElementById('roomDetailsModal').style.display='none'" class="absolute top-4 right-4 text-gray-400 text-lg hover:text-white transition">&times;</button>
             <div class="w-14 h-14 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                <i class="fa-solid fa-lock-open text-2xl text-green-400"></i>
+                <i class="fa-solid fa-key text-2xl text-green-400"></i>
             </div>
-
-            <h3 class="text-xl font-bold mb-6 text-white tracking-wide border-b border-gray-700 pb-3">Match Room Details</h3>
-
-            <div class="space-y-4">
-                <!-- Room ID Box -->
-                <div class="bg-black/40 p-3 rounded-xl border border-gray-600 text-left relative overflow-hidden">
-                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-widest absolute top-2 right-2">Room ID</span>
-                    <i class="fa-solid fa-hashtag text-gray-600 text-xl absolute left-3 top-3"></i>
-                    <div class="pl-8 pt-1">
-                        <span class="text-xl font-mono font-bold text-yellow-400 select-all tracking-wider block truncate" id="room_id_display">LOADING...</span>
-                    </div>
-                </div>
-                
-                <!-- Password Box -->
-                <div class="bg-black/40 p-3 rounded-xl border border-gray-600 text-left relative overflow-hidden">
-                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-widest absolute top-2 right-2">Password</span>
-                    <i class="fa-solid fa-key text-gray-600 text-lg absolute left-3 top-3.5"></i>
-                    <div class="pl-8 pt-1">
-                        <span class="text-xl font-mono font-bold text-green-400 select-all tracking-wider block truncate" id="room_pass_display"w>LOADING...</span>
-                    </div>
-                </div>
+            <h3 class="text-lg font-bold mb-4 text-white">Room Access</h3>
+            <div class="bg-black/40 p-4 rounded-xl mb-3 border border-gray-600 select-all font-mono text-yellow-400 font-bold text-sm tracking-wider shadow-inner text-left space-y-2">
+                <div><span class="text-[9px] text-gray-500 uppercase block mb-0.5">ROOM ID</span><span id="room_id_display" class="block text-lg">...</span></div>
+                <div><span class="text-[9px] text-gray-500 uppercase block mb-0.5">PASSWORD</span><span id="room_pass_display" class="block text-green-400 text-lg">...</span></div>
             </div>
-
-            <div class="mt-6 flex items-center justify-center gap-2 text-[10px] text-red-400 bg-red-900/10 p-2.5 rounded-lg border border-red-900/30">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                Please do not share this info.
-            </div>
-
-            <button onclick="document.getElementById('roomDetailsModal').style.display='none'" class="mt-5 w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-xl transition shadow-md active:scale-95">Okay, Got it</button>
+            <p class="text-[10px] text-gray-500">Only visible to joined players.</p>
         </div>
     </div>
 
-    <!-- Toast -->
-    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-5 py-2.5 rounded-full shadow-2xl transition-all duration-300 z-[100] opacity-0 translate-y-10 border border-gray-700 text-sm font-bold flex items-center gap-2"></div>
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-5 py-2.5 rounded-full shadow-2xl transition-all duration-300 z-[100] opacity-0 translate-y-10 border border-gray-700 text-sm font-bold flex items-center gap-2 pointer-events-none">
+        <span id="toast_msg">Msg</span>
+    </div>
 
     <script>
+        // Authentication Check
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user) window.location.href = '/';
 
+        // URL Params Logic
         const params = new URLSearchParams(window.location.search);
         const catId = params.get('cat_id');
         const catName = params.get('name');
+        
         if(catName) document.getElementById('cat_title').innerText = decodeURIComponent(catName);
 
         function showToast(msg, type) {
             const t = document.getElementById('toast');
             t.innerHTML = (type==='error'?'⚠️ ':'✅ ') + msg;
-            t.classList.remove('translate-y-10', 'opacity-0');
-            setTimeout(()=> t.classList.add('translate-y-10', 'opacity-0'), 3000);
+            t.className = `fixed bottom-10 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-full shadow-2xl transition-all duration-300 z-[100] opacity-100 transform translate-y-0 border text-sm font-bold flex items-center gap-2 bg-gray-800 text-white ` + (type==='error'?'border-red-500':'border-green-500');
+            setTimeout(()=> { t.className += ' opacity-0 translate-y-10'; }, 3000);
         }
 
         async function fetchBalance() {
-            try { const res = await fetch('/api/user', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'wallet_info', user_id: user.id }) });
-            const data = await res.json(); if(data.balance !== undefined) document.getElementById('header_bal').innerText = parseFloat(data.balance).toFixed(2); } catch(e){}
+            try { 
+                const res = await fetch('/api/user', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'wallet_info', user_id: user.id }) });
+                const data = await res.json(); 
+                if(data.balance !== undefined) document.getElementById('header_bal').innerText = parseFloat(data.balance).toFixed(2); 
+            } catch(e){}
         }
         fetchBalance(); 
 
+        // Main Load Function
         async function loadMatches() {
             const list = document.getElementById('match_list');
-            if(!catId) { list.innerHTML = `<div class="text-center mt-20 text-gray-500">Error</div>`; return; }
+            
+            if(!catId) { 
+                list.innerHTML = `<div class="text-center mt-20 text-gray-500">⚠️ Error: Invalid Game Category. <br>Go back to home.</div>`; 
+                return; 
+            }
 
             try {
-                const res = await fetch('/api/tournament', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'get_daily_matches', category_id: parseInt(catId), user_id: user.id }) });
+                // Ensure ID is passed as integer
+                const res = await fetch('/api/tournament', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ type: 'get_daily_matches', category_id: parseInt(catId), user_id: user.id }) 
+                });
+                
                 const matches = await res.json();
 
                 if(Array.isArray(matches) && matches.length > 0) {
                     list.innerHTML = matches.map((m, index) => {
-                        const total = parseInt(m.total_spots) || 0;
+                        const adminLimit = parseInt(m.total_spots) || 0;
                         const type = m.match_type || 'Solo';
-                        let limit = total > 0 ? total : (type==='Solo'?48:(type==='Duo'?24:12));
-                        let curr = type==='Solo'?(m.joined_players||0):(m.joined_teams||0);
-                        let pct = Math.min((curr/limit)*100, 100);
-                        const feeTxt = parseFloat(m.entry_fee) === 0 ? "FREE" : "৳"+m.entry_fee;
-                        const date = new Date(m.match_time).toLocaleString('en-US', { day:'numeric', month:'short', hour:'numeric', minute:'numeric', hour12:true });
                         
-                        let btn = '';
-                        if(m.is_joined) btn=`<button onclick="viewRoom(${m.id})" class="w-full py-3.5 bg-green-600 rounded-xl font-bold text-white shadow-lg animate-pulse hover:bg-green-500 transition">View Room Info</button>`;
-                        else if(m.status==='open' && curr<limit) btn=`<button onclick="openJoin(${m.id}, '${type}', ${m.entry_fee})" class="w-full py-3.5 bg-blue-600 rounded-xl font-bold text-white shadow-lg active:scale-95 transition">JOIN MATCH</button>`;
-                        else btn=`<button disabled class="w-full py-3.5 bg-gray-700 text-gray-500 font-bold rounded-xl cursor-not-allowed border border-gray-600">LOCKED / FULL</button>`;
+                        let limitCount = adminLimit > 0 ? adminLimit : (type === 'Solo' ? 48 : (type === 'Duo' ? 24 : 12));
+                        let currentCount = (type === 'Solo') ? (m.joined_players || 0) : (m.joined_teams || 0);
+                        let label = (type === 'Solo') ? 'Players' : 'Teams';
+                        const percent = Math.min((currentCount / limitCount) * 100, 100);
+
+                        const feeDisplay = parseFloat(m.entry_fee) === 0 ? "FREE" : "৳"+m.entry_fee;
+                        const date = new Date(m.match_time).toLocaleString('en-US', { day:'numeric', month:'short', hour:'numeric', minute:'numeric', hour12:true });
+
+                        let mainBtn = '';
+                        if (m.is_joined) mainBtn = `<button onclick="viewRoom(${m.id})" class="w-full py-3.5 rounded-xl font-bold bg-green-600 hover:bg-green-500 shadow-lg text-white transition animate-pulse">Get Room Code</button>`;
+                        else if (m.status==='open' && currentCount < limitCount) {
+                             mainBtn = `<button onclick="openJoin(${m.id}, '${type}', ${m.entry_fee})" class="w-full py-3.5 bg-blue-600 rounded-xl font-bold text-white shadow-lg active:scale-95 transition">JOIN MATCH</button>`;
+                        } else {
+                            const btnTxt = m.status === 'upcoming' ? "Coming Soon" : "Full / Locked";
+                            mainBtn = `<button disabled class="w-full py-3.5 bg-gray-700 text-gray-500 border border-gray-600 rounded-xl font-bold cursor-not-allowed">${btnTxt}</button>`;
+                        }
 
                         return `
-                        <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-xl mb-6 relative overflow-hidden">
+                        <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-xl mb-6 relative">
                             <div class="bg-gradient-to-r from-gray-750 to-gray-800 p-4 border-b border-gray-600 flex justify-between items-center">
-                                <div><div class="flex items-center gap-2 mb-1"><span class="bg-blue-600 text-white px-2 py-0.5 rounded font-bold text-[9px]">MATCH #${index+1}</span><span class="text-[9px] text-gray-500 font-mono bg-black/20 px-1.5 py-0.5 rounded border border-gray-700">ID: ${m.id}</span></div><h3 class="font-bold text-white text-md truncate">${m.title}</h3></div>
-                                <div class="text-[10px] text-blue-200 bg-blue-900/30 px-2 py-1.5 rounded border border-blue-500/20">${date}</div>
+                                <div class="w-2/3">
+                                    <div class="flex items-center gap-2 mb-1"><span class="bg-blue-600 text-white px-2 py-0.5 rounded font-bold text-[9px] uppercase shadow">MATCH #${index+1}</span><span class="text-[9px] text-gray-500 font-mono bg-black/20 px-1.5 py-0.5 rounded border border-gray-700">ID: ${m.id}</span></div>
+                                    <h3 class="font-bold text-white text-md truncate">${m.title}</h3>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-[10px] font-bold text-blue-200 bg-blue-900/30 px-2 py-1.5 rounded-lg border border-blue-500/20 inline-flex items-center gap-1.5"><i class="fa-regular fa-clock"></i> ${date}</div>
+                                </div>
                             </div>
                             <div class="p-4">
                                 <div class="grid grid-cols-3 gap-2 text-center mb-5 text-[10px] font-bold text-gray-300 bg-gray-900/30 p-3 rounded-xl border border-gray-700/50">
                                     <div><span class="block text-green-400 text-sm font-black mb-0.5">৳${m.prize_pool}</span>Prize</div>
-                                    <div class="border-x border-gray-700/50"><span class="block text-yellow-400 text-sm font-black mb-0.5">${feeTxt}</span>Fee</div>
+                                    <div class="border-x border-gray-700/50"><span class="block text-yellow-400 text-sm font-black mb-0.5">${feeDisplay}</span>Entry</div>
                                     <div><span class="block text-blue-400 text-sm font-black uppercase mb-0.5">${type}</span>Type</div>
                                 </div>
-                                <div class="flex justify-between text-[11px] mb-4 px-1 text-gray-400 font-medium"><span>${m.map || 'Random'}</span><span>Per Kill: <b>৳${m.per_kill}</b></span></div>
+                                <div class="flex justify-between text-[11px] mb-4 px-1 text-gray-400 font-medium"><span><i class="fa-solid fa-map-location-dot text-purple-400"></i> ${m.map || 'Random'}</span><span>Per Kill: <b>৳${m.per_kill}</b></span></div>
                                 <div class="mb-5 px-1">
-                                    <div class="flex justify-between text-[10px] mb-1.5 font-bold uppercase text-gray-400"><button onclick="viewPlayers(${m.id}, ${limit}, '${type}')" class="text-blue-400 underline hover:text-white transition">Participants (${curr}/${limit})</button><span class="${m.status==='open'?'text-green-500':'text-yellow-500'}">${m.status}</span></div>
-                                    <div class="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden shadow-inner"><div class="bg-blue-500 h-full transition-all duration-700" style="width:${pct}%"></div></div>
+                                    <div class="flex justify-between text-[10px] mb-1.5 font-bold uppercase text-gray-400">
+                                        <button onclick="viewPlayers(${m.id}, ${limitCount}, '${type}')" class="text-blue-400 underline hover:text-white transition">List (${currentCount}/${limitCount} ${label})</button>
+                                        <span class="${m.status==='open'?'text-green-500':'text-yellow-500'} uppercase">${m.status}</span>
+                                    </div>
+                                    <div class="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden shadow-inner"><div class="bg-blue-500 h-full transition-all duration-700" style="width:${percent}%"></div></div>
                                 </div>
-                                ${btn}
+                                ${mainBtn}
                             </div>
                         </div>`;
                     }).join('');
-                } else { list.innerHTML = `<div class="text-center mt-20 opacity-50"><p class="text-sm">No matches active.</p></div>`; }
-            } catch(e) { console.error(e); }
+                } else { list.innerHTML = `<div class="text-center mt-20 opacity-50"><p class="text-sm">No matches found in this category.</p></div>`; }
+            } catch(e) { 
+                console.error(e);
+                list.innerHTML = `<p class="text-red-400 text-center mt-20 text-xs">Failed to load data. Refresh page.</p>`; 
+            }
         }
 
-        async function viewRoom(id) {
-             const res = await fetch('/api/tournament', { method:'POST', body:JSON.stringify({ type:'get_daily_room', user_id:user.id, match_id:id})});
-             const d = await res.json();
-             // ROOM DATA DISPLAY LOGIC
-             if(d.room_id && d.room_id.trim() !== "" && d.room_id !== "null") { 
-                 document.getElementById('roomDetailsModal').style.display='flex'; 
-                 document.getElementById('room_id_display').innerText = d.room_id;  // Separate Line
-                 document.getElementById('room_pass_display').innerText = d.room_pass; // Separate Line
-             } else { showToast("Room details will be provided 15 minutes before the match starts.", "error"); }
-        }
-
-        async function viewPlayers(id, totalLimit, type) {
-            document.getElementById('playersListModal').style.display = 'flex';
-            document.getElementById('slot_info').innerText = `${totalLimit} SLOTS (${type.toUpperCase()})`;
-            const con = document.getElementById('joined_players_list');
-            con.innerHTML = '<div class="text-center p-10 animate-pulse text-gray-500 text-sm">Fetching list...</div>';
-
-            try {
-                const res = await fetch('/api/tournament', {method:'POST', body:JSON.stringify({type:'get_daily_participants', match_id:id})});
-                const d = await res.json();
-                
-                let html = '';
-                let filledCount = 0;
-
-                // --- TEAM VIEW (SQUAD / DUO) ---
-                if (type !== 'Solo' && d.length > 0) {
-                    const groups = {};
-                    d.forEach(p => { 
-                        let t = p.team_name || "Unknown Team"; 
-                        if(!groups[t]) groups[t] = [];
-                        groups[t].push(p);
-                    });
-
-                    const teams = Object.keys(groups);
-                    filledCount = teams.length;
-
-                    teams.forEach((tName, idx) => {
-                        let members = groups[tName].map(m => `
-                            <div class="flex justify-between items-center text-[10px] text-gray-400 py-1 pl-2 border-l-2 border-blue-500/30 mt-1 ml-1 bg-black/20 pr-1 rounded">
-                                <span><i class="fa-solid fa-user text-[8px] text-gray-500 mr-1"></i>${m.game_name}</span>
-                                <span class="block text-yellow-500 font-bold">Lvl: ${m.game_level || 'N/A'}</span>
-                            </div>`).join('');
-                        
-                        html += `
-                        <div class="bg-gray-750 border border-blue-500/20 rounded-lg mb-2 overflow-hidden shadow-sm hover:bg-gray-800 transition">
-                            <div onclick="this.nextElementSibling.classList.toggle('hidden')" class="p-3 flex justify-between items-center bg-gray-800 cursor-pointer">
-                                <span class="text-xs font-bold text-white uppercase flex items-center gap-2">
-                                    <span class="bg-blue-600 text-[9px] px-1.5 py-0.5 rounded text-white shadow">#${idx+1}</span> 
-                                    ${tName}
-                                </span>
-                                <span class="text-[9px] bg-blue-900/30 text-blue-300 px-1.5 rounded">${groups[tName].length} Ply</span>
-                            </div>
-                            <div class="hidden p-2 border-t border-gray-700 bg-gray-900/50">${members}</div>
-                        </div>`;
-                    });
-
-                } else {
-                    // --- SOLO VIEW ---
-                    filledCount = d.length;
-                    d.forEach((p, idx) => {
-                         html += `
-                         <div class="flex justify-between items-center bg-gray-800/40 p-2.5 rounded-lg mb-2 border border-gray-700 shadow-sm hover:border-gray-500 transition">
-                             <div>
-                                 <span class="text-xs text-blue-400 font-bold mr-2">#${idx+1}</span> 
-                                 <span class="text-sm font-bold text-white">${p.game_name}</span>
-                                 <span class="block text-yellow-500 font-bold">Lvl: ${m.game_level || 'N/A'}</span>
-                                  </div>
-                             </div>
-                             <span class="text-[9px] bg-green-600/10 text-green-400 px-2 py-0.5 rounded font-bold border border-green-500/20">READY</span>
-                         </div>`;
-                    });
-                }
-                
-                // --- EMPTY SLOTS (সবগুলো দেখাবে) ---
-                const remaining = totalLimit - filledCount;
-                if(remaining > 0) {
-                     // আগে ৩০ লিমিট ছিল, এখন লুপ পুরোটা চালাচ্ছি
-                     for(let i=0; i < remaining; i++) {
-                        const slotNum = filledCount + i + 1;
-                        const label = type === 'Solo' ? 'Empty' : 'Team Slot Open';
-                        
-                        html += `
-                        <div class="border border-gray-800 border-dashed rounded-lg p-2.5 mb-2 flex justify-between items-center bg-black/10">
-                            <span class="text-xs text-gray-600 font-bold">Slot ${slotNum}</span>
-                            <span class="text-[9px] text-gray-700 uppercase tracking-widest font-bold">${label}</span>
-                        </div>`;
-                     }
-                }
-
-                con.innerHTML = html;
-            } catch(e) { con.innerHTML = `<div class="text-center p-10 text-red-400 text-sm">Failed to Load</div>`; }
-        }
-                function openJoin(id, type, fee) {
+        // Updated Join Modal Design
+        function openJoin(id, type, fee) {
             const count = (type === 'Duo') ? 2 : (type.includes('Squad') ? 4 : 1);
             
             // Team Name Field
@@ -252,7 +183,7 @@
                 <input type="text" id="team_name" class="w-full bg-black/20 text-white font-bold text-sm px-4 py-3 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none transition" placeholder="e.g. Delta Force">
             </div>` : '';
 
-            // Players Loop (Beautiful Card Style)
+            // Players Loop (Card Style)
             let playersF = '';
             for(let i=1; i<=count; i++) {
                 const label = i===1 ? '(Leader)' : '';
@@ -260,79 +191,92 @@
 
                 playersF += `
                 <div class="bg-gray-800/80 p-4 mb-4 rounded-xl border ${borderColor} shadow-sm relative group hover:border-gray-500 transition">
-                    
-                    <!-- Player Tag -->
-                    <span class="absolute -top-2.5 left-4 bg-gray-900 text-[10px] font-bold text-gray-300 px-3 py-0.5 rounded-full border border-gray-700 uppercase tracking-widest shadow-lg">
-                        Player ${i} <span class="text-yellow-400">${label}</span>
-                    </span>
-
+                    <span class="absolute -top-2.5 left-4 bg-gray-900 text-[10px] font-bold text-gray-300 px-3 py-0.5 rounded-full border border-gray-700 uppercase tracking-widest shadow-lg">Player ${i} <span class="text-yellow-400">${label}</span></span>
                     <div class="mt-2 space-y-3">
-                        <!-- Row 1: Name & UID -->
                         <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="text-[9px] font-bold text-gray-500 mb-1 block uppercase">Game Name</label>
-                                <input id="name_${i}" class="w-full bg-black/30 border border-gray-600 text-white text-xs px-3 py-2.5 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-600 transition" placeholder="Exact Name">
-                            </div>
-                            <div>
-                                <label class="text-[9px] font-bold text-gray-500 mb-1 block uppercase">UID (Optional)</label>
-                                <input id="uid_${i}" type="number" class="w-full bg-black/30 border border-gray-600 text-white text-xs px-3 py-2.5 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none placeholder-gray-600 transition" placeholder="12345...">
-                            </div>
+                            <div><label class="text-[9px] font-bold text-gray-500 mb-1 block uppercase">Game Name</label><input id="name_${i}" class="w-full bg-black/30 border border-gray-600 text-white text-xs px-3 py-2.5 rounded-lg focus:border-blue-500 outline-none" placeholder="Exact Name"></div>
+                            <div><label class="text-[9px] font-bold text-gray-500 mb-1 block uppercase">UID</label><input id="uid_${i}" type="number" class="w-full bg-black/30 border border-gray-600 text-white text-xs px-3 py-2.5 rounded-lg focus:border-blue-500 outline-none" placeholder="12345..."></div>
                         </div>
-
-                        <!-- Row 2: Level -->
-                        <div>
-                            <label class="text-[9px] font-bold text-gray-500 mb-1 block uppercase flex justify-between">
-                                Game Level 
-                                <span class="text-red-400">Min 40+</span>
-                            </label>
-                            <input id="lvl_${i}" type="number" class="w-full bg-black/30 border border-gray-600 text-white text-xs px-3 py-2.5 rounded-lg focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none text-center font-bold tracking-widest transition" placeholder="Enter Level (Ex: 55)">
-                        </div>
+                        <div><label class="text-[9px] font-bold text-gray-500 mb-1 block uppercase flex justify-between">Game Level <span class="text-red-400">Min 40+</span></label><input id="lvl_${i}" type="number" class="w-full bg-black/30 border border-gray-600 text-white text-xs px-3 py-2.5 rounded-lg focus:border-red-500 outline-none text-center font-bold" placeholder="Ex: 55"></div>
                     </div>
                 </div>`;
             }
 
             const feeTxt = fee === 0 ? "FREE ENTRY" : `PAY ৳${fee}`;
-
-            // Main Modal HTML
+            
             document.getElementById('joinModal').innerHTML = `
-                <div class="bg-[#10141d] w-full max-w-md h-[90vh] flex flex-col relative shadow-2xl rounded-t-3xl md:rounded-3xl border-t border-gray-700 animate-slide-up md:animate-zoom">
-                    
-                    <!-- Fixed Header -->
+                <div class="bg-[#10141d] w-full max-w-md h-[90vh] flex flex-col relative shadow-2xl rounded-t-3xl md:rounded-3xl border-t border-gray-700 animate-slide-up">
                     <div class="flex justify-between items-center px-6 py-5 border-b border-gray-800 bg-gray-900/50 backdrop-blur-md rounded-t-3xl">
-                        <div>
-                            <h3 class="font-black text-xl text-white tracking-wide">CONFIRM ENTRY</h3>
-                            <p class="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">${type} Match • <span class="text-yellow-400 font-bold">${feeTxt}</span></p>
-                        </div>
-                        <button onclick="document.getElementById('joinModal').style.display='none'" class="bg-gray-800 text-gray-400 w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition shadow-lg">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
+                        <div><h3 class="font-black text-xl text-white tracking-wide">CONFIRM ENTRY</h3><p class="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">${type} Match • <span class="text-yellow-400 font-bold">${feeTxt}</span></p></div>
+                        <button onclick="document.getElementById('joinModal').style.display='none'" class="bg-gray-800 text-gray-400 w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition shadow-lg"><i class="fa-solid fa-xmark"></i></button>
                     </div>
-
-                    <!-- Scrollable Form Area -->
-                    <div class="flex-1 overflow-y-auto p-5 custom-scroll space-y-2">
-                        ${teamF}
-                        <div class="space-y-4">
-                            ${playersF}
-                        </div>
-                    </div>
-
-                    <!-- Footer Action -->
+                    <div class="flex-1 overflow-y-auto p-5 custom-scroll space-y-2">${teamF}${playersF}</div>
                     <div class="p-5 border-t border-gray-800 bg-gray-900 shadow-inner">
-                        <button onclick="confirmJoin('${id}', '${type}')" id="join_confirm_btn" class="w-full bg-gradient-to-r from-blue-600 to-indigo-700 py-3.5 rounded-xl font-bold text-white shadow-lg text-sm tracking-widest uppercase hover:scale-[1.02] active:scale-95 transition transform">
-                            COMPLETE REGISTRATION
-                        </button>
+                        <button onclick="confirmJoin('${id}', '${type}')" id="join_confirm_btn" class="w-full bg-gradient-to-r from-blue-600 to-indigo-700 py-3.5 rounded-xl font-bold text-white shadow-lg text-sm tracking-widest uppercase hover:scale-[1.02] active:scale-95 transition transform">COMPLETE REGISTRATION</button>
                     </div>
                 </div>`;
-            
             document.getElementById('joinModal').style.display = 'flex';
         }
-        
+
         async function confirmJoin(id, type) {
-            const c = (type === 'Duo') ? 2 : (type.includes('Squad') ? 4 : 1);
-            let tm = ''; if(c>1) { tm=document.getElementById('team_name').value; if(!tm) return showToast("Enter Team Name","error"); }
-            let ps=[]; for(let i=1; i<=c; i++) { let n=document.getElementById(`n_${i}`).value, u=document.getElementById(`u_${i}`).value, l=document.getElementById(`l_${i}`).value; if(!n||!l) return showToast("Missing Info","error"); if(parseInt(l)<40) return showToast("Low Level","error"); ps.push({name:n, uid:u, level:l}); }
-            const btn=document.getElementById('cf_btn'); btn.disabled=true; btn.innerText="Wait...";
+            const count = (type === 'Duo') ? 2 : (type.includes('Squad') ? 4 : 1);
+            let tName = ''; if(count>1) { tName=document.getElementById('team_name').value; if(!tName) return showToast("Enter Team Name","error"); }
+            let pArr=[]; 
+            for(let i=1; i<=count; i++) { 
+                let n=document.getElementById(`name_${i}`).value, u=document.getElementById(`uid_${i}`).value, l=document.getElementById(`lvl_${i}`).value; 
+                if(!n||!l) return showToast(`Player ${i} Missing`,"error"); 
+                if(parseInt(l)<40) return showToast(`Level 40+ Required`,"error"); 
+                pArr.push({name:n, uid:u, level:l}); 
+            }
+            const btn=document.getElementById('join_confirm_btn'); btn.disabled=true; btn.innerText="Wait...";
+            try { 
+                const res=await fetch('/api/tournament', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({type:'join_daily_match', user_id:user.id, match_id:id, team_name:tName, players:pArr})}); 
+                const d=await res.json(); 
+                if(d.success) { showToast("Success! Joined.", "success"); document.getElementById('joinModal').style.display='none'; loadMatches(); fetchBalance(); }
+                else { showToast(d.error, "error"); btn.disabled=false; btn.innerText="Try Again"; } 
+            } catch(e) { showToast("Connection Error", "error"); btn.disabled=false; }
+        }
+
+        async function viewRoom(id) {
+             try {
+                 const res = await fetch('/api/tournament', { method:'POST', body:JSON.stringify({ type:'get_daily_room', user_id:user.id, match_id:id})});
+                 const d = await res.json();
+                 if(d.room_id && d.room_id.trim() !== "" && d.room_id !== "null") { 
+                     document.getElementById('roomDetailsModal').style.display='flex'; 
+                     document.getElementById('room_id_display').innerText = d.room_id;
+                     document.getElementById('room_pass_display').innerText = d.room_pass;
+                 } else { showToast("Room details will be provided 15 minutes before the match starts.", "error"); }
+             } catch(e){ showToast("Error loading room", "error"); }
+        }
+
+        async function viewPlayers(id, totalLimit, type) {
+            document.getElementById('playersListModal').style.display = 'flex';
+            document.getElementById('slot_info').innerText = `${totalLimit} SLOTS (${type.toUpperCase()})`;
+            const con = document.getElementById('joined_players_list');
+            con.innerHTML = '<div class="text-center p-10 animate-pulse text-gray-500 text-sm">Fetching participants...</div>';
             try {
-                const res=await fetch('/api/tournament', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({type:'join_daily_match', user_id:user.id, match_id:id, team_name:tm, players:ps})});
-                const d=await res.json();
-                if(d.success) { showToast("Joined!", "success"); docume
+                const res = await fetch('/api/tournament', {method:'POST', body:JSON.stringify({type:'get_daily_participants', match_id:id})});
+                const d = await res.json();
+                let html='', filledCount=0;
+
+                if (type !== 'Solo' && d.length > 0) {
+                    const groups={}; d.forEach(p=>{ let t=p.team_name||"Unknown"; if(!groups[t]) groups[t]=[]; groups[t].push(p); });
+                    const teams = Object.keys(groups); filledCount=teams.length;
+                    teams.forEach((tName, i) => {
+                        let ms = groups[tName].map(p=>`<div class="flex justify-between items-center text-[11px] py-1.5 pl-3 border-l-2 border-blue-500/50 bg-black/20 mb-1 rounded pr-2 text-gray-300"><div><i class="fa-solid fa-user text-gray-500 mr-1"></i> ${p.game_name}</div><div class="text-right"><span class="block font-mono text-gray-500">UID: ${p.game_uid||'--'}</span><span class="text-yellow-500 font-bold">Lvl: ${p.game_level||'40+'}</span></div></div>`).join('');
+                        html+=`<div class="bg-gray-750 border border-blue-500/20 rounded-lg mb-2 overflow-hidden shadow-sm hover:border-blue-500/40 transition"><div onclick="this.nextElementSibling.classList.toggle('hidden')" class="p-3 flex justify-between items-center bg-gray-800 cursor-pointer"><span class="text-xs font-bold text-white uppercase flex items-center gap-2"><span class="bg-blue-600 px-1.5 py-0.5 rounded text-white shadow">#${i+1}</span> ${tName}</span><i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i></div><div class="hidden bg-black/10 p-2 border-t border-gray-700 transition-all">${ms}</div></div>`;
+                    });
+                } else {
+                    filledCount=d.length;
+                    d.forEach((p,i)=> { html+=`<div class="bg-gray-800 p-3 rounded-xl mb-2 border border-green-500/10 shadow-sm flex justify-between items-center"><div class="flex items-center gap-3"><span class="bg-gray-700 text-xs font-bold text-white w-6 h-6 flex items-center justify-center rounded-full">#${i+1}</span><div><h4 class="text-sm font-bold text-white leading-tight">${p.game_name}</h4><span class="text-[10px] text-yellow-500 font-bold">Lvl: ${p.game_level||'40+'}</span></div></div><span class="text-[9px] bg-green-900/30 text-green-400 px-2 py-1 rounded font-bold border border-green-500/20">READY</span></div>`; });
+                }
+                const rem = totalLimit - filledCount;
+                if(rem > 0) { const lm=rem>30?30:rem; for(let i=0; i<lm; i++) html+=`<div class="border border-gray-600 border-dashed rounded-lg p-3 mb-2 flex justify-between items-center opacity-40 bg-black/10"><span class="text-xs text-gray-400 font-bold">Slot ${filledCount+i+1}</span><span class="text-[9px] text-gray-500 uppercase tracking-widest font-bold">${type==='Solo'?'Empty':'Team Slot Open'}</span></div>`; }
+                con.innerHTML = html;
+            } catch(e) { con.innerHTML=`<div class="text-center p-10 text-red-400 text-sm">Failed</div>`; }
+        }
+
+        loadMatches();
+    </script>
+</body>
+</html>
