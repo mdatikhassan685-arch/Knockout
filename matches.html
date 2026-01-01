@@ -111,12 +111,47 @@
                         const dateFormatted = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
                         const timeFormatted = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 
-                        let btn = '';
-                        if (m.is_joined) btn = `<button onclick="viewRoom(${m.id})" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-green-600 rounded-lg font-bold text-white shadow-lg uppercase tracking-widest text-xs animate-pulse border border-green-400/50">Get Room ID</button>`;
-                        else if (m.status === 'open' && joined < adminLimit) btn = `<button onclick="openJoin(${m.id}, '${type}', ${m.entry_fee})" class="btn-neon w-full py-3 rounded-lg font-bold text-white shadow-lg tracking-widest text-xs uppercase">Join Match</button>`;
-                        else btn = `<button disabled class="w-full py-3 bg-slate-800 border border-slate-700 rounded-lg text-gray-500 font-bold uppercase tracking-widest text-xs">Locked / Full</button>`;
+                                                let mainBtn = '';
 
-                        const statusTxt = m.status === 'upcoming' ? 'UPCOMING' : m.status;
+                        // ১. COMPLETED (Result Button)
+                        if (status === 'completed') {
+                            mainBtn = `<button class="w-full py-3 bg-purple-600 rounded-lg font-bold text-white shadow-lg uppercase tracking-widest text-xs transition hover:bg-purple-700">View Result</button>`;
+                        }
+                        
+                        // ২. LIVE (Match Started)
+                        else if (status === 'live') {
+                            mainBtn = `<button disabled class="w-full py-3 bg-red-900/50 text-red-500 border border-red-500/50 rounded-lg font-bold uppercase tracking-widest text-xs cursor-not-allowed animate-pulse">Match Started</button>`;
+                        } 
+                        
+                        // ৩. UPCOMING (Coming Soon)
+                        else if (status === 'upcoming') {
+                            mainBtn = `<button disabled class="w-full py-3 bg-slate-800 text-gray-500 border border-slate-700 rounded-lg font-bold uppercase tracking-widest text-xs cursor-not-allowed">Coming Soon</button>`;
+                        }
+                        
+                        // ৪. OPEN (Join Logic)
+                        else if (status === 'open') {
+                            // যদি জয়েন করা থাকে
+                            if (isJoined) {
+                                mainBtn = `<button onclick="viewRoom(${m.id})" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-green-600 rounded-lg font-bold text-white shadow-lg shadow-green-900/30 uppercase tracking-widest text-xs animate-pulse border border-green-400/50">Get Room ID</button>`;
+                            }
+                            // যদি স্লট ফুল হয়ে যায়
+                            else if (joined >= adminLimit) {
+                                mainBtn = `<button disabled class="w-full py-3 bg-slate-800 text-gray-500 border border-slate-700 rounded-lg font-bold uppercase tracking-widest text-xs cursor-not-allowed">Slot Full</button>`;
+                            }
+                            // যদি জয়েন করার জন্য খালি থাকে
+                            else {
+                                mainBtn = `<button onclick="openJoin(${m.id}, '${type}', ${m.entry_fee})" class="btn-neon w-full py-3 rounded-lg font-bold text-white shadow-lg shadow-indigo-500/30 transition-all tracking-widest text-xs uppercase">Join Match</button>`;
+                            }
+                        }
+
+                        // স্ট্যাটাস টেক্সট সুন্দর করার জন্য
+                        let displayStatus = status;
+                        let statusColor = 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
+
+                        if(status==='open') { displayStatus = "REG. OPEN"; statusColor='text-green-400 bg-green-500/10 border-green-500/20'; }
+                        if(status==='live') { displayStatus = "🔴 LIVE"; statusColor='text-red-500 bg-red-500/10 border-red-500/20'; }
+                        if(status==='completed') { displayStatus = "ENDED"; statusColor='text-purple-400 bg-purple-500/10 border-purple-500/20'; }
+                        if(status==='upcoming') { displayStatus = "COMING SOON"; }
                         const badgeColor = m.status === 'open' ? 'text-green-400 bg-green-500/10 border-green-500/20' : 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
 
                         return `
