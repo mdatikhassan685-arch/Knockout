@@ -138,35 +138,64 @@
         }
 
         // 🔥 FIX: ADDED HEADER HERE for viewPlayers call 🔥
-        async function viewPlayers(id, total, type) {
+                async function viewPlayers(id, total, type) {
             document.getElementById('playersListModal').style.display='flex';
             document.getElementById('slot_info').innerText=`${total} SLOTS AVAILABLE`;
-            document.getElementById('joined_players_list').innerHTML = '<div class="text-center pt-20 animate-pulse text-gray-500 text-[10px] font-bold tracking-widest">LOADING...</div>';
+            const con = document.getElementById('joined_players_list');
+            con.innerHTML='<div class="text-center pt-20 animate-pulse text-gray-500 uppercase text-[10px] font-bold tracking-widest">Retrieving Data...</div>';
             
             try {
-                // FIXED HEADER ADDED BELOW:
-                const res = await fetch('/api/tournament', { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, // <-- This Fixes "Failed"
-                    body: JSON.stringify({ type: 'get_daily_participants', match_id: id }) 
-                });
-
+                const res = await fetch('/api/tournament', {method:'POST', body:JSON.stringify({type:'get_daily_participants', match_id:id})});
                 const d = await res.json();
                 let html='', filled=0;
                 
                 if (type !== 'Solo' && d.length>0) {
-                     const gps={}; d.forEach(p=>{let t=p.team_name||"Team";if(!gps[t])gps[t]=[];gps[t].push(p)});
-                     const keys=Object.keys(gps); filled=keys.length;
+                     // SQUAD / DUO VIEW
+                     const groups={}; 
+                     d.forEach(p=>{let t=p.team_name||"Unknow";if(!groups[t])groups[t]=[];groups[t].push(p)});
+                     const keys=Object.keys(groups); filled=keys.length;
+                     
                      keys.forEach((k, i) => {
-                         let items = gps[k].map(m=>`<div class="flex justify-between items-center text-[10px] text-gray-400 py-1.5 pl-3 border-l-2 border-indigo-500 bg-slate-900/40 mb-1 rounded-r-lg"><div>${m.game_name}</div><div class="text-right text-yellow-600 font-bold text-[9px]">Lvl ${m.game_level}</div></div>`).join('');
-                         html += `<div class="bg-[#121620] border border-slate-700/50 rounded-xl mb-3 overflow-hidden shadow-sm transition hover:border-indigo-500/50"><div onclick="this.nextElementSibling.classList.toggle('hidden')" class="p-3 flex justify-between items-center cursor-pointer bg-slate-900"><span class="text-xs font-bold text-white uppercase flex items-center gap-2"><span class="bg-indigo-600 text-[9px] px-1.5 py-0.5 rounded text-white shadow">#${i+1}</span> ${k}</span><i class="fa-solid fa-angle-down text-gray-500"></i></div><div class="hidden p-3 border-t border-slate-700/50 space-y-1">${items}</div></div>`;
+                         // এখানে প্রতিটি প্লেয়ারের UID এবং Level শো করানোর লজিক
+                         let items = groups[k].map(m=>`
+                         <div class="flex justify-between items-center text-[10px] text-gray-400 py-1.5 pl-3 border-l-2 border-indigo-500 bg-slate-900/40 mb-1 rounded-r-lg">
+                             <div class="font-bold text-gray-300 w-1/3 truncate"><i class="fa-solid fa-gamepad text-indigo-500 mr-1"></i>${m.game_name}</div>
+                             
+                             <!-- 🔥 UID Added Here 🔥 -->
+                             <div class="text-center w-1/3 text-slate-500 font-mono text-[9px] tracking-wide bg-black/20 rounded px-1">UID: ${m.game_uid || '--'}</div>
+                             
+                             <div class="text-right w-1/3 text-yellow-600 font-bold text-[9px]">Lvl ${m.game_level}</div>
+                         </div>`).join('');
+                         
+                         html += `<div class="bg-[#121620] border border-slate-700/50 rounded-xl mb-3 overflow-hidden shadow-sm transition hover:border-indigo-500/30 group"><div onclick="this.nextElementSibling.classList.toggle('hidden')" class="p-3 flex justify-between items-center cursor-pointer bg-gradient-to-r from-slate-800 to-slate-900"><span class="text-xs font-bold text-white uppercase flex items-center gap-2 tracking-wide"><span class="bg-indigo-600 text-[9px] px-1.5 py-0.5 rounded text-white shadow">#${i+1}</span> ${k}</span><i class="fa-solid fa-angle-down text-gray-500"></i></div><div class="hidden p-3 border-t border-slate-700/50 space-y-1">${items}</div></div>`;
                      });
+
                 } else {
-                    filled=d.length; d.forEach((p,i)=> { html+=`<div class="flex justify-between items-center bg-[#121620] p-3 rounded-xl mb-2 border border-slate-700/50 shadow-sm"><div class="flex items-center gap-3"><span class="bg-slate-800 text-[10px] text-gray-400 font-bold w-6 h-6 flex items-center justify-center rounded-full border border-slate-700">#${i+1}</span><div><h4 class="text-xs font-bold text-white">${p.game_name}</h4></div></div><span class="text-[9px] font-bold text-yellow-500 bg-yellow-900/20 px-2 py-0.5 rounded border border-yellow-900/40">Lvl ${p.game_level}</span></div>`; });
+                    // SOLO VIEW
+                    filled=d.length; 
+                    d.forEach((p,i)=> { 
+                        html+=`
+                        <div class="flex justify-between items-center bg-[#121620] p-3 rounded-xl mb-2 border border-slate-700/50 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-6 h-6 rounded-full bg-emerald-900/30 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-[10px] font-bold">#${i+1}</div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-white">${p.game_name}</h4>
+                                    <!-- UID & Level for Solo -->
+                                    <p class="text-[9px] text-gray-500 uppercase font-bold tracking-widest mt-0.5">UID: ${p.game_uid || '--'} • <span class="text-yellow-500">Lvl ${p.game_level}</span></p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-shield-halved text-slate-600 text-xs"></i>
+                        </div>`; 
+                    });
                 }
 
-                for(let i=0; i<(total-filled); i++) html+=`<div class="border border-dashed border-slate-800 rounded-xl p-3 mb-2 flex justify-between items-center opacity-40"><span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Slot ${filled+i+1}</span><span class="text-[9px] bg-slate-900 text-slate-600 px-2 py-0.5 rounded uppercase font-bold border border-slate-800">Empty</span></div>`;
+                // EMPTY SLOTS Logic
+                for(let i=0; i<(total-filled); i++) {
+                     html+=`<div class="border-2 border-slate-800 border-dashed rounded-xl p-3 mb-2 flex justify-between items-center opacity-40 bg-black/10"><span class="text-xs text-gray-500 font-bold uppercase tracking-wider pl-2">Slot ${filled+i+1}</span><span class="text-[9px] bg-slate-800 text-slate-500 px-2 py-0.5 rounded uppercase font-bold">Empty</span></div>`;
+                }
+                
                 document.getElementById('joined_players_list').innerHTML = html;
+
             } catch(e) { console.error(e); }
         }
         
