@@ -255,12 +255,101 @@
             } else { con.innerHTML='<div class="text-center pt-10 text-gray-500">No Participants</div>'; }
         }
 
-        async function kickUser(name, mid) {
-             if(!confirm("Kick "+name+"? Refund will apply.")) return;
-             await fetch('/api/admin', { method:'POST', body:JSON.stringify({ type:'kick_participant', match_id:mid, team_name:name }) });
-             viewPlayersAdmin(mid);
+              // 🔥 UPDATED: Admin View with Team Kick Feature
+        async function viewPlayersAdmin(id) {
+            const mType = document.getElementById('m_type').value; // ম্যাচ টাইপ ধরছি
+            document.getElementById('playersModal').style.display = 'flex';
+            const con = document.getElementById('modal_player_list');
+            con.innerHTML = '<div class="text-center p-4">Loading...</div>';
+
+            try {
+                const res = await fetch('/api/tournament', {method:'POST', body:JSON.stringify({type:'get_daily_participants', match_id:id})});
+                const d = await res.json();
+                
+                if(d.length===0) { con.innerHTML='<p class="text-center py-10 text-gray-500">No Participants.</p>'; return; }
+
+                let html = '';
+
+                // --- TEAM LOGIC (SQUAD / DUO) ---
+                if (mType !== 'Solo') {
+                    // Group players by Team Name
+                    const groups = {};
+                    d.forEach(p => { 
+                        let t = p.team_name || "Unknown Team"; 
+                        if(!groups[t]) groups[t] = [];
+                        groups[t].push(p);
+                    });
+                    
+                    Object.keys(groups).forEach((tName, idx) => {
+                        const members = groups[tName];
+                        let memberNames = members.map(m => m.game_name).join(', ');
+                        
+                        // Kick Team Button (পুরো টিম কিক হবে)
+                        // এখানে 'kickTeam' ফাংশন কল হবে
+                        html += `
+                        <div class="bg-gray-700/30 p-2 mb-2 rounded border border-gray-600">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-bold text-blue-300 text-sm">Team #${idx+1}: ${tName}</span>
+                                <button onclick="kickTeam('${tName}', ${id})" class="text-xs bg-red-600 text-white px-2 py-1 rounded shadow hover:bg-red-700">Kick Team</button>
+                            </div>
+                            <div class="text-[10px] text-gray-400 pl-2 border-l border-gray-500">
+                                Players: ${memberNames}
+                            </div>
+                        </div>`;
+                    });
+
+                } else {
+                    // --- SOLO LOGIC (PLAYER KICK) ---
+                    d.forEach((p, idx) => {
+                        html += `
+                        <div class="flex justify-between items-center bg-gray-700/30 p-2 rounded mb-1 border border-gray-600">
+                            <div><span class="text-gray-400 mr-2 text-xs">#${idx+1}</span> ${p.game_name}</div>
+                            <button onclick="kickPlayer(${p.id}, '${p.game_name}', ${id})" class="text-xs bg-red-900/40 text-red-400 border border-red-800 px-2 py-0.5 rounded hover:bg-red-800 hover:text-white">Kick</button>
+                        </div>`;
+                    });
+                }
+                con.innerHTML = html;
+
+            } catch(e){ con.innerHTML="Error Loading."; }
         }
 
+        // 🔥 NEW KICK FUNCTIONS
+
+        // ১. সোলো প্লেয়ার কিক (আইডি ধরে)
+        async function kickPlayer(pId, pName, mid) {
+            if(!confirm(`Kick Player "${pName}"? Refund will be sent.`)) return;
+            
+            await callKickAPI(mid, pName);
+        }
+
+        // ২. পুরো টিম কিক (টিম নাম ধরে)
+        async function kickTeam(teamName, mid) {
+            if(!confirm(`⚠️ KICK TEAM "${teamName}"?\nThis will remove ALL members of this team and refund everyone.`)) return;
+            
+            await callKickAPI(mid, teamName);
+        }
+
+        async function callKickAPI(matchId, targetName) {
+            try {
+                const res = await fetch('/api/admin', { 
+                    method:'POST', 
+                    headers: {'Content-Type': 'application/json'},
+                    body:JSON.stringify({ 
+                        type: 'kick_participant', 
+                        match_id: matchId, 
+                        team_name: targetName // নাম বা টিমনেম দুটোই 'team_name' ফিল্ডে পাঠাচ্ছি
+                    }) 
+                });
+                
+                const d = await res.json();
+                if(d.success) {
+                    alert("Kicked & Refunded Successfully!");
+                    viewPlayersAdmin(matchId); // Reload list
+                } else {
+                    alert("Failed: " + d.error);
+                }
+            } catch(e) { alert("Network Error"); }
+        }
         async function deleteMatch(id) {
             if(!confirm("Delete Match?")) return;
             await fetch('/api/admin', { method:'POST', body: JSON.stringify({ type:'delete_match', id:id }) });
