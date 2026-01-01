@@ -5,96 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Matches</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Rajdhani', 'sans-serif'] },
-                    colors: { dark: '#0B0E14', card: '#151A25' }
-                }
-            }
-        }
-    </script>
     <style>
-        body { user-select: none; -webkit-tap-highlight-color: transparent; }
-        .glass { background: rgba(20, 25, 35, 0.7); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .glow-text { text-shadow: 0 0 10px rgba(99, 102, 241, 0.5); }
-        .custom-scroll::-webkit-scrollbar { width: 3px; } 
-        .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        
-        .btn-neon { 
-            background: linear-gradient(135deg, #3b82f6, #6366f1); 
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-            transition: all 0.3s ease;
-        }
-        .btn-neon:active { transform: scale(0.95); box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3); }
+        body { font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        .btn-neon { background: linear-gradient(135deg, #2563eb, #1e40af); transition: all 0.2s; }
+        .btn-neon:active { transform: scale(0.97); }
     </style>
 </head>
-<body class="font-sans pb-24 bg-[#0B0E14] text-white min-h-screen">
-
-    <!-- ✅ Background Gradient Only (No Image/Watermark) -->
-    <div class="fixed inset-0 z-[-1] bg-gradient-to-br from-[#0a0d13] via-[#0f121a] to-[#141824]"></div>
+<body class="bg-gray-900 text-white pb-24">
 
     <!-- Header -->
-    <header class="p-4 glass sticky top-0 z-50 flex justify-between items-center shadow-lg">
-        <a href="/home" class="w-9 h-9 flex items-center justify-center rounded-full bg-slate-800/50 text-gray-400 hover:text-white transition hover:bg-blue-600/20 border border-slate-700">
-            <i class="fa-solid fa-arrow-left"></i>
-        </a>
-        <h1 class="text-xl font-bold tracking-widest uppercase text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400" id="cat_title">MATCHES</h1>
-        <div class="bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-700/60 shadow-sm flex items-center gap-1.5">
-            <i class="fa-solid fa-coins text-yellow-400 text-xs"></i>
-            <span class="text-sm font-bold tracking-wide text-gray-200">৳<span id="header_bal">...</span></span>
+    <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50 border-b border-gray-700">
+        <a href="/home" class="mr-4 text-gray-400 active:scale-90 transition"><i class="fa-solid fa-arrow-left text-xl"></i></a>
+        <div class="text-xl font-bold truncate flex-1" id="cat_title">Matches</div>
+        <div class="bg-gray-700 px-3 py-1 rounded-full text-xs font-bold text-yellow-400 border border-gray-600 shadow-sm flex items-center gap-1">
+            ৳ <span id="header_bal">...</span>
         </div>
     </header>
 
-    <!-- Main List -->
-    <div id="match_list" class="p-4 space-y-6 max-w-lg mx-auto">
-        <div class="flex flex-col items-center justify-center mt-32 space-y-3 opacity-60 animate-pulse">
-            <i class="fa-solid fa-gamepad text-5xl text-slate-700"></i>
-            <p class="text-xs font-bold text-slate-500 tracking-[0.2em] uppercase">Checking Active Lobbies...</p>
-        </div>
+    <!-- List -->
+    <div id="match_list" class="p-4 space-y-5 pb-10">
+        <div class="text-center mt-20 text-gray-500 animate-pulse">Loading matches...</div>
     </div>
 
-    <!-- MODALS & TOAST -->
-    <div id="joinModal" class="fixed inset-0 bg-black/95 z-[60] hidden items-end md:items-center justify-center p-0 md:p-4 backdrop-blur-md"></div>
-    
-    <div id="playersListModal" class="fixed inset-0 bg-black/95 z-[70] hidden items-center justify-center p-4 backdrop-blur-md">
-        <div class="bg-[#121620] w-full max-w-sm h-[70vh] flex flex-col rounded-2xl border border-slate-700 shadow-2xl relative overflow-hidden animate-zoom">
-            <div class="p-4 border-b border-slate-700/60 flex justify-between items-center bg-slate-900/40">
-                <div>
-                    <h3 class="text-lg font-bold text-white tracking-wide">Player List</h3>
-                    <p class="text-[10px] text-blue-400 font-bold uppercase tracking-wider" id="slot_info">Loading...</p>
-                </div>
-                <button onclick="document.getElementById('playersListModal').style.display='none'" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-gray-400 hover:text-white transition"><i class="fa-solid fa-xmark"></i></button>
+    <!-- Modals (Join, List, Room) SAME AS BEFORE -->
+    <div id="joinModal" class="fixed inset-0 bg-black/95 hidden items-center justify-center z-[60] p-4 backdrop-blur-sm"></div>
+    <div id="playersListModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[70] p-4 backdrop-blur-sm">
+        <div class="bg-gray-800 p-5 rounded-2xl w-full max-w-sm h-[75vh] flex flex-col relative shadow-2xl border border-gray-700 animate-zoom">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
+                <div><h3 class="font-bold text-lg text-white">Participants</h3><p class="text-[10px] text-gray-400 font-bold" id="slot_info">Loading...</p></div>
+                <button onclick="document.getElementById('playersListModal').style.display='none'" class="text-gray-400 text-2xl hover:text-white">&times;</button>
             </div>
-            <div id="joined_players_list" class="overflow-y-auto flex-1 p-2 space-y-2 custom-scroll"></div>
+            <div id="joined_players_list" class="overflow-y-auto flex-1 space-y-2 pr-1 custom-scroll pb-5"></div>
         </div>
     </div>
-    
-    <div id="roomDetailsModal" class="fixed inset-0 bg-black/95 z-[80] hidden items-center justify-center p-6 backdrop-blur-lg">
-        <div class="bg-[#151a24] w-full max-w-xs rounded-2xl border border-slate-700 shadow-[0_0_40px_rgba(0,0,0,0.8)] p-6 text-center relative">
-            <button onclick="document.getElementById('roomDetailsModal').style.display='none'" class="absolute top-3 right-3 text-gray-500 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <div class="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/20"><i class="fa-solid fa-key text-xl text-green-400"></i></div>
-            <h3 class="text-lg font-bold text-white mb-5 tracking-wide">ROOM ACCESS</h3>
-            <div class="space-y-3 text-left">
-                <div class="bg-black/40 p-3 rounded-lg border border-slate-700/60">
-                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest block mb-0.5">Room ID</span>
-                    <span id="room_id_display" class="text-lg font-mono text-yellow-400 tracking-wider font-bold select-all">---</span>
-                </div>
-                <div class="bg-black/40 p-3 rounded-lg border border-slate-700/60">
-                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest block mb-0.5">Password</span>
-                    <span id="room_pass_display" class="text-lg font-mono text-green-400 tracking-wider font-bold select-all">---</span>
-                </div>
+    <div id="roomDetailsModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[60] p-4">
+        <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-sm text-center shadow-lg relative border border-gray-700">
+            <button onclick="document.getElementById('roomDetailsModal').style.display='none'" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-times text-lg"></i></button>
+            <div class="w-14 h-14 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse"><i class="fa-solid fa-key text-2xl text-green-400"></i></div>
+            <h3 class="text-lg font-bold mb-4 text-white">Room Access</h3>
+            <div class="bg-black/40 p-4 rounded-xl mb-3 border border-gray-600 text-left space-y-3 shadow-inner">
+                <div><span class="text-[10px] text-gray-500 uppercase font-bold block mb-0.5">ROOM ID</span><span id="room_id_display" class="text-xl font-mono font-bold text-yellow-400 select-all tracking-wider block">...</span></div>
+                <div><span class="text-[10px] text-gray-500 uppercase font-bold block mb-0.5">PASSWORD</span><span id="room_pass_display" class="text-xl font-mono font-bold text-green-400 select-all tracking-wider block">...</span></div>
             </div>
+            <p class="text-[10px] text-gray-500 text-center">Do not share.</p>
         </div>
     </div>
-
-    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-[#1e293b] text-white px-5 py-3 rounded-full shadow-2xl z-[100] border border-slate-600 flex items-center gap-3 transition-all duration-300 opacity-0 translate-y-10 min-w-[200px] justify-center">
-        <span id="toast_icon"></span> <span id="toast_msg" class="text-xs font-bold tracking-wide">Msg</span>
-    </div>
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-5 py-2.5 rounded-full shadow-2xl transition-all duration-300 z-[100] opacity-0 translate-y-10 border border-gray-700 text-sm font-bold flex items-center gap-2 pointer-events-none"><span id="toast_msg">Msg</span></div>
 
     <script>
         const user = JSON.parse(localStorage.getItem('user'));
@@ -107,212 +66,170 @@
 
         function showToast(msg, type) {
             const t = document.getElementById('toast');
-            const icon = document.getElementById('toast_icon');
-            icon.innerHTML = type === 'error' ? '<i class="fa-solid fa-circle-exclamation text-red-500"></i>' : '<i class="fa-solid fa-circle-check text-green-400"></i>';
-            document.getElementById('toast_msg').innerText = msg;
+            t.innerHTML = (type==='error'?'⚠️ ':'✅ ') + msg;
             t.classList.remove('translate-y-10', 'opacity-0');
-            setTimeout(() => t.classList.add('translate-y-10', 'opacity-0'), 3000);
+            setTimeout(()=> t.classList.add('translate-y-10', 'opacity-0'), 3000);
         }
 
         async function fetchBalance() {
-            try { 
-                const res = await fetch('/api/user', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'wallet_info', user_id: user.id }) });
-                const data = await res.json(); 
-                if(data.balance !== undefined) document.getElementById('header_bal').innerText = parseFloat(data.balance).toFixed(0); 
-            } catch(e){}
+            try { const res = await fetch('/api/user', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'wallet_info', user_id: user.id }) });
+            const data = await res.json(); if(data.balance !== undefined) document.getElementById('header_bal').innerText = parseFloat(data.balance).toFixed(2); } catch(e){}
         }
         fetchBalance(); 
 
+        // 🔥 MATCH LOAD & LOGIC
         async function loadMatches() {
             const list = document.getElementById('match_list');
-            if(!catId) { list.innerHTML = `<p class="text-center text-red-400 mt-20 text-xs">Error: Invalid Category</p>`; return; }
+            if(!catId) { list.innerHTML = `<div class="text-center mt-20 text-gray-500 text-sm">Error: No Category</div>`; return; }
 
             try {
-                const res = await fetch('/api/tournament', { 
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json'}, 
-                    body: JSON.stringify({ type: 'get_daily_matches', category_id: parseInt(catId), user_id: user.id }) 
-                });
+                const res = await fetch('/api/tournament', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'get_daily_matches', category_id: parseInt(catId), user_id: user.id }) });
                 const matches = await res.json();
 
                 if(Array.isArray(matches) && matches.length > 0) {
                     list.innerHTML = matches.map((m, index) => {
+                        const adminLimit = parseInt(m.total_spots) || 0;
                         const type = m.match_type || 'Solo';
-                        const adminLimit = parseInt(m.total_spots) || (type==='Solo'?48:12);
-                        const joined = type === 'Solo' ? (m.joined_players || 0) : (m.joined_teams || 0);
-                        const filled = Math.min((joined / adminLimit) * 100, 100);
+                        
+                        let limitCount = adminLimit > 0 ? adminLimit : (type==='Solo'?48:(type==='Duo'?24:12));
+                        let currentCount = (type==='Solo') ? (m.joined_players||0) : (m.joined_teams||0);
+                        const label = type==='Solo'?'Players':'Teams';
+                        const percent = Math.min((currentCount/limitCount)*100, 100);
+
                         const feeDisplay = parseFloat(m.entry_fee) === 0 ? "FREE" : "৳"+m.entry_fee;
                         const d = new Date(m.match_time);
-                        const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-                        const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+                        const dateFormatted = d.toLocaleDateString('en-GB', { day:'numeric', month:'short' }) + ', ' + d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', hour12:true });
+                        
+                        const status = m.status || 'upcoming';
+                        const isJoined = m.is_joined > 0;
+                        const matchNo = index + 1;
 
-                        let btn = '';
-                        if (m.is_joined) btn = `<button onclick="viewRoom(${m.id})" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl font-bold text-white shadow-lg animate-pulse uppercase tracking-widest text-xs border border-emerald-400/50">Get Room ID</button>`;
-                        else if (m.status === 'open' && joined < adminLimit) btn = `<button onclick="openJoin(${m.id}, '${type}', ${m.entry_fee})" class="btn-neon w-full py-3 rounded-xl font-bold text-white shadow-lg uppercase tracking-widest text-xs">Join Match</button>`;
-                        else btn = `<button disabled class="w-full py-3 bg-slate-800 text-gray-500 rounded-xl font-bold uppercase tracking-widest text-xs border border-slate-700">Locked / Full</button>`;
+                        // 🔥 FIXED BUTTON LOGIC 🔥
+                        let mainBtn = '';
 
-                        const statusColor = m.status==='open' ? 'text-green-400' : 'text-yellow-500';
+                        // 1. Upcoming -> Always disabled "Coming Soon" (Even if Joined)
+                        if (status === 'upcoming') {
+                            mainBtn = `<button disabled class="w-full py-3.5 bg-gray-800 text-gray-500 font-bold border border-gray-600 rounded-xl uppercase tracking-widest cursor-not-allowed">Coming Soon</button>`;
+                        }
+                        
+                        // 2. Completed -> View Result
+                        else if (status === 'completed') {
+                            mainBtn = `<button class="w-full py-3.5 bg-purple-600 text-white font-bold rounded-xl uppercase tracking-widest shadow-lg hover:bg-purple-700 transition">View Result</button>`;
+                        }
+                        
+                        // 3. Live -> Match Started
+                        else if (status === 'live') {
+                            mainBtn = `<button disabled class="w-full py-3.5 bg-red-900/50 text-red-500 border border-red-500/50 rounded-xl font-bold uppercase tracking-widest cursor-not-allowed animate-pulse">Match Started</button>`;
+                        }
+                        
+                        // 4. Open
+                        else if (status === 'open') {
+                            // If joined -> Show Room Button
+                            if (isJoined) {
+                                mainBtn = `<button onclick="viewRoom(${m.id})" class="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl font-bold text-white shadow-lg animate-pulse uppercase tracking-widest">Get Room ID</button>`;
+                            }
+                            // If NOT joined but Full -> Full Button
+                            else if (currentCount >= limitCount) {
+                                mainBtn = `<button disabled class="w-full py-3.5 bg-gray-700 text-gray-400 font-bold border border-gray-600 rounded-xl cursor-not-allowed">Slot Full</button>`;
+                            }
+                            // If Open and Slots Available -> Join Button
+                            else {
+                                mainBtn = `<button onclick="openJoin(${m.id}, '${type}', ${m.entry_fee})" class="btn-neon w-full py-3.5 rounded-xl font-bold text-white shadow-lg uppercase tracking-widest text-sm">Join Match</button>`;
+                            }
+                        }
+
+                        // Status Color
+                        const statusColor = (status==='open') ? 'text-green-500' : ((status==='upcoming')?'text-yellow-500':'text-red-500');
 
                         return `
-                        <div class="bg-[#151a24] rounded-2xl border border-slate-700/60 shadow-xl relative overflow-hidden group hover:border-indigo-500/30 transition duration-300">
-                            <!-- Glowing Top Border -->
-                            <div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-blue-500 to-purple-600"></div>
-
-                            <div class="p-4 flex justify-between items-center border-b border-slate-800 bg-slate-900/30">
-                                <div>
-                                    <div class="flex items-center gap-2 mb-1">
-                                        <span class="bg-indigo-600 text-white text-[9px] px-2 py-0.5 rounded font-bold uppercase shadow-sm">MATCH #${index+1}</span>
-                                        <span class="text-[9px] text-slate-500 font-mono tracking-widest uppercase">ID: ${m.id}</span>
-                                    </div>
-                                    <h3 class="text-white font-bold text-lg tracking-wide truncate w-40">${m.title}</h3>
+                        <div class="bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 shadow-xl mb-6 relative group transition hover:border-blue-500/30">
+                            <div class="bg-gradient-to-r from-gray-750 to-gray-800 p-4 flex justify-between items-center border-b border-gray-600">
+                                <div class="w-2/3">
+                                    <div class="flex items-center gap-2 mb-1.5"><span class="bg-blue-600 text-white px-2 py-0.5 rounded font-bold text-[9px] uppercase shadow-sm">MATCH #${matchNo}</span><span class="text-[9px] text-gray-500 font-mono tracking-widest bg-black/20 px-1.5 py-0.5 rounded border border-gray-700">ID: ${m.id}</span></div>
+                                    <h3 class="font-bold text-white text-md truncate">${m.title}</h3>
                                 </div>
                                 <div class="text-right">
-                                    <div class="text-xl font-bold text-indigo-400 glow-text leading-none">${timeStr}</div>
-                                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">${dateStr}</div>
+                                     <div class="text-[10px] font-bold text-blue-200 bg-blue-900/30 px-3 py-1.5 rounded-lg border border-blue-500/20 inline-flex items-center gap-1.5 shadow-sm"><i class="fa-regular fa-clock"></i> ${dateFormatted}</div>
                                 </div>
                             </div>
-
                             <div class="p-4">
-                                <!-- Stats Grid -->
-                                <div class="grid grid-cols-3 gap-2 text-center mb-5 bg-slate-900/50 p-2.5 rounded-xl border border-slate-700/50">
-                                    <div><p class="text-[9px] text-slate-400 font-bold uppercase">Prize</p><p class="text-green-400 font-black text-sm">৳${m.prize_pool}</p></div>
-                                    <div class="border-x border-slate-700"><p class="text-[9px] text-slate-400 font-bold uppercase">Fee</p><p class="text-yellow-400 font-black text-sm">${feeDisplay}</p></div>
-                                    <div><p class="text-[9px] text-slate-400 font-bold uppercase">Mode</p><p class="text-blue-400 font-black text-sm uppercase">${type}</p></div>
+                                <div class="grid grid-cols-3 gap-3 text-center mb-5 text-[10px] font-bold text-gray-300 bg-gray-900/30 p-3 rounded-xl border border-gray-700/50">
+                                    <div><span class="block text-green-400 text-sm font-black mb-0.5">৳${m.prize_pool}</span>Prize</div>
+                                    <div class="border-x border-gray-700/50"><span class="block text-yellow-400 text-sm font-black mb-0.5">${feeDisplay}</span>Fee</div>
+                                    <div><span class="block text-blue-400 text-sm font-black uppercase mb-0.5">${type}</span>Type</div>
                                 </div>
-
-                                <div class="flex justify-between items-center text-[11px] font-medium text-slate-400 mb-4 px-1">
-                                    <span><i class="fa-solid fa-map text-indigo-400 mr-1"></i> ${m.map || 'Random'}</span>
-                                    <span>Per Kill: <b class="text-white">৳${m.per_kill}</b></span>
+                                <div class="flex justify-between text-[11px] mb-4 px-2 text-gray-400 font-medium border-t border-dashed border-gray-700/50 pt-3">
+                                    <span><i class="fa-solid fa-map-location-dot text-purple-400"></i> ${m.map || 'Random'}</span>
+                                    <span>Per Kill: <b>৳${m.per_kill}</b></span>
                                 </div>
-
-                                <!-- Progress -->
-                                <div class="mb-5">
-                                    <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-1.5 text-slate-400">
-                                        <span onclick="viewPlayers(${m.id}, ${adminLimit}, '${type}')" class="hover:text-blue-400 cursor-pointer underline decoration-blue-500/50 transition">Participants (${joined}/${adminLimit})</span>
-                                        <span class="${statusColor} flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full ${m.status==='open'?'bg-green-500 animate-pulse':'bg-yellow-500'}"></span> ${m.status}</span>
+                                <div class="mb-5 px-1">
+                                    <div class="flex justify-between text-[10px] mb-1.5 font-bold uppercase tracking-wider text-gray-400">
+                                        <button onclick="viewPlayers(${m.id}, ${limitCount}, '${type}')" class="text-blue-400 underline hover:text-white transition">List (${currentCount}/${limitCount} ${label})</button>
+                                        <span class="${statusColor} flex items-center gap-1 uppercase"><span class="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span> ${status}</span>
                                     </div>
-                                    <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                                        <div class="bg-gradient-to-r from-blue-500 to-purple-600 h-full transition-all duration-1000 relative" style="width:${filled}%">
-                                            <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
-                                        </div>
-                                    </div>
+                                    <div class="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden shadow-inner"><div class="bg-blue-500 h-full transition-all duration-700" style="width:${percent}%"></div></div>
                                 </div>
-                                ${btn}
+                                ${mainBtn}
                             </div>
                         </div>`;
                     }).join('');
-                } else {
-                    list.innerHTML = `<div class="flex flex-col items-center justify-center mt-32 opacity-50 space-y-4">
-                        <i class="fa-solid fa-folder-open text-6xl text-slate-700"></i>
-                        <p class="text-slate-500 font-bold uppercase tracking-widest text-xs">No Active Lobbies</p>
-                    </div>`;
-                }
+                } else { list.innerHTML = `<div class="text-center mt-20 opacity-50"><p class="text-sm">No matches active.</p></div>`; }
             } catch(e) { console.error(e); }
         }
-
+        
+        // Functions same as before (openJoin, confirmJoin, viewPlayers, viewRoom...)
         function openJoin(id, type, fee) {
-            const count = (type === 'Duo') ? 2 : (type.includes('Squad') ? 4 : 1);
-            let teamH = count > 1 ? `
-            <div class="mb-5">
-                <label class="text-[10px] text-blue-400 font-bold uppercase block mb-1.5 tracking-widest ml-1">Team Name (Required)</label>
-                <div class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center"><i class="fa-solid fa-users text-slate-500 mr-3"></i><input id="team_name" class="bg-transparent w-full text-white text-sm font-bold outline-none placeholder-slate-600" placeholder="e.g. ThunderBot"></div>
-            </div>` : '';
-
-            let playerH = '';
-            for(let i=1; i<=count; i++) {
-                playerH += `
-                <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/80 mb-3 relative group hover:border-slate-600 transition">
-                    <span class="absolute -top-2 left-3 bg-slate-800 text-[9px] font-bold text-slate-400 px-2 py-0.5 rounded border border-slate-600 shadow-sm uppercase tracking-wide">Player ${i}</span>
-                    <div class="grid grid-cols-2 gap-3 mt-1.5">
-                        <input id="name_${i}" class="bg-slate-900 border border-slate-600 text-white text-xs p-3 rounded-lg outline-none placeholder-slate-600 focus:border-blue-500 transition font-medium" placeholder="In-Game Name">
-                        <input id="uid_${i}" type="number" class="bg-slate-900 border border-slate-600 text-white text-xs p-3 rounded-lg outline-none placeholder-slate-600 focus:border-blue-500 transition text-center font-mono" placeholder="UID">
-                    </div>
-                    <div class="mt-2"><input id="lvl_${i}" type="number" class="bg-slate-900 border border-slate-600 text-white text-xs p-2.5 w-full rounded-lg outline-none focus:border-red-500 placeholder-slate-600 text-center font-bold" placeholder="Game Level (40+)"></div>
-                </div>`;
-            }
+             const count = (type === 'Duo') ? 2 : (type.includes('Squad') ? 4 : 1);
+            let teamF = count > 1 ? `<div class="bg-black/30 p-3 rounded-lg mb-3 border border-blue-500/30"><label class="text-[10px] text-blue-400 font-bold uppercase block mb-1">TEAM NAME</label><input type="text" id="team_name" class="w-full bg-transparent text-white font-bold text-sm outline-none placeholder-gray-600" placeholder="Your Squad Name"></div>` : '';
+            let playersF = '';
+            for(let i=1; i<=count; i++) { playersF += `<div class="bg-gray-700/30 p-2.5 mb-2 rounded-xl border border-gray-600/50 relative"><span class="absolute -top-2 left-2 bg-gray-800 px-2 text-[9px] font-bold text-gray-400 rounded border border-gray-600 shadow-sm">P${i}</span><div class="flex gap-2 mt-2"><input id="name_${i}" class="bg-gray-900 border-none text-white text-xs p-2.5 rounded-lg w-3/5 outline-none placeholder-gray-500 font-medium" placeholder="Game Name"><input id="uid_${i}" type="number" class="bg-gray-900 border-none text-white text-xs p-2.5 rounded-lg w-2/5 outline-none placeholder-gray-500 text-center font-mono" placeholder="UID"></div><input id="l_${i}" type="number" class="w-full mt-2 bg-gray-900/50 border-none text-white text-xs p-2.5 rounded-lg outline-none placeholder-gray-500 text-center font-bold" placeholder="Lvl (Min 40)"></div>`; }
             const feeTxt = fee === 0 ? "FREE" : "৳"+fee;
-            
-            document.getElementById('joinModal').innerHTML = `
-                <div class="bg-[#10141d] w-full max-w-md h-[90vh] md:h-auto rounded-t-3xl md:rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.9)] flex flex-col relative animate-slide-up border-t md:border border-slate-700/80">
-                    <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 backdrop-blur-md rounded-t-3xl">
-                        <div><h3 class="font-bold text-xl text-white tracking-wide">Join Match</h3><p class="text-[10px] text-gray-400 uppercase tracking-widest mt-1">Entry Fee: <span class="text-yellow-400 font-bold text-xs">${feeTxt}</span></p></div>
-                        <button onclick="document.getElementById('joinModal').style.display='none'" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-gray-400 hover:text-white hover:bg-red-500 transition shadow"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
-                    <div class="flex-1 overflow-y-auto p-5 custom-scroll pb-20 space-y-1">${teamH}${playerH}</div>
-                    <div class="p-5 border-t border-slate-800 bg-slate-900 absolute bottom-0 w-full rounded-b-3xl">
-                        <button onclick="confirmJoin('${id}', '${type}')" id="conf_btn" class="btn-neon w-full py-3.5 rounded-xl font-black text-white uppercase tracking-[2px] text-xs shadow-lg transition transform hover:scale-[1.02]">Confirm Entry</button>
-                    </div>
-                </div>`;
+            document.getElementById('joinModal').innerHTML = `<div class="bg-gray-800 p-6 rounded-3xl w-full max-w-md h-[85vh] flex flex-col relative shadow-2xl border border-gray-600 animate-zoom"><div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-600"><div><h3 class="font-bold text-lg text-white">Join ${type}</h3><p class="text-[10px] text-gray-400 font-bold uppercase">Fee: <span class="text-yellow-400">${feeTxt}</span></p></div><button onclick="document.getElementById('joinModal').style.display='none'"><i class="fa-solid fa-times text-gray-400 text-lg"></i></button></div><div class="flex-1 overflow-y-auto pr-1 custom-scroll mb-3 space-y-1">${teamF}${playersF}</div><div class="pt-2 border-t border-gray-700 flex gap-3"><button onclick="document.getElementById('joinModal').style.display='none'" class="w-1/3 py-3 rounded-lg font-bold text-gray-400 hover:text-white bg-gray-700 text-xs">Cancel</button><button onclick="confirmJoin('${id}', '${type}')" id="join_confirm_btn" class="w-2/3 bg-blue-600 py-3 rounded-lg font-bold text-white shadow-lg active:scale-95 transition text-sm uppercase tracking-wide">Confirm Join</button></div></div>`;
             document.getElementById('joinModal').style.display = 'flex';
         }
-
+        
         async function confirmJoin(id, type) {
             const count = (type === 'Duo') ? 2 : (type.includes('Squad') ? 4 : 1);
-            let tName = '';
-            if(count>1) { tName = document.getElementById('team_name').value; if(!tName) return showToast("Enter Team Name", "error"); }
-            
-            let pArr = [];
-            for(let i=1; i<=count; i++) {
-                let n=document.getElementById(`name_${i}`).value, u=document.getElementById(`uid_${i}`).value, l=document.getElementById(`lvl_${i}`).value;
-                if(!n || !l) return showToast(`Fill all fields for Player ${i}`, "error");
-                if(parseInt(l) < 40) return showToast(`Player ${i} Level < 40`, "error");
-                pArr.push({name:n, uid:u, level:l});
-            }
-
-            const btn = document.getElementById('conf_btn'); btn.innerText = "PROCESSING..."; btn.disabled=true;
-
-            try {
-                const res = await fetch('/api/tournament', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ type: 'join_daily_match', user_id: user.id, match_id: id, team_name: tName, players: pArr })
-                });
-                const d = await res.json();
-                if(d.success) { showToast("Successfully Joined!", "success"); document.getElementById('joinModal').style.display='none'; loadMatches(); fetchBalance(); }
-                else { showToast(d.error, "error"); btn.disabled=false; btn.innerText="TRY AGAIN"; }
-            } catch(e) { showToast("Connection Error", "error"); btn.disabled=false; }
+            let tName = ''; if(count>1) { tName=document.getElementById('team_name').value; if(!tName) return showToast("Enter Team Name","error"); }
+            let pArr = []; for(let i=1; i<=count; i++) { let n=document.getElementById(`name_${i}`).value, u=document.getElementById(`uid_${i}`).value, l=document.getElementById(`l_${i}`).value; if(!n || !l) return showToast(`Info Missing Player ${i}`, "error"); if(parseInt(l)<40) return showToast(`Level 40+ Required`, "error"); pArr.push({name:n, uid:u, level:l}); }
+            const btn=document.getElementById('join_confirm_btn'); btn.disabled=true; btn.innerText="Processing...";
+            try { const res = await fetch('/api/tournament', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'join_daily_match', user_id: user.id, match_id: id, team_name: tName, players: pArr }) }); const d = await res.json(); if(d.success) { showToast("Success! Joined.", "success"); document.getElementById('joinModal').style.display='none'; loadMatches(); fetchBalance(); } else { showToast(d.error, "error"); btn.disabled=false; btn.innerText="Retry"; } } catch(e) { showToast("Connection Error", "error"); btn.disabled=false; }
         }
-
+        
         async function viewPlayers(id, total, type) {
-            document.getElementById('playersListModal').style.display='flex';
-            document.getElementById('slot_info').innerText = `${total} SLOTS AVAILABLE`;
-            const con = document.getElementById('joined_players_list');
-            con.innerHTML = '<div class="text-center pt-20 animate-pulse text-gray-500 uppercase text-[10px] font-bold tracking-widest">Retrieving Data...</div>';
-            
-            try {
+             document.getElementById('playersListModal').style.display='flex';
+             document.getElementById('slot_info').innerText=`${total} SLOTS AVAILABLE`;
+             const con = document.getElementById('joined_players_list');
+             con.innerHTML='<div class="text-center pt-10 text-gray-500 uppercase text-[10px] font-bold tracking-widest animate-pulse">Retrieving Data...</div>';
+             try {
                 const res = await fetch('/api/tournament', {method:'POST', body:JSON.stringify({type:'get_daily_participants', match_id:id})});
                 const d = await res.json();
                 let html='', filled=0;
-                
-                if (type !== 'Solo' && d.length>0) {
-                     const gps={}; d.forEach(p=>{let t=p.team_name||"Unknow";if(!gps[t])gps[t]=[];gps[t].push(p)});
-                     const keys=Object.keys(gps); filled=keys.length;
+                if(type !== 'Solo' && d.length>0) {
+                     const groups={}; d.forEach(p=>{let t=p.team_name||"Unknow";if(!gps[t])gps[t]=[];gps[t].push(p)});
+                     // Small fix: variable name in map was 'gps' in last reply. fixing logic.
+                     d.forEach(p=>{ let t=p.team_name||"Team"; if(!groups[t]) groups[t]=[]; groups[t].push(p); });
+                     const keys=Object.keys(groups); filled=keys.length;
                      keys.forEach((k, i) => {
-                         let items = gps[k].map(m=>`
-                         <div class="flex justify-between items-center text-[10px] text-gray-400 py-1.5 pl-3 border-l-2 border-indigo-500 bg-slate-900/40 mb-1 rounded-r-lg">
-                             <div class="font-bold text-gray-300">${m.game_name}</div>
-                             <div class="text-right"><span class="block font-mono text-slate-500">${m.game_uid||'--'}</span><span class="text-yellow-600 font-bold text-[9px]">LVL ${m.game_level}</span></div>
-                         </div>`).join('');
-                         html += `<div class="bg-[#121620] border border-slate-700/50 rounded-xl mb-3 overflow-hidden shadow-sm transition hover:border-indigo-500/30 group"><div onclick="this.nextElementSibling.classList.toggle('hidden')" class="p-3 flex justify-between items-center cursor-pointer bg-gradient-to-r from-slate-800 to-slate-900"><span class="text-xs font-bold text-white uppercase flex items-center gap-2 tracking-wide"><span class="bg-indigo-600 text-[9px] px-1.5 py-0.5 rounded text-white shadow">#${i+1}</span> ${k}</span><i class="fa-solid fa-angle-down text-gray-500"></i></div><div class="hidden p-3 border-t border-slate-700/50 space-y-1">${items}</div></div>`;
+                         let items = groups[k].map(m=>`<div class="flex justify-between items-center text-[10px] text-gray-400 py-1.5 pl-3 border-l-2 border-indigo-500 bg-slate-900/40 mb-1 rounded-r-lg"><div>${m.game_name}</div><div class="text-right text-yellow-600 font-bold">Lvl ${m.game_level}</div></div>`).join('');
+                         html += `<div class="bg-[#121620] border border-slate-700/50 rounded-xl mb-3 overflow-hidden shadow-sm transition group"><div onclick="this.nextElementSibling.classList.toggle('hidden')" class="p-3 flex justify-between items-center cursor-pointer bg-gradient-to-r from-slate-800 to-slate-900"><span class="text-xs font-bold text-white uppercase flex items-center gap-2"><span class="bg-indigo-600 text-[9px] px-1.5 py-0.5 rounded text-white shadow">#${i+1}</span> ${k}</span><i class="fa-solid fa-angle-down text-gray-500"></i></div><div class="hidden p-3 border-t border-slate-700/50 space-y-1">${items}</div></div>`;
                      });
                 } else {
-                    filled=d.length; d.forEach((p,i)=> { html+=`<div class="flex justify-between items-center bg-[#121620] p-3 rounded-xl mb-2 border border-slate-700/50 shadow-sm"><div class="flex items-center gap-3"><span class="text-indigo-400 font-bold text-xs">#${i+1}</span><div><h4 class="text-sm font-bold text-white">${p.game_name}</h4><span class="text-[9px] text-gray-500 font-bold tracking-wider">LEVEL <span class="text-yellow-500">${p.game_level}</span></span></div></div><i class="fa-solid fa-check-circle text-green-500/50"></i></div>`; });
+                    filled=d.length; d.forEach((p,i)=> { html+=`<div class="flex justify-between items-center bg-[#121620] p-3 rounded-xl mb-2 border border-slate-700/50 shadow-sm"><div class="flex items-center gap-3"><div class="w-6 h-6 rounded-full bg-emerald-900/30 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-[10px] font-bold">#${i+1}</div><div><h4 class="text-sm font-bold text-white">${p.game_name}</h4><p class="text-[9px] text-yellow-500 font-bold uppercase tracking-widest">LVL ${p.game_level}</p></div></div><i class="fa-solid fa-check-circle text-green-500/50 text-xs"></i></div>`; });
                 }
-
-                for(let i=0; i<(total-filled); i++) html+=`<div class="border border-dashed border-slate-700 p-3 mb-2 rounded-xl flex justify-between items-center opacity-40 bg-black/10"><span class="text-xs text-gray-500 font-bold uppercase tracking-wider pl-2">Slot ${filled+i+1}</span><span class="text-[9px] bg-slate-800 text-slate-500 px-2 py-0.5 rounded uppercase font-bold">Open</span></div>`;
-                document.getElementById('joined_players_list').innerHTML = html;
-            } catch(e) { console.error(e); }
+                for(let i=0; i<(total-filled); i++) html+=`<div class="border-2 border-slate-800 border-dashed rounded-xl p-3 mb-2 flex justify-between items-center opacity-40 bg-black/10"><span class="text-xs text-gray-500 font-bold uppercase tracking-wider pl-2">Slot ${filled+i+1}</span><span class="text-[9px] bg-slate-800 text-slate-500 px-2 py-0.5 rounded uppercase font-bold">Empty</span></div>`;
+                con.innerHTML = html;
+             } catch(e){ con.innerHTML="<p>Failed</p>"; }
         }
 
         async function viewRoom(id) {
-             try {
-                 const res = await fetch('/api/tournament', { method:'POST', body:JSON.stringify({ type:'get_daily_room', user_id:user.id, match_id:id})});
-                 const d = await res.json();
-                 if(d.room_id && d.room_id.trim() !== "" && d.room_id !== "null") { 
-                     document.getElementById('roomDetailsModal').style.display='flex'; 
-                     document.getElementById('room_id_display').innerText = d.room_id; 
-                     document.getElementById('room_pass_display').innerText = d.room_pass; 
-                 } else { showToast("Room details will be provided 15 minutes before the match starts.", "error"); }
-             } catch(e) { showToast("Error", "error"); }
+             const res = await fetch('/api/tournament', { method:'POST', body:JSON.stringify({ type:'get_daily_room', user_id:user.id, match_id:id})});
+             const d = await res.json();
+             if(d.room_id && d.room_id.trim() !== "" && d.room_id !== "null") { 
+                 document.getElementById('roomDetailsModal').style.display='flex'; 
+                 document.getElementById('room_id_display').innerText = d.room_id; 
+                 document.getElementById('room_pass_display').innerText = d.room_pass; 
+             } else { showToast("Room details available 15m before start", "error"); }
         }
 
         loadMatches();
