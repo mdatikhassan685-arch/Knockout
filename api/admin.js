@@ -11,7 +11,12 @@ module.exports = async (req, res) => {
     const { type, category_id, id, match_id, user_id } = body;
 
     try {
-        // --- 📂 CATEGORIES ---
+        // ... (Categories, Matches, Users, Balance logic remains SAME) ...
+        // (আমি উপরের কোডগুলো স্কিপ করলাম যাতে ফাইল বড় না হয়, শুধু নিচের অংশটুকু আপডেট করুন)
+
+        /* ============================ 
+           CATEGORIES 
+        ============================ */
         if (type === 'get_categories') {
             const [rows] = await db.execute('SELECT * FROM categories ORDER BY id ASC');
             return res.status(200).json(rows);
@@ -31,7 +36,9 @@ module.exports = async (req, res) => {
             return res.status(200).json({ success: true });
         }
 
-        // --- 🎮 MATCHES ---
+        /* ============================ 
+           MATCHES 
+        ============================ */
         if (type === 'get_admin_matches') {
             let sql = `SELECT * FROM matches ORDER BY match_time DESC LIMIT 50`;
             let params = [];
@@ -65,8 +72,6 @@ module.exports = async (req, res) => {
             await db.execute('UPDATE matches SET status = ? WHERE id = ?', [body.new_status, match_id]); 
             return res.status(200).json({ success: true }); 
         }
-
-        // --- 🦵 KICK USER (Refund with 'details') ---
         if (type === 'kick_participant') {
              const [match] = await db.execute('SELECT entry_fee FROM matches WHERE id = ?', [body.match_id]);
              const [players] = await db.execute('SELECT user_id FROM match_participants WHERE match_id=? AND (team_name=? OR game_name=?)', [body.match_id, body.team_name, body.team_name]);
@@ -75,7 +80,6 @@ module.exports = async (req, res) => {
              if(refund > 0) {
                  for(let p of players) {
                      await db.execute('UPDATE users SET wallet_balance=wallet_balance+? WHERE id=?', [refund, p.user_id]);
-                     // ✅ FIX: details & status
                      await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Refund", "Kicked by Admin", "completed", NOW())', [p.user_id, refund]);
                  }
              }
@@ -83,7 +87,9 @@ module.exports = async (req, res) => {
              return res.status(200).json({ success: true });
         }
 
-        // --- 👥 USERS ---
+        /* ============================ 
+           USERS & FINANCE (Updated with Messages)
+        ============================ */
         if (type === 'list_users') { 
             const [users] = await db.execute('SELECT id, username, email, wallet_balance, status FROM users ORDER BY id DESC LIMIT 100'); 
             return res.status(200).json(users); 
@@ -92,64 +98,62 @@ module.exports = async (req, res) => {
             await db.execute('UPDATE users SET status=? WHERE id=?', [body.status, user_id]);
             return res.status(200).json({ success: true });
         }
-
-        // --- 💰 BALANCE MANAGE (Add/Cut) ---
         if (type === 'manage_balance') {
             const amount = parseFloat(body.amount);
             if (body.action === 'add') {
                 await db.execute('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?', [amount, user_id]);
-                // ✅ FIX: details & status
                 await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Admin Gift", "Added by Admin", "completed", NOW())', [user_id, amount]);
             } else {
                 await db.execute('UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?', [amount, user_id]);
-                // ✅ FIX: details & status
                 await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Penalty", "Deducted by Admin", "completed", NOW())', [user_id, amount]);
             }
             return res.status(200).json({ success: true });
         }
 
-        // --- 🏦 DEPOSIT ---
         if (type === 'list_deposits') {
             const [rows] = await db.execute('SELECT d.*, u.username FROM deposits d JOIN users u ON d.user_id = u.id WHERE d.status = "pending" ORDER BY d.created_at DESC');
             return res.status(200).json(rows);
         }
+        
+        // ✅ FIX: Added 'message' property
         if (type === 'handle_deposit') {
             if (body.action === 'approve') {
                 const [dep] = await db.execute('SELECT user_id, amount FROM deposits WHERE id=?', [body.deposit_id]);
                 if (dep.length > 0) {
                     await db.execute("UPDATE deposits SET status='approved' WHERE id=?", [body.deposit_id]);
                     await db.execute("UPDATE users SET wallet_balance = wallet_balance + ? WHERE id=?", [dep[0].amount, dep[0].user_id]);
-                    // ✅ FIX: details & status
                     await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Deposit", "Approved", "completed", NOW())', [dep[0].user_id, dep[0].amount]);
+                    return res.status(200).json({ success: true, message: "Deposit Approved!" });
                 }
             } else {
                 await db.execute("UPDATE deposits SET status='rejected' WHERE id=?", [body.deposit_id]);
+                return res.status(200).json({ success: true, message: "Deposit Rejected!" });
             }
-            return res.status(200).json({ success: true });
         }
 
-        // --- 💸 WITHDRAW ---
         if (type === 'list_withdrawals') {
             const [rows] = await db.execute('SELECT w.*, u.username FROM withdrawals w JOIN users u ON w.user_id = u.id WHERE w.status = "pending" ORDER BY w.created_at DESC');
             return res.status(200).json(rows);
         }
+
+        // ✅ FIX: Added 'message' property
         if (type === 'handle_withdrawal') {
             if (body.action === 'approve') {
                 await db.execute("UPDATE withdrawals SET status='approved' WHERE id=?", [body.withdraw_id]);
+                return res.status(200).json({ success: true, message: "Withdrawal Approved!" });
             } else {
                 const [wd] = await db.execute('SELECT user_id, amount FROM withdrawals WHERE id=?', [body.withdraw_id]);
                 if (wd.length > 0) {
                     await db.execute("UPDATE withdrawals SET status='rejected' WHERE id=?", [body.withdraw_id]);
-                    // Refund to user
+                    // Refund
                     await db.execute("UPDATE users SET wallet_balance = wallet_balance + ? WHERE id=?", [wd[0].amount, wd[0].user_id]);
-                    // ✅ FIX: details & status
                     await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Refund", "Withdraw Rejected", "completed", NOW())', [wd[0].user_id, wd[0].amount]);
+                    return res.status(200).json({ success: true, message: "Rejected & Refunded!" });
                 }
             }
-            return res.status(200).json({ success: true });
         }
 
-        // --- 📊 DASHBOARD ---
+        // ... (Stats & Settings logic remains same) ...
         if (type === 'dashboard_stats') {
              try {
                 const [u] = await db.execute('SELECT COUNT(*) as c FROM users');
@@ -158,8 +162,6 @@ module.exports = async (req, res) => {
                 return res.status(200).json({ total_users: u[0].c, pending_deposits: d[0].c, pending_withdraws: w[0].c });
              } catch(e) { return res.status(200).json({ total_users:0, pending_deposits:0, pending_withdraws:0 }); }
         }
-
-        // --- ⚙️ SETTINGS ---
         if (type === 'get_settings') {
             const [rows] = await db.execute('SELECT setting_key, setting_value FROM settings');
             const settings = {};
@@ -183,6 +185,7 @@ module.exports = async (req, res) => {
         }
 
         return res.status(400).json({ error: 'Unknown Type' });
+
     } catch (e) {
         console.error("ADMIN ERROR:", e);
         return res.status(500).json({ error: e.message });
