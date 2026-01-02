@@ -3,186 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knockout Admin</title>
+    <title>Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
-    </style>
 </head>
 <body class="bg-gray-900 text-white font-sans pb-20 select-none">
 
-    <!-- Header -->
-    <header class="p-4 bg-gray-800 shadow-md flex justify-between items-center sticky top-0 z-50">
-        <div class="text-xl font-bold text-red-500">ADMIN PANEL</div>
-        <button onclick="logout()" class="bg-red-600 px-3 py-1 rounded text-sm font-bold hover:bg-red-700 transition">Logout</button>
+    <header class="p-4 bg-gray-800 shadow-md flex justify-between items-center sticky top-0 z-50 border-b border-gray-700">
+        <div class="text-xl font-bold text-red-500 italic uppercase">Knockout Admin</div>
+        <button onclick="logout()" class="bg-red-600 px-4 py-1.5 rounded-lg text-xs font-black uppercase hover:bg-red-700 transition active:scale-95">Logout</button>
     </header>
 
-    <!-- Stats Grid -->
     <div class="p-4 grid grid-cols-2 gap-4">
         <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-blue-500 shadow-lg">
-            <p class="text-gray-400 text-xs uppercase font-bold">Total Users</p>
-            <h2 class="text-2xl font-bold mt-1" id="total_users">...</h2>
+            <p class="text-gray-400 text-[10px] uppercase font-bold">Total Users</p>
+            <h2 class="text-2xl font-black mt-1" id="total_users">0</h2>
         </div>
-        <div onclick="window.location.href='/admin-deposits'" class="bg-gray-800 p-4 rounded-xl border-l-4 border-yellow-500 shadow-lg cursor-pointer">
-            <p class="text-gray-400 text-xs uppercase font-bold">Deposits</p>
-            <h2 class="text-2xl font-bold mt-1 text-yellow-400" id="pending_deposits">...</h2>
+        <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-green-500 shadow-lg">
+            <p class="text-gray-400 text-[10px] uppercase font-bold">Total Deposits</p>
+            <h2 class="text-2xl font-black mt-1" id="total_deposit">৳0</h2>
         </div>
-    </div>
-
-    <!-- ✅ UPDATE START: Main Navigation Logic ✅ -->
-    <div class="p-4">
-        
-        <!-- 1. CATEGORY MANAGEMENT (Create Games) -->
-        <h3 class="font-bold text-lg mb-3 border-l-4 border-gray-500 pl-2">System Setup</h3>
-        <button onclick="window.location.href='/admin-categories'" class="w-full bg-indigo-600 p-4 rounded-xl mb-4 shadow-lg active:scale-95 transition flex items-center justify-between border border-indigo-500 hover:bg-indigo-700">
-            <div class="flex items-center gap-3">
-                <div class="bg-white/20 p-2 rounded-full"><i class="fa-solid fa-layer-group text-xl text-white"></i></div>
-                <div class="text-left">
-                    <h3 class="font-bold text-md text-white">Manage Game Titles</h3>
-                    <p class="text-[10px] text-indigo-200">Create New Games / Tournaments</p>
-                </div>
-            </div>
-            <i class="fa-solid fa-chevron-right text-sm"></i>
-        </button>
-
-        <!-- 2. MATCH OPERATIONS (Create Matches Inside Games) -->
-        <h3 class="font-bold text-lg mb-3 border-l-4 border-gray-500 pl-2">Match Operations</h3>
-        <div class="grid grid-cols-2 gap-4 mb-4">
-            
-            <!-- DAILY MATCHES -> Select Category Mode -->
-            <a href="/admin-categories?mode=select&type=normal" class="block bg-blue-600 p-5 rounded-2xl text-center shadow-lg active:scale-95 transition no-underline text-white relative overflow-hidden group hover:bg-blue-700">
-                <i class="fa-solid fa-gamepad text-4xl mb-3 relative z-10"></i>
-                <h3 class="font-bold text-md leading-none relative z-10">Daily<br>Matches</h3>
-            </a>
-            
-            <!-- OFFICIAL -> Select Tournament Mode -->
-            <a href="/admin-categories?mode=select&type=official" class="block bg-yellow-600 p-5 rounded-2xl text-center shadow-lg active:scale-95 transition no-underline text-white relative overflow-hidden group hover:bg-yellow-700">
-                <i class="fa-solid fa-trophy text-4xl mb-3 text-white relative z-10"></i>
-                <h3 class="font-bold text-md leading-none relative z-10">Official<br>Events</h3>
-            </a>
-
+        <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-yellow-500 shadow-lg">
+            <p class="text-gray-400 text-[10px] uppercase font-bold">Total Matches</p>
+            <h2 class="text-2xl font-black mt-1" id="total_matches">0</h2>
         </div>
-
-        <!-- 3. USERS & SETTINGS -->
-        <h3 class="font-bold text-lg mb-3 border-l-4 border-gray-500 pl-2">Users & Settings</h3>
-        <div class="grid grid-cols-2 gap-4">
-            <a href="/admin-users" class="bg-gray-800 p-4 rounded-xl flex flex-col items-center justify-center border border-gray-700 active:scale-95 hover:bg-gray-700">
-                <i class="fa-solid fa-users text-2xl text-gray-400 mb-1"></i>
-                <span class="text-xs font-bold text-gray-300">Users</span>
-            </a>
-            <button onclick="openNotiModal()" class="bg-red-800 p-4 rounded-xl flex flex-col items-center justify-center border border-red-700 active:scale-95 hover:bg-red-700">
-                <i class="fa-solid fa-bell text-2xl text-white mb-1"></i>
-                <span class="text-xs font-bold text-white">Notify</span>
-            </button>
-        </div>
-        
-        <button onclick="openSettings()" class="w-full bg-purple-700 p-3 mt-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:bg-purple-600">
-            <i class="fa-solid fa-sliders"></i> App Settings
-        </button>
-    </div>
-    <!-- ✅ UPDATE END ✅ -->
-
-    <!-- Placeholders for Modals -->
-    <!-- SETTINGS MODAL -->
-    <div id="settingsModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="bg-gray-800 p-6 rounded-xl w-full max-w-md border border-gray-600 shadow-2xl h-[85vh] flex flex-col">
-            <h3 class="text-xl font-bold mb-4 text-white border-b border-gray-600 pb-2">App Settings</h3>
-            <div class="overflow-y-auto flex-1 space-y-3 pr-2 custom-scroll">
-                <div><label class="text-[10px] text-blue-400 uppercase font-bold ml-1">YouTube Link</label><input type="text" id="set_youtube" class="w-full bg-gray-900 p-2.5 rounded-lg border border-gray-600 text-white text-sm outline-none focus:border-blue-500"></div>
-                <div><label class="text-[10px] text-blue-400 uppercase font-bold ml-1">Telegram Link</label><input type="text" id="set_telegram" class="w-full bg-gray-900 p-2.5 rounded-lg border border-gray-600 text-white text-sm outline-none focus:border-blue-500"></div>
-                <div><label class="text-[10px] text-blue-400 uppercase font-bold ml-1">WhatsApp Number</label><input type="text" id="set_whatsapp" class="w-full bg-gray-900 p-2.5 rounded-lg border border-gray-600 text-white text-sm outline-none focus:border-blue-500"></div>
-                <div><label class="text-[10px] text-yellow-400 uppercase font-bold ml-1">Announcement</label><textarea id="set_announcement" rows="2" class="w-full bg-gray-900 p-2.5 rounded-lg border border-gray-600 text-white text-sm outline-none focus:border-yellow-500"></textarea></div>
-                <div><label class="text-[10px] text-red-400 uppercase font-bold ml-1">Notification Msg</label><textarea id="set_notification" rows="2" class="w-full bg-gray-900 p-2.5 rounded-lg border border-gray-600 text-white text-sm outline-none focus:border-red-500"></textarea></div>
-                <div><label class="text-[10px] text-green-400 uppercase font-bold ml-1">About Us</label><textarea id="set_about" rows="3" class="w-full bg-gray-900 p-2.5 rounded-lg border border-gray-600 text-white text-sm outline-none focus:border-green-500"></textarea></div>
-                <div><label class="text-[10px] text-green-400 uppercase font-bold ml-1">Privacy Policy</label><textarea id="set_policy" rows="2" class="w-full bg-gray-900 p-2.5 rounded-lg border border-gray-600 text-white text-sm outline-none focus:border-green-500"></textarea></div>
-                <div><label class="text-[10px] text-gray-400 uppercase font-bold ml-1">App Version</label><input type="text" id="set_version" class="w-full bg-gray-900 p-2.5 rounded-lg border border-gray-600 text-white text-sm outline-none focus:border-gray-500"></div>
-            </div>
-            <div class="flex gap-3 mt-4">
-                <button onclick="document.getElementById('settingsModal').style.display='none'" class="flex-1 bg-gray-700 py-3 rounded-lg font-bold hover:bg-gray-600">Cancel</button>
-                <button onclick="saveSettings()" class="flex-1 bg-blue-600 py-3 rounded-lg font-bold hover:bg-blue-700">Save</button>
-            </div>
+        <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-red-500 shadow-lg">
+            <p class="text-gray-400 text-[10px] uppercase font-bold">Withdrawals</p>
+            <h2 class="text-2xl font-black mt-1" id="total_withdraw">৳0</h2>
         </div>
     </div>
 
-    <!-- NOTIFICATION MODAL -->
-    <div id="notiModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="bg-gray-800 p-6 rounded-xl w-full max-w-md border border-gray-600 shadow-2xl h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
-                <h3 class="text-xl font-bold text-white">Send Notification</h3>
-                <button onclick="closeNotiModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-times text-xl"></i></button>
+    <div class="px-4 grid grid-cols-2 gap-3 mb-6">
+        <a href="/admin-categories.html" class="bg-indigo-600 p-3 rounded-xl text-center font-bold text-sm shadow-lg active:scale-95 transition"><i class="fa-solid fa-list-check mr-2"></i>Categories</a>
+        <a href="/admin-matches.html" class="bg-purple-600 p-3 rounded-xl text-center font-bold text-sm shadow-lg active:scale-95 transition"><i class="fa-solid fa-gamepad mr-2"></i>Matches</a>
+    </div>
+
+    <div class="p-4 space-y-6">
+        <div class="bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-2xl">
+            <div class="p-4 bg-gray-700 border-b border-gray-600">
+                <h3 class="font-bold text-xs uppercase tracking-widest text-green-400"><i class="fa-solid fa-wallet mr-2"></i>Pending Deposits</h3>
             </div>
-            <div class="overflow-y-auto flex-1 pr-2 custom-scroll">
-                <label class="text-[10px] text-gray-400 uppercase font-bold ml-1">Title</label>
-                <input type="text" id="noti_title" placeholder="Notice Title" class="w-full bg-gray-900 p-3 rounded-lg mb-3 border border-gray-600 text-white outline-none focus:border-blue-500">
-                <label class="text-[10px] text-gray-400 uppercase font-bold ml-1">Message</label>
-                <textarea id="noti_msg" rows="3" placeholder="Type here..." class="w-full bg-gray-900 p-3 rounded-lg mb-4 border border-gray-600 text-white outline-none focus:border-blue-500"></textarea>
-                <div class="bg-gray-900 p-3 rounded-lg border border-gray-700">
-                    <div class="flex justify-between items-center mb-2">
-                        <label class="text-[10px] text-gray-400 uppercase font-bold">Target Audience</label>
-                        <div class="flex items-center gap-2">
-                            <input type="checkbox" id="send_all" class="w-4 h-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500" checked>
-                            <label for="send_all" class="text-xs text-white cursor-pointer select-none">All Users</label>
-                        </div>
-                    </div>
-                </div>
+            <div class="overflow-x-auto" id="deposit_list">
+                <p class="p-10 text-center text-gray-500 text-xs italic">Checking for deposits...</p>
             </div>
-            <div class="mt-4">
-                <button onclick="sendNoti()" id="send_btn" class="w-full bg-blue-600 py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-lg">Send Notification</button>
+        </div>
+
+        <div class="bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-2xl">
+            <div class="p-4 bg-gray-700 border-b border-gray-600">
+                <h3 class="font-bold text-xs uppercase tracking-widest text-red-400"><i class="fa-solid fa-money-bill-transfer mr-2"></i>Pending Withdrawals</h3>
+            </div>
+            <div class="overflow-x-auto" id="withdraw_list">
+                <p class="p-10 text-center text-gray-500 text-xs italic">Checking for withdrawals...</p>
             </div>
         </div>
     </div>
 
     <script>
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (!user || user.role !== 'admin') window.location.href = '/';
-
+        // ১. স্ট্যাটাস লোড করা
         async function loadStats() {
             try {
-                const res = await fetch('/api/admin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'dashboard_stats' }) });
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'get_stats' })
+                });
                 const data = await res.json();
-                document.getElementById('total_users').innerText = data.total_users;
-                document.getElementById('pending_deposits').innerText = data.pending_deposits;
-            } catch (e) {}
+                document.getElementById('total_users').innerText = data.total_users || 0;
+                document.getElementById('total_deposit').innerText = '৳' + (data.total_deposit || 0);
+                document.getElementById('total_matches').innerText = data.total_matches || 0;
+                document.getElementById('total_withdraw').innerText = '৳' + (data.total_withdraw || 0);
+            } catch (e) { console.error(e); }
         }
 
-        // Functions
-        function logout() { localStorage.removeItem('user'); window.location.href = '/'; }
-        async function openSettings() { 
-            document.getElementById('settingsModal').style.display = 'flex'; 
-            const res = await fetch('/api/admin', { method:'POST', body: JSON.stringify({type:'get_settings'})});
-            const data = await res.json();
-            if(data) {
-                document.getElementById('set_youtube').value = data.youtube_link || '';
-                document.getElementById('set_telegram').value = data.telegram_link || '';
-                document.getElementById('set_whatsapp').value = data.whatsapp_number || '';
-                document.getElementById('set_announcement').value = data.announcement || '';
-                document.getElementById('set_notification').value = data.notification_msg || '';
-                document.getElementById('set_about').value = data.about_us || '';
-                document.getElementById('set_policy').value = data.privacy_policy || '';
-                document.getElementById('set_version').value = data.app_version || '';
-            }
-        }
-        
-        async function saveSettings() {
-            const body = { type:'update_settings', youtube: document.getElementById('set_youtube').value, telegram: document.getElementById('set_telegram').value, whatsapp: document.getElementById('set_whatsapp').value, announcement: document.getElementById('set_announcement').value, notification: document.getElementById('set_notification').value, about: document.getElementById('set_about').value, policy: document.getElementById('set_policy').value, version: document.getElementById('set_version').value };
-            await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
-            alert("Updated!"); document.getElementById('settingsModal').style.display='none';
+        // ২. রিকোয়েস্ট লিস্ট লোড করা
+        async function loadRequests() {
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'get_pending_requests' })
+                });
+                const { deposits, withdrawals } = await res.json();
+
+                // Deposit রেন্ডার
+                const dList = document.getElementById('deposit_list');
+                if(!deposits || deposits.length === 0) {
+                    dList.innerHTML = '<p class="p-8 text-center text-gray-500 text-[10px]">No pending deposit requests.</p>';
+                } else {
+                    dList.innerHTML = `<table class="w-full text-left text-[11px]"><thead class="bg-black/30 text-gray-400"><tr><th class="p-3">Info</th><th class="p-3">Amount</th><th class="p-3 text-right">Actions</th></tr></thead><tbody class="divide-y divide-gray-700">
+                        ${deposits.map(d => `<tr>
+                            <td class="p-3">UID: ${d.user_id}<br><span class="text-blue-400 font-mono">${d.details}</span></td>
+                            <td class="p-3 font-black text-green-400">৳${d.amount}</td>
+                            <td class="p-3 text-right space-x-2">
+                                <button onclick="processRequest('deposit', ${d.id}, 'success')" class="bg-green-600/20 text-green-500 p-2 rounded-lg hover:bg-green-600 hover:text-white"><i class="fa-solid fa-check"></i></button>
+                                <button onclick="processRequest('deposit', ${d.id}, 'rejected')" class="bg-red-600/20 text-red-500 p-2 rounded-lg hover:bg-red-600 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                            </td>
+                        </tr>`).join('')}</tbody></table>`;
+                }
+
+                // Withdraw রেন্ডার
+                const wList = document.getElementById('withdraw_list');
+                if(!withdrawals || withdrawals.length === 0) {
+                    wList.innerHTML = '<p class="p-8 text-center text-gray-500 text-[10px]">No pending withdrawal requests.</p>';
+                } else {
+                    wList.innerHTML = `<table class="w-full text-left text-[11px]"><thead class="bg-black/30 text-gray-400"><tr><th class="p-3">Method/Num</th><th class="p-3">Amount</th><th class="p-3 text-right">Actions</th></tr></thead><tbody class="divide-y divide-gray-700">
+                        ${withdrawals.map(w => `<tr>
+                            <td class="p-3 font-medium uppercase text-blue-300">${w.method}: ${w.account_number}<br><span class="text-gray-500 text-[9px]">User ID: ${w.user_id}</span></td>
+                            <td class="p-3 font-black text-red-400">৳${w.amount}</td>
+                            <td class="p-3 text-right space-x-2">
+                                <button onclick="processRequest('withdraw', ${w.id}, 'success')" class="bg-green-600/20 text-green-500 p-2 rounded-lg hover:bg-green-600 hover:text-white"><i class="fa-solid fa-check"></i></button>
+                                <button onclick="processRequest('withdraw', ${w.id}, 'rejected')" class="bg-red-600/20 text-red-500 p-2 rounded-lg hover:bg-red-600 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                            </td>
+                        </tr>`).join('')}</tbody></table>`;
+                }
+            } catch (e) { console.error(e); }
         }
 
-        function openNotiModal() { document.getElementById('notiModal').style.display = 'flex'; }
-        function closeNotiModal() { document.getElementById('notiModal').style.display = 'none'; }
-        
-        async function sendNoti() {
-            const t = document.getElementById('noti_title').value;
-            const m = document.getElementById('noti_msg').value;
-            if(!t || !m) return alert("Fill details");
-            await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'send_notification', title:t, message:m, send_to_all:true }) });
-            alert("Sent!"); closeNotiModal();
+        // ৩. রিকোয়েস্ট এক্সেপ্ট/রিজেক্ট প্রসেস
+        async function processRequest(cat, id, status) {
+            if(!confirm(`Confirm ${status} this ${cat}?`)) return;
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'update_request_status', category: cat, id, status })
+                });
+                const result = await res.json();
+                if(result.success) {
+                    alert("Operation Successful!");
+                    loadStats();
+                    loadRequests();
+                } else {
+                    alert("Error: " + result.error);
+                }
+            } catch (e) { alert("Network Error"); }
         }
 
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/index.html';
+        }
+
+        // শুরুতে লোড
         loadStats();
+        loadRequests();
     </script>
 </body>
 </html>
