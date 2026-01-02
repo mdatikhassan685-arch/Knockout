@@ -63,13 +63,13 @@ module.exports = async (req, res) => {
             const [transactions] = await db.execute('SELECT * FROM transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 30', [user_id]); 
             return res.status(200).json({ balance: parseFloat(user[0]?.wallet_balance || 0), transactions: transactions }); 
         }
-
-        if (type === 'deposit') { 
+            if (type === 'deposit') { 
             const depositAmount = parseFloat(amount); 
             if (!depositAmount || depositAmount <= 0) return res.status(400).json({ error: 'Invalid amount' }); 
             
-            await db.execute('INSERT INTO deposits (user_id, amount, sender_number, trx_id, status, created_at) VALUES (?, ?, ?, ?, "pending", NOW())', 
-                [user_id, depositAmount, sender_number, trx_id]); 
+            // ✅ FIX: 'method' column added
+            await db.execute('INSERT INTO deposits (user_id, amount, method, sender_number, trx_id, status, created_at) VALUES (?, ?, ?, ?, ?, "pending", NOW())', 
+                [user_id, depositAmount, method || 'bkash', sender_number, trx_id]); 
             
             return res.status(200).json({ success: true, message: 'Deposit Request Submitted!' }); 
         }
