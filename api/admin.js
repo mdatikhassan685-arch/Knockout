@@ -37,33 +37,46 @@ module.exports = async (req, res) => {
             return res.status(200).json({ deposits, withdrawals });
         }
 
-        // --- ৩. রিকোয়েস্ট এক্সেপ্ট বা রিজেক্ট করা ---
         if (type === 'update_request_status') {
-            const { category, id, status } = body;
+    const { category, id, status } = body;
 
-            if (category === 'deposit') {
-                if (status === 'success') {
-                    const [trx] = await db.execute('SELECT user_id, amount FROM transactions WHERE id = ?', [id]);
-                    if (trx.length > 0) {
-                        // ইউজারের ব্যালেন্সে টাকা যোগ করা
-                        await db.execute('UPDATE users SET balance = balance + ? WHERE id = ?', [trx[0].amount, trx[0].user_id]);
-                    }
-                }
-                await db.execute('UPDATE transactions SET status = ? WHERE id = ?', [status, id]);
-            } 
-            else if (category === 'withdraw') {
-                if (status === 'rejected') {
-                    const [wd] = await db.execute('SELECT user_id, amount FROM withdrawals WHERE id = ?', [id]);
-                    if (wd.length > 0) {
-                        // রিজেক্ট করলে টাকা ব্যালেন্সে ফেরত দেওয়া
-                        await db.execute('UPDATE users SET balance = balance + ? WHERE id = ?', [wd[0].amount, wd[0].user_id]);
-                    }
-                }
-                await db.execute('UPDATE withdrawals SET status = ? WHERE id = ?', [status, id]);
+    // --- ১. ডিপোজিট ম্যানেজমেন্ট ---
+    if (category === 'deposit') {
+        if (status === 'success') {
+            const [trx] = await db.execute('SELECT user_id, amount FROM transactions WHERE id = ?', [id]);
+            if (trx.length > 0) {
+                // ইউজারের wallet_balance এ টাকা যোগ করা
+                await db.execute('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?', [trx[0].amount, trx[0].user_id]);
             }
-            return res.status(200).json({ success: true });
         }
+        await db.execute('UPDATE transactions SET status = ? WHERE id = ?', [status, id]);
+    } 
 
+    // --- ২. উইথড্রয়াল ম্যানেজমেন্ট (টাকা ফেরতের লজিক সহ) ---
+    else if (category === 'withdraw') {
+        if (status === 'rejected') {
+            // উইথড্রয়াল টেবিল থেকে ওই ট্রানজেকশনের ইউজার এবং এমাউন্ট খুঁজে বের করা
+            const [wd] = await db.execute('SELECT user_id, amount FROM withdrawals WHERE id = ?', [id]);
+            
+            if (wd.length > 0) {
+                const userId = wd[0].user_id;
+                const refundAmount = wd[0].amount;
+
+                // ইউজারের wallet_balance এ টাকা ফেরত দেওয়া
+                await db.execute('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?', [refundAmount, userId]);
+                
+                // ট্রানজেকশন টেবিলে রিফান্ডের একটি রেকর্ড রাখা (ইউজারের স্টেটমেন্টের জন্য)
+                await db.execute('INSERT INTO transactions (user_id, amount, type, details, status) VALUES (?, ?, "Refund", "Withdrawal Rejected", "success")', [userId, refundAmount]);
+            }
+        }
+        
+        // উইথড্রয়াল স্ট্যাটাস আপডেট করা (success বা rejected)
+        await db.execute('UPDATE withdrawals SET status = ? WHERE id = ?', [status, id]);
+    }
+
+    return res.status(200).json({ success: true });
+               }
+        
         // --- ৪. আপনার আগের ক্যাটাগরি ও ম্যাচ ম্যানেজমেন্ট কোড ---
         if (type === 'get_categories') {
             const [rows] = await db.execute('SELECT * FROM categories ORDER BY id ASC');
