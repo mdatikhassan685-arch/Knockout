@@ -1,7 +1,6 @@
 const db = require('../db');
 
 module.exports = async (req, res) => {
-    // Basic Setup
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -12,9 +11,7 @@ module.exports = async (req, res) => {
     const { type, category_id, id, match_id, user_id } = body;
 
     try {
-        /* ============================ 
-           📂 CATEGORIES 
-        ============================ */
+        // --- 📂 CATEGORIES ---
         if (type === 'get_categories') {
             const [rows] = await db.execute('SELECT * FROM categories ORDER BY id ASC');
             return res.status(200).json(rows);
@@ -28,16 +25,13 @@ module.exports = async (req, res) => {
             return res.status(200).json({ success: true });
         }
         if (type === 'delete_category') {
-            // Cascade Delete: প্রথমে ম্যাচ প্লেয়ার, তারপর ম্যাচ, তারপর ক্যাটাগরি
             await db.execute('DELETE FROM match_participants WHERE match_id IN (SELECT id FROM matches WHERE category_id = ?)', [id]);
             await db.execute('DELETE FROM matches WHERE category_id = ?', [id]);
             await db.execute('DELETE FROM categories WHERE id = ?', [id]);
             return res.status(200).json({ success: true });
         }
 
-        /* ============================ 
-           🎮 MATCHES (Daily)
-        ============================ */
+        // --- 🎮 MATCHES ---
         if (type === 'get_admin_matches') {
             let sql = `SELECT * FROM matches ORDER BY match_time DESC LIMIT 50`;
             let params = [];
@@ -71,8 +65,8 @@ module.exports = async (req, res) => {
             await db.execute('UPDATE matches SET status = ? WHERE id = ?', [body.new_status, match_id]); 
             return res.status(200).json({ success: true }); 
         }
-        
-        // Kick User Logic (Refund সহ)
+
+        // --- 🦵 KICK USER (Refund with 'details') ---
         if (type === 'kick_participant') {
              const [match] = await db.execute('SELECT entry_fee FROM matches WHERE id = ?', [body.match_id]);
              const [players] = await db.execute('SELECT user_id FROM match_participants WHERE match_id=? AND (team_name=? OR game_name=?)', [body.match_id, body.team_name, body.team_name]);
@@ -81,16 +75,15 @@ module.exports = async (req, res) => {
              if(refund > 0) {
                  for(let p of players) {
                      await db.execute('UPDATE users SET wallet_balance=wallet_balance+? WHERE id=?', [refund, p.user_id]);
-                     await db.execute('INSERT INTO transactions (user_id, amount, type, description) VALUES (?, ?, "Refund", "Kicked by Admin")', [p.user_id, refund]);
+                     // ✅ FIX: details & status
+                     await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Refund", "Kicked by Admin", "completed", NOW())', [p.user_id, refund]);
                  }
              }
              await db.execute('DELETE FROM match_participants WHERE match_id=? AND (team_name=? OR game_name=?)', [body.match_id, body.team_name, body.team_name]);
              return res.status(200).json({ success: true });
         }
 
-        /* ============================ 
-           👥 USERS & FINANCE 
-        ============================ */
+        // --- 👥 USERS ---
         if (type === 'list_users') { 
             const [users] = await db.execute('SELECT id, username, email, wallet_balance, status FROM users ORDER BY id DESC LIMIT 100'); 
             return res.status(200).json(users); 
@@ -99,17 +92,23 @@ module.exports = async (req, res) => {
             await db.execute('UPDATE users SET status=? WHERE id=?', [body.status, user_id]);
             return res.status(200).json({ success: true });
         }
+
+        // --- 💰 BALANCE MANAGE (Add/Cut) ---
         if (type === 'manage_balance') {
             const amount = parseFloat(body.amount);
             if (body.action === 'add') {
                 await db.execute('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?', [amount, user_id]);
-                await db.execute('INSERT INTO transactions (user_id, amount, type, description) VALUES (?, ?, "Admin Gift", "Added by Admin")', [user_id, amount]);
+                // ✅ FIX: details & status
+                await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Admin Gift", "Added by Admin", "completed", NOW())', [user_id, amount]);
             } else {
                 await db.execute('UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?', [amount, user_id]);
-                await db.execute('INSERT INTO transactions (user_id, amount, type, description) VALUES (?, ?, "Penalty", "Deducted by Admin")', [user_id, amount]);
+                // ✅ FIX: details & status
+                await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Penalty", "Deducted by Admin", "completed", NOW())', [user_id, amount]);
             }
             return res.status(200).json({ success: true });
         }
+
+        // --- 🏦 DEPOSIT ---
         if (type === 'list_deposits') {
             const [rows] = await db.execute('SELECT d.*, u.username FROM deposits d JOIN users u ON d.user_id = u.id WHERE d.status = "pending" ORDER BY d.created_at DESC');
             return res.status(200).json(rows);
@@ -120,13 +119,16 @@ module.exports = async (req, res) => {
                 if (dep.length > 0) {
                     await db.execute("UPDATE deposits SET status='approved' WHERE id=?", [body.deposit_id]);
                     await db.execute("UPDATE users SET wallet_balance = wallet_balance + ? WHERE id=?", [dep[0].amount, dep[0].user_id]);
-                    await db.execute('INSERT INTO transactions (user_id, amount, type, description) VALUES (?, ?, "Deposit", "Approved")', [dep[0].user_id, dep[0].amount]);
+                    // ✅ FIX: details & status
+                    await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Deposit", "Approved", "completed", NOW())', [dep[0].user_id, dep[0].amount]);
                 }
             } else {
                 await db.execute("UPDATE deposits SET status='rejected' WHERE id=?", [body.deposit_id]);
             }
             return res.status(200).json({ success: true });
         }
+
+        // --- 💸 WITHDRAW ---
         if (type === 'list_withdrawals') {
             const [rows] = await db.execute('SELECT w.*, u.username FROM withdrawals w JOIN users u ON w.user_id = u.id WHERE w.status = "pending" ORDER BY w.created_at DESC');
             return res.status(200).json(rows);
@@ -138,69 +140,49 @@ module.exports = async (req, res) => {
                 const [wd] = await db.execute('SELECT user_id, amount FROM withdrawals WHERE id=?', [body.withdraw_id]);
                 if (wd.length > 0) {
                     await db.execute("UPDATE withdrawals SET status='rejected' WHERE id=?", [body.withdraw_id]);
+                    // Refund to user
                     await db.execute("UPDATE users SET wallet_balance = wallet_balance + ? WHERE id=?", [wd[0].amount, wd[0].user_id]);
-                    await db.execute('INSERT INTO transactions (user_id, amount, type, description) VALUES (?, ?, "Refund", "Withdraw Rejected")', [wd[0].user_id, wd[0].amount]);
+                    // ✅ FIX: details & status
+                    await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Refund", "Withdraw Rejected", "completed", NOW())', [wd[0].user_id, wd[0].amount]);
                 }
             }
             return res.status(200).json({ success: true });
         }
 
-        /* ============================ 
-           ⚙️ SETTINGS (FIXED: Key-Value Update)
-        ============================ */
-                if (type === 'dashboard_stats') {
-            try {
-                // ১. মোট ইউজার
+        // --- 📊 DASHBOARD ---
+        if (type === 'dashboard_stats') {
+             try {
                 const [u] = await db.execute('SELECT COUNT(*) as c FROM users');
-                // ২. পেন্ডিং ডিপোজিট
                 const [d] = await db.execute('SELECT COUNT(*) as c FROM deposits WHERE status="pending"');
-                // ৩. পেন্ডিং উইথড্র (এটি আগে ছিল না, এখন যোগ করলাম)
                 const [w] = await db.execute('SELECT COUNT(*) as c FROM withdrawals WHERE status="pending"');
-                
-                return res.status(200).json({ 
-                    total_users: u[0].c, 
-                    pending_deposits: d[0].c, 
-                    pending_withdraws: w[0].c 
-                });
-            } catch(e) {
-                return res.status(200).json({ total_users: 0, pending_deposits: 0, pending_withdraws: 0 });
-            }
-                }
+                return res.status(200).json({ total_users: u[0].c, pending_deposits: d[0].c, pending_withdraws: w[0].c });
+             } catch(e) { return res.status(200).json({ total_users:0, pending_deposits:0, pending_withdraws:0 }); }
+        }
 
+        // --- ⚙️ SETTINGS ---
         if (type === 'get_settings') {
             const [rows] = await db.execute('SELECT setting_key, setting_value FROM settings');
             const settings = {};
             rows.forEach(row => { settings[row.setting_key] = row.setting_value; });
             return res.status(200).json(settings);
         }
-
         if (type === 'update_settings') {
-            // ✅ FIX: একটি একটি করে কী (Key) আপডেট করা হচ্ছে
             const updates = [
-                { k: 'youtube_link', v: body.youtube },
-                { k: 'telegram_link', v: body.telegram },
-                { k: 'whatsapp_number', v: body.whatsapp },
-                { k: 'announcement', v: body.announcement },
-                { k: 'notification_msg', v: body.notification },
-                { k: 'about_us', v: body.about },
-                { k: 'privacy_policy', v: body.policy },
-                { k: 'app_version', v: body.version }
+                { k: 'youtube_link', v: body.youtube }, { k: 'telegram_link', v: body.telegram }, { k: 'whatsapp_number', v: body.whatsapp },
+                { k: 'announcement', v: body.announcement }, { k: 'notification_msg', v: body.notification }, { k: 'about_us', v: body.about },
+                { k: 'privacy_policy', v: body.policy }, { k: 'app_version', v: body.version }
             ];
-
             for (let item of updates) {
-                // আপডেট কুয়েরি চালানো হচ্ছে
                 await db.execute('UPDATE settings SET setting_value = ? WHERE setting_key = ?', [item.v, item.k]);
             }
             return res.status(200).json({ success: true });
         }
-
         if (type === 'send_notification') {
             await db.execute('INSERT INTO notifications (title, message, is_global, created_at) VALUES (?, ?, 1, NOW())', [body.title, body.message]);
             return res.status(200).json({ success: true });
         }
 
         return res.status(400).json({ error: 'Unknown Type' });
-
     } catch (e) {
         console.error("ADMIN ERROR:", e);
         return res.status(500).json({ error: e.message });
