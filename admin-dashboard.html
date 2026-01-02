@@ -9,6 +9,8 @@
     <style>
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        .badge { position: absolute; top: -5px; right: -5px; width: 20px; height: 20px; background: #ef4444; color: white; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid #1f2937; }
+        .hidden-badge { display: none; }
     </style>
 </head>
 <body class="bg-gray-900 text-white font-sans pb-20 select-none">
@@ -19,72 +21,89 @@
         <button onclick="logout()" class="bg-red-600 px-3 py-1 rounded text-sm font-bold hover:bg-red-700 transition">Logout</button>
     </header>
 
-    <!-- Stats Grid -->
-    <div class="p-4 grid grid-cols-2 gap-4">
-        <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-blue-500 shadow-lg">
-            <p class="text-gray-400 text-xs uppercase font-bold">Total Users</p>
-            <h2 class="text-2xl font-bold mt-1" id="total_users">...</h2>
-        </div>
-        <div onclick="window.location.href='/admin-deposits'" class="bg-gray-800 p-4 rounded-xl border-l-4 border-yellow-500 shadow-lg cursor-pointer">
-            <p class="text-gray-400 text-xs uppercase font-bold">Deposits</p>
-            <h2 class="text-2xl font-bold mt-1 text-yellow-400" id="pending_deposits">...</h2>
+    <!-- 1. TOTAL USERS CARD (BIG) -->
+    <div class="p-4">
+        <div class="bg-gradient-to-r from-blue-900 to-gray-800 p-5 rounded-2xl border border-blue-500/30 shadow-lg flex items-center justify-between">
+            <div>
+                <p class="text-gray-400 text-xs uppercase font-bold tracking-widest">Total Registered Users</p>
+                <h2 class="text-4xl font-black mt-1 text-white" id="total_users">...</h2>
+            </div>
+            <div class="w-12 h-12 bg-blue-600/20 rounded-full flex items-center justify-center text-blue-400">
+                <i class="fa-solid fa-users text-2xl"></i>
+            </div>
         </div>
     </div>
 
-    <!-- ✅ UPDATE START: Main Navigation Logic ✅ -->
-    <div class="p-4">
+    <!-- 2. QUICK ACTIONS (Users | Deposits | Withdrawals) -->
+    <div class="px-4 grid grid-cols-3 gap-3 mb-6">
         
-        <!-- 1. CATEGORY MANAGEMENT (Create Games) -->
-        <h3 class="font-bold text-lg mb-3 border-l-4 border-gray-500 pl-2">System Setup</h3>
-        <button onclick="window.location.href='/admin-categories'" class="w-full bg-indigo-600 p-4 rounded-xl mb-4 shadow-lg active:scale-95 transition flex items-center justify-between border border-indigo-500 hover:bg-indigo-700">
+        <!-- Users Button -->
+        <a href="/admin-users" class="bg-gray-800 p-3 rounded-xl border border-gray-700 shadow-md flex flex-col items-center justify-center active:scale-95 transition hover:bg-gray-700">
+            <i class="fa-solid fa-user-gear text-2xl text-blue-400 mb-2"></i>
+            <span class="text-[10px] font-bold text-gray-300 uppercase">Users</span>
+        </a>
+
+        <!-- Deposits Button (With Badge) -->
+        <a href="/admin-deposits" class="relative bg-gray-800 p-3 rounded-xl border border-gray-700 shadow-md flex flex-col items-center justify-center active:scale-95 transition hover:bg-gray-700">
+            <i class="fa-solid fa-money-bill-transfer text-2xl text-green-400 mb-2"></i>
+            <span class="text-[10px] font-bold text-gray-300 uppercase">Deposits</span>
+            <!-- Counter Badge -->
+            <span id="badge_dep" class="badge hidden-badge">0</span>
+        </a>
+
+        <!-- Withdrawals Button (With Badge) -->
+        <a href="/admin-withdrawals" class="relative bg-gray-800 p-3 rounded-xl border border-gray-700 shadow-md flex flex-col items-center justify-center active:scale-95 transition hover:bg-gray-700">
+            <i class="fa-solid fa-money-bill-1-wave text-2xl text-red-400 mb-2"></i>
+            <span class="text-[10px] font-bold text-gray-300 uppercase">Withdraw</span>
+            <!-- Counter Badge -->
+            <span id="badge_wd" class="badge hidden-badge">0</span>
+        </a>
+    </div>
+
+    <div class="px-4">
+        <!-- 3. GAME MANAGEMENT -->
+        <h3 class="font-bold text-sm text-gray-400 mb-3 uppercase tracking-wider pl-1 border-l-2 border-blue-500">Game & Matches</h3>
+        
+        <button onclick="window.location.href='/admin-categories'" class="w-full bg-indigo-900/40 p-4 rounded-xl mb-4 shadow-lg active:scale-95 transition flex items-center justify-between border border-indigo-500/50 hover:bg-indigo-900/60">
             <div class="flex items-center gap-3">
-                <div class="bg-white/20 p-2 rounded-full"><i class="fa-solid fa-layer-group text-xl text-white"></i></div>
+                <div class="bg-indigo-500 p-2 rounded-lg"><i class="fa-solid fa-layer-group text-white"></i></div>
                 <div class="text-left">
-                    <h3 class="font-bold text-md text-white">Manage Game Titles</h3>
-                    <p class="text-[10px] text-indigo-200">Create New Games / Tournaments</p>
+                    <h3 class="font-bold text-sm text-white">Manage Game Titles</h3>
+                    <p class="text-[9px] text-gray-400">Create New Categories</p>
                 </div>
             </div>
-            <i class="fa-solid fa-chevron-right text-sm"></i>
+            <i class="fa-solid fa-chevron-right text-xs text-gray-500"></i>
         </button>
 
-        <!-- 2. MATCH OPERATIONS (Create Matches Inside Games) -->
-        <h3 class="font-bold text-lg mb-3 border-l-4 border-gray-500 pl-2">Match Operations</h3>
-        <div class="grid grid-cols-2 gap-4 mb-4">
-            
-            <!-- DAILY MATCHES -> Select Category Mode -->
-            <a href="/admin-categories?mode=select&type=normal" class="block bg-blue-600 p-5 rounded-2xl text-center shadow-lg active:scale-95 transition no-underline text-white relative overflow-hidden group hover:bg-blue-700">
-                <i class="fa-solid fa-gamepad text-4xl mb-3 relative z-10"></i>
-                <h3 class="font-bold text-md leading-none relative z-10">Daily<br>Matches</h3>
+        <div class="grid grid-cols-2 gap-3 mb-6">
+            <a href="/admin-categories?mode=select&type=normal" class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex flex-col items-center justify-center active:scale-95 transition hover:border-blue-500">
+                <i class="fa-solid fa-gamepad text-3xl text-blue-500 mb-2"></i>
+                <h3 class="font-bold text-xs text-white">Daily Matches</h3>
             </a>
             
-            <!-- OFFICIAL -> Select Tournament Mode -->
-            <a href="/admin-categories?mode=select&type=official" class="block bg-yellow-600 p-5 rounded-2xl text-center shadow-lg active:scale-95 transition no-underline text-white relative overflow-hidden group hover:bg-yellow-700">
-                <i class="fa-solid fa-trophy text-4xl mb-3 text-white relative z-10"></i>
-                <h3 class="font-bold text-md leading-none relative z-10">Official<br>Events</h3>
+            <a href="/admin-categories?mode=select&type=official" class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex flex-col items-center justify-center active:scale-95 transition hover:border-yellow-500">
+                <i class="fa-solid fa-trophy text-3xl text-yellow-500 mb-2"></i>
+                <h3 class="font-bold text-xs text-white">Official Events</h3>
             </a>
-
         </div>
 
-        <!-- 3. USERS & SETTINGS -->
-        <h3 class="font-bold text-lg mb-3 border-l-4 border-gray-500 pl-2">Users & Settings</h3>
-        <div class="grid grid-cols-2 gap-4">
-            <a href="/admin-users" class="bg-gray-800 p-4 rounded-xl flex flex-col items-center justify-center border border-gray-700 active:scale-95 hover:bg-gray-700">
-                <i class="fa-solid fa-users text-2xl text-gray-400 mb-1"></i>
-                <span class="text-xs font-bold text-gray-300">Users</span>
-            </a>
-            <button onclick="openNotiModal()" class="bg-red-800 p-4 rounded-xl flex flex-col items-center justify-center border border-red-700 active:scale-95 hover:bg-red-700">
-                <i class="fa-solid fa-bell text-2xl text-white mb-1"></i>
-                <span class="text-xs font-bold text-white">Notify</span>
+        <!-- 4. SYSTEM SETTINGS -->
+        <h3 class="font-bold text-sm text-gray-400 mb-3 uppercase tracking-wider pl-1 border-l-2 border-purple-500">System</h3>
+        
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="openNotiModal()" class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex items-center gap-3 active:scale-95 transition hover:bg-gray-750">
+                <div class="bg-red-500/20 p-2 rounded-full text-red-500"><i class="fa-solid fa-bell"></i></div>
+                <div class="text-left"><p class="font-bold text-xs">Notify</p><p class="text-[9px] text-gray-500">Send Alert</p></div>
+            </button>
+            
+            <button onclick="openSettings()" class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex items-center gap-3 active:scale-95 transition hover:bg-gray-750">
+                <div class="bg-purple-500/20 p-2 rounded-full text-purple-500"><i class="fa-solid fa-sliders"></i></div>
+                <div class="text-left"><p class="font-bold text-xs">Settings</p><p class="text-[9px] text-gray-500">App Config</p></div>
             </button>
         </div>
-        
-        <button onclick="openSettings()" class="w-full bg-purple-700 p-3 mt-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:bg-purple-600">
-            <i class="fa-solid fa-sliders"></i> App Settings
-        </button>
     </div>
-    <!-- ✅ UPDATE END ✅ -->
 
-    <!-- Placeholders for Modals -->
+    <!-- Modals (Settings & Notification) same as before... -->
     <!-- SETTINGS MODAL -->
     <div id="settingsModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
         <div class="bg-gray-800 p-6 rounded-xl w-full max-w-md border border-gray-600 shadow-2xl h-[85vh] flex flex-col">
@@ -138,17 +157,19 @@
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || user.role !== 'admin') window.location.href = '/';
 
-        async function loadStats() {
-            try {
-                const res = await fetch('/api/admin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'dashboard_stats' }) });
-                const data = await res.json();
-                document.getElementById('total_users').innerText = data.total_users;
-                document.getElementById('pending_deposits').innerText = data.pending_deposits;
-            } catch (e) {}
+        function logout() { localStorage.removeItem('user'); window.location.href = '/'; }
+        
+        // Settings & Noti Logic
+        function openNotiModal() { document.getElementById('notiModal').style.display = 'flex'; }
+        function closeNotiModal() { document.getElementById('notiModal').style.display = 'none'; }
+        async function sendNoti() {
+            const t = document.getElementById('noti_title').value;
+            const m = document.getElementById('noti_msg').value;
+            if(!t || !m) return alert("Fill details");
+            await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'send_notification', title:t, message:m, send_to_all:true }) });
+            alert("Sent!"); closeNotiModal();
         }
 
-        // Functions
-        function logout() { localStorage.removeItem('user'); window.location.href = '/'; }
         async function openSettings() { 
             document.getElementById('settingsModal').style.display = 'flex'; 
             const res = await fetch('/api/admin', { method:'POST', body: JSON.stringify({type:'get_settings'})});
@@ -171,15 +192,38 @@
             alert("Updated!"); document.getElementById('settingsModal').style.display='none';
         }
 
-        function openNotiModal() { document.getElementById('notiModal').style.display = 'flex'; }
-        function closeNotiModal() { document.getElementById('notiModal').style.display = 'none'; }
-        
-        async function sendNoti() {
-            const t = document.getElementById('noti_title').value;
-            const m = document.getElementById('noti_msg').value;
-            if(!t || !m) return alert("Fill details");
-            await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'send_notification', title:t, message:m, send_to_all:true }) });
-            alert("Sent!"); closeNotiModal();
+        // 🔥 DASHBOARD STATS LOGIC (UPDATED)
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/admin', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ type: 'dashboard_stats' }) 
+                });
+                const data = await res.json();
+                
+                // 1. Total Users
+                document.getElementById('total_users').innerText = data.total_users;
+                
+                // 2. Deposit Badge Logic
+                const depBadge = document.getElementById('badge_dep');
+                if (data.pending_deposits > 0) {
+                    depBadge.innerText = data.pending_deposits;
+                    depBadge.classList.remove('hidden-badge');
+                } else {
+                    depBadge.classList.add('hidden-badge');
+                }
+
+                // 3. Withdraw Badge Logic
+                const wdBadge = document.getElementById('badge_wd');
+                if (data.pending_withdraws > 0) {
+                    wdBadge.innerText = data.pending_withdraws;
+                    wdBadge.classList.remove('hidden-badge');
+                } else {
+                    wdBadge.classList.add('hidden-badge');
+                }
+
+            } catch (e) { console.error(e); }
         }
 
         loadStats();
