@@ -12,6 +12,7 @@
     { "source": "/api/admin", "destination": "/api/admin.js" },
     { "source": "/api/tournament", "destination": "/api/tournament.js" },
     { "source": "/api/official", "destination": "/api/official.js" }, 
+    { "source": "/admin-stages", "destination": "/admin-stages.html" },
 
     { "source": "/admin", "destination": "/admin-dashboard.html" },
     { "source": "/admin-users", "destination": "/admin-users.html" },
