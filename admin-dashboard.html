@@ -47,7 +47,6 @@
         <a href="/admin-deposits" class="relative bg-gray-800 p-3 rounded-xl border border-gray-700 shadow-md flex flex-col items-center justify-center active:scale-95 transition hover:bg-gray-700">
             <i class="fa-solid fa-money-bill-transfer text-2xl text-green-400 mb-2"></i>
             <span class="text-[10px] font-bold text-gray-300 uppercase">Deposits</span>
-            <!-- Counter Badge -->
             <span id="badge_dep" class="badge hidden-badge">0</span>
         </a>
 
@@ -55,7 +54,6 @@
         <a href="/admin-withdrawals" class="relative bg-gray-800 p-3 rounded-xl border border-gray-700 shadow-md flex flex-col items-center justify-center active:scale-95 transition hover:bg-gray-700">
             <i class="fa-solid fa-money-bill-1-wave text-2xl text-red-400 mb-2"></i>
             <span class="text-[10px] font-bold text-gray-300 uppercase">Withdraw</span>
-            <!-- Counter Badge -->
             <span id="badge_wd" class="badge hidden-badge">0</span>
         </a>
     </div>
@@ -64,7 +62,8 @@
         <!-- 3. GAME MANAGEMENT -->
         <h3 class="font-bold text-sm text-gray-400 mb-3 uppercase tracking-wider pl-1 border-l-2 border-blue-500">Game & Matches</h3>
         
-        <button onclick="window.location.href='/admin-categories'" class="w-full bg-indigo-900/40 p-4 rounded-xl mb-4 shadow-lg active:scale-95 transition flex items-center justify-between border border-indigo-500/50 hover:bg-indigo-900/60">
+        <!-- ✅ LINK FIXED HERE -->
+        <button onclick="window.location.href='/admin-categories?mode=manage'" class="w-full bg-indigo-900/40 p-4 rounded-xl mb-4 shadow-lg active:scale-95 transition flex items-center justify-between border border-indigo-500/50 hover:bg-indigo-900/60">
             <div class="flex items-center gap-3">
                 <div class="bg-indigo-500 p-2 rounded-lg"><i class="fa-solid fa-layer-group text-white"></i></div>
                 <div class="text-left">
@@ -103,8 +102,7 @@
         </div>
     </div>
 
-    <!-- Modals (Settings & Notification) same as before... -->
-    <!-- SETTINGS MODAL -->
+    <!-- Modals -->
     <div id="settingsModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
         <div class="bg-gray-800 p-6 rounded-xl w-full max-w-md border border-gray-600 shadow-2xl h-[85vh] flex flex-col">
             <h3 class="text-xl font-bold mb-4 text-white border-b border-gray-600 pb-2">App Settings</h3>
@@ -125,7 +123,6 @@
         </div>
     </div>
 
-    <!-- NOTIFICATION MODAL -->
     <div id="notiModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
         <div class="bg-gray-800 p-6 rounded-xl w-full max-w-md border border-gray-600 shadow-2xl h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
@@ -158,13 +155,11 @@
         if (!user || user.role !== 'admin') window.location.href = '/';
 
         function logout() { localStorage.removeItem('user'); window.location.href = '/'; }
-        
-        // Settings & Noti Logic
         function openNotiModal() { document.getElementById('notiModal').style.display = 'flex'; }
         function closeNotiModal() { document.getElementById('notiModal').style.display = 'none'; }
+        
         async function sendNoti() {
-            const t = document.getElementById('noti_title').value;
-            const m = document.getElementById('noti_msg').value;
+            const t = document.getElementById('noti_title').value, m = document.getElementById('noti_msg').value;
             if(!t || !m) return alert("Fill details");
             await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'send_notification', title:t, message:m, send_to_all:true }) });
             alert("Sent!"); closeNotiModal();
@@ -192,7 +187,6 @@
             alert("Updated!"); document.getElementById('settingsModal').style.display='none';
         }
 
-        // 🔥 DASHBOARD STATS LOGIC (UPDATED)
         async function loadStats() {
             try {
                 const res = await fetch('/api/admin', { 
@@ -201,31 +195,16 @@
                     body: JSON.stringify({ type: 'dashboard_stats' }) 
                 });
                 const data = await res.json();
-                
-                // 1. Total Users
                 document.getElementById('total_users').innerText = data.total_users;
                 
-                // 2. Deposit Badge Logic
                 const depBadge = document.getElementById('badge_dep');
-                if (data.pending_deposits > 0) {
-                    depBadge.innerText = data.pending_deposits;
-                    depBadge.classList.remove('hidden-badge');
-                } else {
-                    depBadge.classList.add('hidden-badge');
-                }
+                if (data.pending_deposits > 0) { depBadge.innerText = data.pending_deposits; depBadge.classList.remove('hidden-badge'); } else { depBadge.classList.add('hidden-badge'); }
 
-                // 3. Withdraw Badge Logic
                 const wdBadge = document.getElementById('badge_wd');
-                if (data.pending_withdraws > 0) {
-                    wdBadge.innerText = data.pending_withdraws;
-                    wdBadge.classList.remove('hidden-badge');
-                } else {
-                    wdBadge.classList.add('hidden-badge');
-                }
+                if (data.pending_withdraws > 0) { wdBadge.innerText = data.pending_withdraws; wdBadge.classList.remove('hidden-badge'); } else { wdBadge.classList.add('hidden-badge'); }
 
             } catch (e) { console.error(e); }
         }
-
         loadStats();
     </script>
 </body>
