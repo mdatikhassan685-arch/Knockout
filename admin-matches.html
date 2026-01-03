@@ -109,14 +109,13 @@
         }
 
         // 🔥 ADMIN VIEW (TEAM & SOLO LOGIC FIXED) 🔥
-              async function viewPlayersAdmin(id, matchType) {
+        async function viewPlayersAdmin(id, matchType) {
             document.getElementById('playersModal').style.display = 'flex';
             document.getElementById('player_limit_info').innerText = `Viewing as Admin (${matchType})`;
             const con = document.getElementById('modal_player_list');
             con.innerHTML = '<div class="text-center p-10 animate-pulse text-gray-500">Loading list...</div>';
 
             try {
-                // Fetch players
                 const res = await fetch('/api/tournament', {method:'POST', body:JSON.stringify({type:'get_daily_participants', match_id:id})});
                 const d = await res.json();
                 
@@ -127,7 +126,7 @@
 
                 let html = '';
 
-                // --- SQUAD / DUO VIEW (Admin) ---
+                // --- SQUAD / DUO VIEW (Collapsible Logic) ---
                 if (matchType !== 'Solo') {
                     const groups = {};
                     d.forEach(p => { 
@@ -137,42 +136,56 @@
                     });
 
                     Object.keys(groups).forEach((tName, idx) => {
+                        // Generate Players List (Hidden initially)
                         let members = groups[tName].map(p => `
-                            <div class="flex justify-between text-xs py-1 border-b border-gray-700 items-center">
+                            <div class="flex justify-between text-xs py-2 border-b border-gray-700/50 items-center last:border-none">
                                 <div>
-                                    <span class="text-gray-200 block">${p.game_name}</span>
+                                    <span class="text-gray-300 font-bold block">${p.game_name}</span>
                                     <span class="text-[9px] text-gray-500 font-mono">UID: ${p.game_uid || '--'}</span>
                                 </div>
-                                <!-- 🔥 HERE IS THE FIX: Actual Level -->
-                                <div class="text-yellow-500 text-[10px] font-bold bg-black/20 px-1 rounded">
+                                <div class="text-yellow-500 text-[10px] font-bold bg-black/30 px-2 py-0.5 rounded border border-yellow-500/20">
                                     Lvl: ${p.game_level || '?'}
                                 </div>
                             </div>
                         `).join('');
-
+                        
                         html += `
-                        <div class="bg-gray-800 border border-blue-500/30 rounded-lg mb-2 overflow-hidden shadow-lg transition">
-                            <div class="p-3 flex justify-between items-center bg-gray-750">
-                                <div>
-                                    <span class="text-sm font-bold text-white uppercase">${tName}</span>
-                                    <p class="text-[10px] text-gray-400">Team #${idx+1}</p>
+                        <div class="bg-gray-800 border border-gray-700 rounded-lg mb-2 overflow-hidden shadow-sm transition hover:border-blue-500/50">
+                            <!-- Header (Click to Toggle) -->
+                            <div onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.arrow').classList.toggle('rotate-180')" class="p-3 flex justify-between items-center bg-gray-750 cursor-pointer select-none">
+                                <div class="flex items-center gap-3">
+                                    <span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">#${idx+1}</span>
+                                    <div>
+                                        <span class="text-sm font-bold text-white uppercase tracking-wide">${tName}</span>
+                                        <p class="text-[9px] text-gray-400 mt-0.5">${groups[tName].length} Players</p>
+                                    </div>
                                 </div>
-                                <button onclick="kickUser('${tName}', ${id}, 'Team')" class="bg-red-600/20 text-red-500 border border-red-500/50 px-2 py-1 rounded text-xs font-bold hover:bg-red-600 hover:text-white transition">Kick Team</button>
+                                <div class="flex items-center gap-3">
+                                    <button onclick="event.stopPropagation(); kickUser('${tName}', ${id}, 'Team')" class="bg-red-600/10 text-red-500 border border-red-500/30 px-2 py-1 rounded text-[10px] font-bold hover:bg-red-600 hover:text-white transition uppercase">Kick</button>
+                                    <i class="fa-solid fa-chevron-down text-gray-500 text-xs transition transform arrow"></i>
+                                </div>
                             </div>
-                            <div class="bg-black/20 p-2 border-t border-gray-700 space-y-1">${members}</div>
+                            
+                            <!-- Player List (Hidden by Default) -->
+                            <div class="bg-black/20 p-3 border-t border-gray-700 hidden transition-all duration-300 ease-in-out">
+                                ${members}
+                            </div>
                         </div>`;
                     });
 
                 } else {
-                    // --- SOLO VIEW (Admin) ---
+                    // --- SOLO VIEW (No Collapse needed) ---
                     d.forEach((p, idx) => {
                         html += `
-                        <div class="flex justify-between items-center bg-gray-700/20 p-2 rounded-lg mb-1 border border-gray-600">
-                            <div>
-                                <span class="text-xs font-bold text-white">${idx+1}. ${p.game_name}</span>
-                                <span class="text-[9px] text-gray-400 block">UID: ${p.game_uid} | <b class="text-yellow-500">Lvl: ${p.game_level || '?'}</b></span>
+                        <div class="flex justify-between items-center bg-gray-800 p-3 rounded-lg mb-2 border border-gray-700 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-bold text-gray-500">#${idx+1}</span>
+                                <div>
+                                    <span class="text-xs font-bold text-white block">${p.game_name}</span>
+                                    <span class="text-[9px] text-gray-400 block">UID: ${p.game_uid} <span class="mx-1">•</span> <b class="text-yellow-500">Lvl: ${p.game_level || '?'}</b></span>
+                                </div>
                             </div>
-                            <button onclick="kickUser('${p.game_name}', ${id}, 'Player')" class="text-red-500 bg-red-900/10 border border-red-600/30 px-2 py-1 rounded text-[10px] hover:bg-red-600 hover:text-white transition">Kick</button>
+                            <button onclick="kickUser('${p.game_name}', ${id}, 'Player')" class="text-red-500 bg-red-500/10 border border-red-500/30 px-3 py-1 rounded text-[10px] font-bold hover:bg-red-600 hover:text-white transition uppercase">Kick</button>
                         </div>`;
                     });
                 }
@@ -181,7 +194,6 @@
 
             } catch(e) { con.innerHTML = '<div class="text-center p-5 text-red-400 text-sm">Failed to Load</div>'; }
         }
-        
         async function kickUser(name, mid, typeText) {
              if(!confirm(`⚠️ WARNING: Kick ${typeText} "${name}"?\n- User(s) will be removed.\n- Entry fee will be refunded automatically.`)) return;
              
@@ -252,12 +264,11 @@
                 const d = await res.json();
 
                 if (d.success) {
-                    // সফল হলে রিলোড বা কনফার্মেশন
-                    // alert("Status Updated to " + newStatus); // চাইলে রাখতে পারেন
+
+
                     selectEl.disabled = false;
-                    
-                    // এখানে লিস্ট রিলোড করতে পারেন যাতে কনফার্ম হওয়া যায়
-                    // loadMatches(); // Optional
+ 
+ 
                 } else {
                     alert("Update Failed: " + d.error);
                     selectEl.value = originalVal; // Revert
