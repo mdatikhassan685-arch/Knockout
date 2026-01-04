@@ -76,6 +76,7 @@
                 if(data.length > 0) {
                     list.innerHTML = data.map(t => `
                         <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg relative group transition hover:border-yellow-500/50">
+                            <!-- Header Info -->
                             <div class="flex justify-between items-start mb-2">
                                 <div>
                                     <span class="bg-yellow-600 text-black text-[9px] px-2 py-0.5 rounded font-bold uppercase">ID: ${t.id}</span>
@@ -88,15 +89,16 @@
                                 </div>
                             </div>
                             
+                            <!-- Stats Grid -->
                             <div class="grid grid-cols-3 gap-2 text-center bg-gray-900/50 p-2 rounded-lg border border-gray-700/50 mb-3">
                                 <div><p class="text-[9px] text-gray-500">FEE</p><p class="text-white font-bold">৳${t.entry_fee}</p></div>
                                 <div><p class="text-[9px] text-gray-500">PRIZE</p><p class="text-yellow-400 font-bold">৳${t.winning_prize}</p></div>
                                 <div><p class="text-[9px] text-gray-500">SLOTS</p><p class="text-blue-400 font-bold">${t.total_spots}</p></div>
                             </div>
 
-                            <!-- ✅ NEW BUTTON: MANAGE STAGES -->
-                            <button onclick="window.location.href='/admin-stages?tour_id=${t.id}'" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 py-3 rounded-lg text-xs font-bold text-white shadow-lg active:scale-95 transition flex justify-center items-center gap-2 uppercase tracking-wide border border-green-500/50 hover:to-green-500">
-                                <i class="fa-solid fa-sitemap"></i> Manage Stages & Groups
+                            <!-- ✅ NEW BUTTON: Goes to Tournament Panel -->
+                            <button onclick="window.location.href='/admin-tournament-panel?tour_id=${t.id}&title=${encodeURIComponent(t.title)}'" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 py-3 rounded-lg text-xs font-bold text-white shadow-lg active:scale-95 transition flex justify-center items-center gap-2 uppercase tracking-wide border border-blue-500/50 hover:to-indigo-500">
+                                <i class="fa-solid fa-gear"></i> Manage Tournament
                             </button>
                         </div>
                     `).join('');
