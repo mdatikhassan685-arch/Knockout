@@ -101,6 +101,38 @@ module.exports = async (req, res) => {
             }
             return res.status(200).json({ success: true });
         }
+              // --- 🤖 ADD TEST TEAMS (FOR TESTING) ---
+        if (type === 'add_test_teams') {
+            const count = body.count || 10;
+            const prefixes = ["Dark", "Red", "Blue", "Team", "Pro", "BD", "Royal", "King", "Elite", "Max"];
+            const suffixes = ["Warriors", "Snipers", "Esports", "Gaming", "Squad", "Killers", "Legends", "Hunters", "Army", "Boys"];
+
+            for (let i = 0; i < count; i++) {
+                // 1. Generate Fake User
+                const username = "BotUser_" + Math.floor(Math.random() * 10000);
+                const email = `bot${Date.now()}_${i}@test.com`;
+                const [uRes] = await db.execute(
+                    `INSERT INTO users (username, email, password, phone, role, status) 
+                     VALUES (?, ?, 'botpass', '0000000000', 'bot', 'active')`,
+                    [username, email]
+                );
+                const botUserId = uRes.insertId;
+
+                // 2. Generate Random Team Name
+                const teamName = prefixes[Math.floor(Math.random() * prefixes.length)] + " " + suffixes[Math.floor(Math.random() * suffixes.length)] + " " + Math.floor(Math.random() * 100);
+                
+                // 3. Generate Fake Players
+                const members = `Player1_${i}, Player2_${i}, Player3_${i}, Player4_${i}`;
+
+                // 4. Register Team directly into Participants
+                await db.execute(
+                    `INSERT INTO participants (user_id, tournament_id, team_name, team_members, kills, prize_won, joined_at, \`rank\`) 
+                     VALUES (?, ?, ?, ?, 0, 0, NOW(), 0)`,
+                    [botUserId, tournament_id, teamName, members]
+                );
+            }
+            return res.status(200).json({ success: true, message: `${count} Test Teams Added!` });
+                     }
 
         // 3. Promote Teams to Next Stage
         if (type === 'promote_teams') {
