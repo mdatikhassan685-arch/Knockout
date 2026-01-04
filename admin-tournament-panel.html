@@ -6,7 +6,11 @@
     <title>Tournament Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>body { user-select: none; } .custom-scroll::-webkit-scrollbar { width: 4px; background: #374151; } .custom-scroll::-webkit-scrollbar-thumb { background: #eab308; border-radius: 4px; }</style>
+    <style>
+        body { user-select: none; } 
+        .custom-scroll::-webkit-scrollbar { width: 4px; background: #374151; } 
+        .custom-scroll::-webkit-scrollbar-thumb { background: #eab308; border-radius: 4px; }
+    </style>
 </head>
 <body class="bg-gray-900 text-white pb-24">
 
@@ -21,80 +25,84 @@
 
     <div class="p-4 max-w-lg mx-auto">
         
-        <!-- Tournament Info Card -->
+        <!-- Tournament Info -->
         <div class="bg-gray-800 p-5 rounded-xl border border-gray-700 shadow-lg mb-6 relative overflow-hidden">
             <div class="absolute top-0 right-0 w-20 h-20 bg-yellow-500/10 rounded-full -mr-10 -mt-10 blur-xl"></div>
             <h2 class="text-xl font-bold text-white mb-1" id="tour_name_display">...</h2>
             <p class="text-xs text-gray-400 font-mono bg-gray-900 px-2 py-1 rounded inline-block border border-gray-700">ID: <span id="tour_id_display">...</span></p>
         </div>
 
-        <!-- Tools Section -->
-        <h3 class="text-gray-500 font-bold mb-3 uppercase text-xs tracking-wider border-l-2 border-yellow-500 pl-2">Quick Actions</h3>
-        
-        <div class="space-y-3">
-            
-            <!-- Row 1: Groups & Schedule -->
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="goToPage('groups')" class="bg-blue-600/20 border border-blue-600/50 hover:bg-blue-600 hover:text-white text-blue-400 py-4 rounded-xl font-bold shadow-lg transition flex flex-col items-center gap-1 active:scale-95">
-                    <i class="fa-solid fa-users-rectangle text-2xl mb-1"></i>
-                    <span class="text-xs uppercase">Groups</span>
-                </button>
-                <button onclick="goToPage('schedule')" class="bg-purple-600/20 border border-purple-600/50 hover:bg-purple-600 hover:text-white text-purple-400 py-4 rounded-xl font-bold shadow-lg transition flex flex-col items-center gap-1 active:scale-95">
-                    <i class="fa-solid fa-calendar-days text-2xl mb-1"></i>
-                    <span class="text-xs uppercase">Schedule</span>
-                </button>
-            </div>
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-2 gap-3 mb-6">
+            <button onclick="goToPage('groups')" class="bg-blue-600/20 border border-blue-600/50 hover:bg-blue-600 hover:text-white text-blue-400 py-4 rounded-xl font-bold shadow-lg transition flex flex-col items-center gap-1 active:scale-95">
+                <i class="fa-solid fa-users-rectangle text-2xl mb-1"></i>
+                <span class="text-xs uppercase">Groups</span>
+            </button>
+            <button onclick="goToPage('schedule')" class="bg-purple-600/20 border border-purple-600/50 hover:bg-purple-600 hover:text-white text-purple-400 py-4 rounded-xl font-bold shadow-lg transition flex flex-col items-center gap-1 active:scale-95">
+                <i class="fa-solid fa-calendar-days text-2xl mb-1"></i>
+                <span class="text-xs uppercase">Schedule</span>
+            </button>
+        </div>
 
-            <!-- List Actions -->
+        <div class="space-y-3 mb-8">
             <button onclick="goToPage('schedule')" class="w-full bg-gray-800 p-4 rounded-xl border border-gray-700 flex items-center justify-between active:scale-95 transition hover:border-yellow-500">
-                <div class="flex items-center gap-3">
-                    <div class="bg-indigo-500/20 p-2 rounded-lg text-indigo-400"><i class="fa-solid fa-shuffle"></i></div>
-                    <span class="text-sm font-bold">Manage Rounds</span>
-                </div>
+                <div class="flex items-center gap-3"><div class="bg-indigo-500/20 p-2 rounded-lg text-indigo-400"><i class="fa-solid fa-shuffle"></i></div><span class="text-sm font-bold">Manage Rounds</span></div>
                 <i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>
             </button>
-
-            <button onclick="alert('Feature coming soon!')" class="w-full bg-gray-800 p-4 rounded-xl border border-gray-700 flex items-center justify-between active:scale-95 transition hover:border-red-500">
-                <div class="flex items-center gap-3">
-                    <div class="bg-red-500/20 p-2 rounded-lg text-red-400"><i class="fa-solid fa-user-xmark"></i></div>
-                    <span class="text-sm font-bold">Eliminate Teams</span>
-                </div>
-                <i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>
-            </button>
-
             <button onclick="goToPage('points')" class="w-full bg-gray-800 p-4 rounded-xl border border-gray-700 flex items-center justify-between active:scale-95 transition hover:border-green-500">
-                <div class="flex items-center gap-3">
-                    <div class="bg-green-500/20 p-2 rounded-lg text-green-400"><i class="fa-solid fa-chart-simple"></i></div>
-                    <span class="text-sm font-bold">Update Results</span>
-                </div>
+                <div class="flex items-center gap-3"><div class="bg-green-500/20 p-2 rounded-lg text-green-400"><i class="fa-solid fa-chart-simple"></i></div><span class="text-sm font-bold">Update Results</span></div>
                 <i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>
             </button>
-
         </div>
 
-        <!-- Registered Teams Preview (With Bot Button) -->
-        <div class="flex justify-between items-end mt-6 mb-3">
-            <h3 class="text-gray-500 font-bold uppercase text-xs tracking-wider border-l-2 border-blue-500 pl-2">Registered Teams (<span id="team_count">0</span>)</h3>
+        <!-- REGISTERED TEAMS LIST (FULL VIEW) -->
+        <div class="flex justify-between items-end mb-3 border-l-4 border-blue-500 pl-3">
+            <h3 class="text-gray-400 font-bold uppercase text-xs tracking-wider">Registered Teams (<span id="team_count">0</span>)</h3>
             
-            <!-- ✅ BOT BUTTON FOR TESTING -->
-            <button onclick="addBotTeams()" class="bg-gray-700 text-gray-300 px-2 py-1 rounded text-[10px] font-bold border border-gray-600 hover:bg-gray-600 hover:text-white transition active:scale-95">
-                <i class="fa-solid fa-robot"></i> +10 Bots
-            </button>
-        </div>
-
-        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 min-h-[100px]">
-            <input type="text" placeholder="Quick Search..." class="w-full bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-sm mb-3 focus:border-blue-500 text-white">
-            <div id="team_list_preview" class="text-xs text-gray-400 space-y-1 font-mono">
-                Loading teams...
+            <div class="flex items-center gap-2">
+                <input type="number" id="bot_count" value="10" class="w-12 bg-gray-800 text-white text-xs p-1 rounded border border-gray-600 text-center outline-none">
+                <button onclick="addBotTeams()" class="bg-gray-700 text-gray-300 px-2 py-1 rounded text-[10px] font-bold border border-gray-600 hover:bg-gray-600 hover:text-white transition active:scale-95">
+                    <i class="fa-solid fa-robot"></i> Add Bots
+                </button>
             </div>
         </div>
 
+        <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-lg">
+            <!-- Search Bar -->
+            <div class="p-3 border-b border-gray-700">
+                <input type="text" id="search_team" onkeyup="filterTeams()" placeholder="Search team name..." class="w-full bg-gray-900 p-2 rounded-lg border border-gray-600 outline-none text-sm text-white focus:border-blue-500">
+            </div>
+            
+            <!-- Scrollable List -->
+            <div id="team_list_full" class="max-h-[300px] overflow-y-auto custom-scroll p-2 space-y-1">
+                <p class="text-center text-xs text-gray-500 py-4">Loading teams...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TEAM DETAILS MODAL -->
+    <div id="teamModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[60] p-4 backdrop-blur-sm">
+        <div class="bg-gray-800 p-6 rounded-xl w-full max-w-sm border border-gray-600 shadow-2xl relative">
+            <button onclick="document.getElementById('teamModal').style.display='none'" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-times text-xl"></i></button>
+            
+            <h3 class="font-bold text-lg text-white mb-1" id="modal_team_name">Team Name</h3>
+            <p class="text-xs text-blue-400 font-mono mb-4">ID: <span id="modal_team_id">...</span></p>
+            
+            <div class="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                <p class="text-[10px] text-gray-500 uppercase font-bold mb-2 border-b border-gray-700 pb-1">Team Members</p>
+                <div id="modal_members" class="space-y-2 text-sm text-gray-300">
+                    <!-- Members will be loaded here -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
         const params = new URLSearchParams(window.location.search);
         const tourId = params.get('tour_id');
         const tourTitle = params.get('title');
+        let allTeams = [];
 
         if(tourTitle) {
             document.getElementById('tour_title').innerText = decodeURIComponent(tourTitle);
@@ -102,63 +110,92 @@
         }
         document.getElementById('tour_id_display').innerText = tourId;
 
-        // Navigation Logic
         function goToPage(page) {
             if(!tourId) return alert("Tournament ID missing");
-
-            if (page === 'schedule') {
-                window.location.href = `/admin-stages?tour_id=${tourId}`;
-            } 
-            else if (page === 'groups') {
-                window.location.href = `/admin-groups?tour_id=${tourId}`;
-            }
-            else if (page === 'points') {
-                window.location.href = `/admin-points?tour_id=${tourId}`;
-            }
+            if (page === 'schedule') window.location.href = `/admin-stages?tour_id=${tourId}`;
+            else if (page === 'groups') window.location.href = `/admin-groups?tour_id=${tourId}`;
+            else if (page === 'points') window.location.href = `/admin-points?tour_id=${tourId}`;
         }
 
-        async function loadTeamCount() {
+        async function loadTeams() {
             try {
+                // Fetching all teams
                 const res = await fetch('/api/official', { 
                     method: 'POST', 
                     headers: {'Content-Type':'application/json'},
                     body: JSON.stringify({ type: 'get_official_standings', tournament_id: tourId }) 
                 });
                 const data = await res.json();
-                document.getElementById('team_count').innerText = data.length;
+                allTeams = data; // Store for searching
                 
-                if(data.length > 0) {
-                    document.getElementById('team_list_preview').innerHTML = data.slice(0, 5).map(t => `<p>• ${t.team_name}</p>`).join('') + (data.length > 5 ? `<p class="text-xs italic mt-2 text-blue-400">+ ${data.length-5} more...</p>` : '');
-                } else {
-                    document.getElementById('team_list_preview').innerHTML = '<p class="opacity-50">No teams registered yet.</p>';
-                }
-            } catch(e) {}
+                document.getElementById('team_count').innerText = data.length;
+                renderList(data);
+
+            } catch(e) { console.error(e); }
         }
 
-        // 🤖 BOT ADD LOGIC
+        function renderList(teams) {
+            const list = document.getElementById('team_list_full');
+            if(teams.length > 0) {
+                list.innerHTML = teams.map((t, i) => `
+                    <div onclick='openTeamDetails(${JSON.stringify(t).replace(/'/g, "&#39;")})' class="flex justify-between items-center bg-gray-700/30 p-2.5 rounded-lg cursor-pointer hover:bg-gray-700 transition border border-transparent hover:border-gray-600">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold text-gray-500 w-5">#${i+1}</span>
+                            <span class="text-sm font-bold text-gray-200">${t.team_name}</span>
+                        </div>
+                        <i class="fa-solid fa-circle-info text-blue-500/50 text-sm"></i>
+                    </div>
+                `).join('');
+            } else {
+                list.innerHTML = '<p class="text-center text-xs text-gray-500 py-4">No teams found.</p>';
+            }
+        }
+
+        function filterTeams() {
+            const query = document.getElementById('search_team').value.toLowerCase();
+            const filtered = allTeams.filter(t => t.team_name.toLowerCase().includes(query));
+            renderList(filtered);
+        }
+
+        // Open Modal with Details
+        function openTeamDetails(t) {
+            document.getElementById('modal_team_name').innerText = t.team_name;
+            document.getElementById('modal_team_id').innerText = t.id;
+            
+            // Format Members (Assuming comma separated or just string)
+            const members = t.team_members ? t.team_members.split(',') : ['No members info'];
+            
+            document.getElementById('modal_members').innerHTML = members.map(m => `
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-user text-gray-600 text-xs"></i>
+                    <span>${m.trim()}</span>
+                </div>
+            `).join('');
+            
+            document.getElementById('teamModal').style.display = 'flex';
+        }
+
         async function addBotTeams() {
-            if(!confirm("Add 10 Fake Teams for testing?")) return;
+            const count = document.getElementById('bot_count').value;
+            if(!confirm(`Add ${count} Fake Teams?`)) return;
             
             const btn = event.target;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = "..."; btn.disabled = true;
+            btn.innerText = "..."; btn.disabled = true;
 
             try {
                 const res = await fetch('/api/official', { 
                     method: 'POST', 
                     headers: {'Content-Type': 'application/json'}, 
-                    body: JSON.stringify({ type: 'add_test_teams', tournament_id: tourId, count: 10 }) 
+                    body: JSON.stringify({ type: 'add_test_teams', tournament_id: tourId, count: count }) 
                 });
                 const d = await res.json();
-                if(d.success) { 
-                    loadTeamCount(); 
-                } else { alert("Error"); }
+                if(d.success) { loadTeams(); } else { alert("Error: " + JSON.stringify(d)); }
             } catch(e) { alert("Network Error"); }
             
-            btn.innerHTML = originalText; btn.disabled = false;
+            btn.innerText = "Add Bots"; btn.disabled = false;
         }
 
-        loadTeamCount();
+        loadTeams();
     </script>
 </body>
 </html>
