@@ -72,8 +72,16 @@
 
         </div>
 
-        <!-- Registered Teams Preview -->
-        <h3 class="text-gray-500 font-bold mt-6 mb-3 uppercase text-xs tracking-wider border-l-2 border-blue-500 pl-2">Registered Teams (<span id="team_count">0</span>)</h3>
+        <!-- Registered Teams Preview (With Bot Button) -->
+        <div class="flex justify-between items-end mt-6 mb-3">
+            <h3 class="text-gray-500 font-bold uppercase text-xs tracking-wider border-l-2 border-blue-500 pl-2">Registered Teams (<span id="team_count">0</span>)</h3>
+            
+            <!-- ✅ BOT BUTTON FOR TESTING -->
+            <button onclick="addBotTeams()" class="bg-gray-700 text-gray-300 px-2 py-1 rounded text-[10px] font-bold border border-gray-600 hover:bg-gray-600 hover:text-white transition active:scale-95">
+                <i class="fa-solid fa-robot"></i> +10 Bots
+            </button>
+        </div>
+
         <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 min-h-[100px]">
             <input type="text" placeholder="Quick Search..." class="w-full bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-sm mb-3 focus:border-blue-500 text-white">
             <div id="team_list_preview" class="text-xs text-gray-400 space-y-1 font-mono">
@@ -102,12 +110,9 @@
                 window.location.href = `/admin-stages?tour_id=${tourId}`;
             } 
             else if (page === 'groups') {
-                // ✅ FIX: সরাসরি admin-groups.html এ যাবে (tour_id সহ)
                 window.location.href = `/admin-groups?tour_id=${tourId}`;
             }
             else if (page === 'points') {
-                // Update Results -> admin-points.html
-                // (Points page will also need to handle stage selection, similar to groups)
                 window.location.href = `/admin-points?tour_id=${tourId}`;
             }
         }
@@ -125,9 +130,32 @@
                 if(data.length > 0) {
                     document.getElementById('team_list_preview').innerHTML = data.slice(0, 5).map(t => `<p>• ${t.team_name}</p>`).join('') + (data.length > 5 ? `<p class="text-xs italic mt-2 text-blue-400">+ ${data.length-5} more...</p>` : '');
                 } else {
-                    document.getElementById('team_list_preview').innerText = "No teams registered yet.";
+                    document.getElementById('team_list_preview').innerHTML = '<p class="opacity-50">No teams registered yet.</p>';
                 }
             } catch(e) {}
+        }
+
+        // 🤖 BOT ADD LOGIC
+        async function addBotTeams() {
+            if(!confirm("Add 10 Fake Teams for testing?")) return;
+            
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "..."; btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/official', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ type: 'add_test_teams', tournament_id: tourId, count: 10 }) 
+                });
+                const d = await res.json();
+                if(d.success) { 
+                    loadTeamCount(); 
+                } else { alert("Error"); }
+            } catch(e) { alert("Network Error"); }
+            
+            btn.innerHTML = originalText; btn.disabled = false;
         }
 
         loadTeamCount();
