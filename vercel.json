@@ -20,6 +20,7 @@
     { "source": "/admin-categories", "destination": "/admin-categories.html" },
     { "source": "/admin-matches", "destination": "/admin-matches.html" },
     { "source": "/admin-official", "destination": "/admin-official.html" },
+    { "source": "/admin-tournament-panel", "destination": "/admin-tournament-panel.html" },
     { "source": "/admin-stages", "destination": "/admin-stages.html" },
     { "source": "/admin-groups", "destination": "/admin-groups.html" },
 
