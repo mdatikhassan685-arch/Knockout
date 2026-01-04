@@ -6,77 +6,77 @@
     <title>Tournament Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>body { font-family: 'Segoe UI', sans-serif; user-select: none; }</style>
+    <style>body { user-select: none; } .custom-scroll::-webkit-scrollbar { width: 4px; background: #374151; } .custom-scroll::-webkit-scrollbar-thumb { background: #eab308; border-radius: 4px; }</style>
 </head>
-<body class="bg-gray-100 min-h-screen pb-10">
+<body class="bg-gray-900 text-white pb-24">
 
-    <!-- Header (Blue Background) -->
-    <header class="bg-blue-800 p-4 text-white flex items-center shadow-lg sticky top-0 z-50">
-        <a href="/admin-official" class="mr-4 hover:bg-blue-700 p-2 rounded-full transition"><i class="fa-solid fa-arrow-left text-xl"></i></a>
-        <h1 class="text-xl font-bold">Manage Tournament</h1>
+    <!-- Header -->
+    <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50 border-b border-gray-700">
+        <a href="/admin-categories?mode=select&type=official" class="mr-4 text-gray-400 active:scale-90"><i class="fa-solid fa-arrow-left text-xl"></i></a>
+        <div>
+            <h1 class="font-bold text-lg text-yellow-500">Manage Tournament</h1>
+            <p class="text-[10px] text-gray-400" id="tour_title">Loading...</p>
+        </div>
     </header>
 
     <div class="p-4 max-w-lg mx-auto">
         
-        <!-- Tournament Name Card -->
-        <div class="bg-white p-5 rounded-xl shadow-md mb-6 border-l-4 border-blue-600">
-            <h2 class="text-2xl font-bold text-gray-800" id="tour_title">Loading Name...</h2>
-            <p class="text-sm text-gray-500 mt-1">ID: <span id="tour_id_display">...</span></p>
+        <!-- Tournament Info Card -->
+        <div class="bg-gray-800 p-5 rounded-xl border border-gray-700 shadow-lg mb-6 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-20 h-20 bg-yellow-500/10 rounded-full -mr-10 -mt-10 blur-xl"></div>
+            <h2 class="text-xl font-bold text-white mb-1" id="tour_name_display">...</h2>
+            <p class="text-xs text-gray-400 font-mono bg-gray-900 px-2 py-1 rounded inline-block border border-gray-700">ID: <span id="tour_id_display">...</span></p>
         </div>
 
-        <!-- Tournament Tools -->
-        <h3 class="text-gray-600 font-bold mb-3 uppercase text-xs tracking-wider">Tournament Tools</h3>
+        <!-- Tools Section -->
+        <h3 class="text-gray-500 font-bold mb-3 uppercase text-xs tracking-wider border-l-2 border-yellow-500 pl-2">Quick Actions</h3>
         
-        <div class="bg-white p-4 rounded-xl shadow-md space-y-3">
+        <div class="space-y-3">
             
             <!-- Row 1: Groups & Schedule -->
             <div class="grid grid-cols-2 gap-3">
-                <button onclick="goToPage('groups')" class="bg-blue-500 hover:bg-blue-600 text-white py-4 rounded-lg font-bold shadow transition flex flex-col items-center gap-1">
-                    <i class="fa-solid fa-users-rectangle text-xl"></i>
-                    <span>Groups</span>
+                <button onclick="goToPage('groups')" class="bg-blue-600/20 border border-blue-600/50 hover:bg-blue-600 hover:text-white text-blue-400 py-4 rounded-xl font-bold shadow-lg transition flex flex-col items-center gap-1 active:scale-95">
+                    <i class="fa-solid fa-users-rectangle text-2xl mb-1"></i>
+                    <span class="text-xs uppercase">Groups</span>
                 </button>
-                <button onclick="goToPage('schedule')" class="bg-purple-500 hover:bg-purple-600 text-white py-4 rounded-lg font-bold shadow transition flex flex-col items-center gap-1">
-                    <i class="fa-solid fa-calendar-days text-xl"></i>
-                    <span>Schedule</span>
+                <button onclick="goToPage('schedule')" class="bg-purple-600/20 border border-purple-600/50 hover:bg-purple-600 hover:text-white text-purple-400 py-4 rounded-xl font-bold shadow-lg transition flex flex-col items-center gap-1 active:scale-95">
+                    <i class="fa-solid fa-calendar-days text-2xl mb-1"></i>
+                    <span class="text-xs uppercase">Schedule</span>
                 </button>
             </div>
 
-            <!-- Row 2: Stages/Rounds -->
-            <button onclick="goToPage('schedule')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-bold shadow transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-shuffle"></i> Manage Rounds & Qualifiers
+            <!-- List Actions -->
+            <button onclick="goToPage('schedule')" class="w-full bg-gray-800 p-4 rounded-xl border border-gray-700 flex items-center justify-between active:scale-95 transition hover:border-yellow-500">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-500/20 p-2 rounded-lg text-indigo-400"><i class="fa-solid fa-shuffle"></i></div>
+                    <span class="text-sm font-bold">Manage Rounds</span>
+                </div>
+                <i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>
             </button>
 
-            <!-- Row 3: Eliminate -->
-            <button onclick="alert('Feature coming soon!')" class="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-bold shadow transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-user-xmark"></i> Eliminate Teams Manually
+            <button onclick="alert('Feature coming soon!')" class="w-full bg-gray-800 p-4 rounded-xl border border-gray-700 flex items-center justify-between active:scale-95 transition hover:border-red-500">
+                <div class="flex items-center gap-3">
+                    <div class="bg-red-500/20 p-2 rounded-lg text-red-400"><i class="fa-solid fa-user-xmark"></i></div>
+                    <span class="text-sm font-bold">Eliminate Teams</span>
+                </div>
+                <i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>
             </button>
 
-            <!-- Row 4: Results -->
-            <button onclick="goToPage('points')" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-lg font-bold shadow transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-chart-simple"></i> Update Match Results
+            <button onclick="goToPage('points')" class="w-full bg-gray-800 p-4 rounded-xl border border-gray-700 flex items-center justify-between active:scale-95 transition hover:border-green-500">
+                <div class="flex items-center gap-3">
+                    <div class="bg-green-500/20 p-2 rounded-lg text-green-400"><i class="fa-solid fa-chart-simple"></i></div>
+                    <span class="text-sm font-bold">Update Results</span>
+                </div>
+                <i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>
             </button>
 
-            <!-- Row 5: Standings -->
-            <button onclick="alert('Use Update Match Results to auto-update standings')" class="w-full bg-teal-500 hover:bg-teal-600 text-white py-3 rounded-lg font-bold shadow transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-list-ol"></i> Update Overall Standings
-            </button>
-
-            <!-- Row 6: Final -->
-            <button onclick="alert('Feature coming soon!')" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-bold shadow transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-star"></i> Update Final Standings
-            </button>
-
-            <!-- Row 7: Prizes -->
-            <button onclick="alert('Feature coming soon!')" class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-bold shadow transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-trophy"></i> Distribute Prizes
-            </button>
         </div>
 
-        <!-- Registered Teams Section -->
-        <h3 class="text-gray-600 font-bold mt-6 mb-3 uppercase text-xs tracking-wider">Registered Teams (<span id="team_count">0</span>)</h3>
-        <div class="bg-white p-4 rounded-xl shadow-md min-h-[100px]">
-            <input type="text" placeholder="Search team..." class="w-full bg-gray-100 p-3 rounded-lg border border-gray-300 outline-none text-sm mb-3 focus:border-blue-500">
-            <div id="team_list_preview" class="text-sm text-gray-500 space-y-1">
+        <!-- Registered Teams Preview -->
+        <h3 class="text-gray-500 font-bold mt-6 mb-3 uppercase text-xs tracking-wider border-l-2 border-blue-500 pl-2">Registered Teams (<span id="team_count">0</span>)</h3>
+        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 min-h-[100px]">
+            <input type="text" placeholder="Quick Search..." class="w-full bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-sm mb-3 focus:border-blue-500 text-white">
+            <div id="team_list_preview" class="text-xs text-gray-400 space-y-1 font-mono">
                 Loading teams...
             </div>
         </div>
@@ -86,9 +86,12 @@
     <script>
         const params = new URLSearchParams(window.location.search);
         const tourId = params.get('tour_id');
-        const tourTitle = params.get('title'); // Passed from previous page to avoid extra fetch
+        const tourTitle = params.get('title');
 
-        if(tourTitle) document.getElementById('tour_title').innerText = decodeURIComponent(tourTitle);
+        if(tourTitle) {
+            document.getElementById('tour_title').innerText = decodeURIComponent(tourTitle);
+            document.getElementById('tour_name_display').innerText = decodeURIComponent(tourTitle);
+        }
         document.getElementById('tour_id_display').innerText = tourId;
 
         // Navigation Logic
@@ -96,25 +99,21 @@
             if(!tourId) return alert("Tournament ID missing");
 
             if (page === 'schedule') {
-                // Schedule & Rounds -> admin-stages.html
                 window.location.href = `/admin-stages?tour_id=${tourId}`;
             } 
             else if (page === 'groups') {
-                // Groups -> admin-groups.html (Requires a stage ID, default to first stage or select stage page)
-                // Since groups are stage-specific, we direct them to stages first OR need logic to fetch stage
-                window.location.href = `/admin-stages?tour_id=${tourId}&msg=Select_Stage_For_Groups`;
+                // ✅ FIX: সরাসরি admin-groups.html এ যাবে (tour_id সহ)
+                window.location.href = `/admin-groups?tour_id=${tourId}`;
             }
             else if (page === 'points') {
                 // Update Results -> admin-points.html
-                // Points are also stage specific
-                window.location.href = `/admin-stages?tour_id=${tourId}&msg=Select_Stage_For_Points`;
+                // (Points page will also need to handle stage selection, similar to groups)
+                window.location.href = `/admin-points?tour_id=${tourId}`;
             }
         }
 
-        // Load Total Registered Teams count for preview
         async function loadTeamCount() {
             try {
-                // We need a lightweight API to just get count. Reusing get_official_standings for now.
                 const res = await fetch('/api/official', { 
                     method: 'POST', 
                     headers: {'Content-Type':'application/json'},
@@ -124,7 +123,7 @@
                 document.getElementById('team_count').innerText = data.length;
                 
                 if(data.length > 0) {
-                    document.getElementById('team_list_preview').innerHTML = data.slice(0, 5).map(t => `<p>• ${t.team_name}</p>`).join('') + (data.length > 5 ? `<p class="text-xs italic mt-2 text-blue-500">+ ${data.length-5} more...</p>` : '');
+                    document.getElementById('team_list_preview').innerHTML = data.slice(0, 5).map(t => `<p>• ${t.team_name}</p>`).join('') + (data.length > 5 ? `<p class="text-xs italic mt-2 text-blue-400">+ ${data.length-5} more...</p>` : '');
                 } else {
                     document.getElementById('team_list_preview').innerText = "No teams registered yet.";
                 }
@@ -134,4 +133,4 @@
         loadTeamCount();
     </script>
 </body>
-  </html>
+</html>
