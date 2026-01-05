@@ -110,6 +110,51 @@ module.exports = async (req, res) => {
             await db.execute(`UPDATE stage_standings SET kills = kills + ?, position_points = position_points + ?, total_points = total_points + ? + ? WHERE id = ?`, [kills_to_add, points_to_add, kills_to_add, points_to_add, team_id]);
             return res.status(200).json({ success: true });
         }
+                
+       // 1. Get Stages
+        if (type === 'get_stages_and_matches') {
+            const [stages] = await db.execute('SELECT * FROM tournament_stages WHERE tournament_id = ? ORDER BY stage_order ASC', [tournament_id]);
+            for (let stage of stages) {
+                const [matches] = await db.execute('SELECT * FROM stage_matches WHERE stage_id = ? ORDER BY schedule_time ASC', [stage.id]);
+                stage.matches = matches;
+            }
+            return res.status(200).json(stages);
+        }
+
+        // 2. Create Stage (With Custom Round Number)
+        if (type === 'create_stage') {
+            const order = parseInt(body.stage_order) || 1; // Admin input
+            await db.execute(
+                `INSERT INTO tournament_stages (tournament_id, stage_name, stage_order, status) 
+                 VALUES (?, ?, ?, 'upcoming')`,
+                [tournament_id, body.stage_name, order]
+            );
+            return res.status(200).json({ success: true });
+        }
+
+        // ... (Update/Delete Stage logic same as before) ...
+        if (type === 'update_stage') { /* ... same ... */ }
+        if (type === 'delete_stage') { /* ... same ... */ }
+
+        // 3. Create Match (With Participants Info)
+        if (type === 'create_stage_match') {
+            await db.execute(
+                `INSERT INTO stage_matches (stage_id, match_title, participants, map_name, schedule_time, status) 
+                 VALUES (?, ?, ?, ?, ?, 'upcoming')`,
+                [stage_id, title, body.participants, map, time]
+            );
+            return res.status(200).json({ success: true });
+        }
+
+        // 4. Update Room/Status/Details (Edit Match)
+        if (type === 'update_stage_match') {
+            // This handles Room ID, Pass, Status update
+            await db.execute(
+                `UPDATE stage_matches SET room_id=?, room_pass=?, status=? WHERE id=?`,
+                [room_id, room_pass, status, match_id]
+            );
+            return res.status(200).json({ success: true });
+        }
 
         // --- BOTS ---
         if (type === 'add_test_teams') {
