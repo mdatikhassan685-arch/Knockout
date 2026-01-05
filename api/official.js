@@ -29,6 +29,7 @@ module.exports = async (req, res) => {
             
             const newTourId = result.insertId;
 
+            // Auto-Create Stages
             if (body.stages) {
                 const stageList = body.stages.split(',').map(s => s.trim());
                 for (let i = 0; i < stageList.length; i++) {
@@ -141,19 +142,17 @@ module.exports = async (req, res) => {
             return res.status(200).json({ success: true });
         }
 
-        // --- 🤖 ADD TEST TEAMS (FIXED: Role Error & Dynamic Count) ---
+        // --- 🤖 ADD TEST TEAMS ---
         if (type === 'add_test_teams') {
             const count = parseInt(body.count) || 10;
             const prefixes = ["Dark", "Red", "Blue", "Team", "Pro", "BD", "Royal", "King", "Elite", "Max"];
             const suffixes = ["Warriors", "Snipers", "Esports", "Gaming", "Squad", "Killers", "Legends", "Hunters", "Army", "Boys"];
 
             for (let i = 0; i < count; i++) {
-                // 1. Generate Fake User
                 const username = "Bot_" + Math.floor(Math.random() * 100000);
                 const email = `bot${Date.now()}_${i}@test.local`;
-                const phone = "01" + Math.floor(Math.random() * 1000000000); // 11 Digit Dummy
+                const phone = "01" + Math.floor(Math.random() * 1000000000); 
                 
-                // ✅ FIX: 'role' is set to 'user' to avoid ENUM error
                 const [uRes] = await db.execute(
                     `INSERT INTO users (username, email, password, phone, role, status, wallet_balance, created_at) 
                      VALUES (?, ?, '$2a$10$FakeHashForBot123456', ?, 'user', 'active', 0, NOW())`,
@@ -161,13 +160,9 @@ module.exports = async (req, res) => {
                 );
                 const botUserId = uRes.insertId;
 
-                // 2. Generate Random Team Name
                 const teamName = prefixes[Math.floor(Math.random() * prefixes.length)] + " " + suffixes[Math.floor(Math.random() * suffixes.length)] + " " + Math.floor(Math.random() * 999);
-                
-                // 3. Fake Players
                 const members = `P1_${i}, P2_${i}, P3_${i}, P4_${i}`;
 
-                // 4. Register Team
                 await db.execute(
                     `INSERT INTO participants (user_id, tournament_id, team_name, team_members, kills, prize_won, joined_at, \`rank\`) 
                      VALUES (?, ?, ?, ?, 0, 0, NOW(), 0)`,
@@ -234,13 +229,21 @@ module.exports = async (req, res) => {
         }
 
         if (type === 'get_official_standings') {
-            // ✅ FIX: 'team_members' যোগ করা হয়েছে যাতে ডিটেইলস দেখানো যায়
+            // ✅ FIX: Added 'team_members' column
             const [rows] = await db.execute(`
                 SELECT id, team_name, team_members, kills, \`rank\` as total_points 
                 FROM participants 
                 WHERE tournament_id = ? 
-                ORDER BY id DESC`, // লেটেস্ট টিম আগে দেখাবে
+                ORDER BY id DESC`, 
                 [tournament_id]
             );
             return res.status(200).json(rows);
-        };
+        }
+
+        return res.status(400).json({ error: "Invalid Type" });
+
+    } catch (e) {
+        console.error("OFFICIAL API ERROR:", e);
+        return res.status(500).json({ error: e.message });
+    }
+};
