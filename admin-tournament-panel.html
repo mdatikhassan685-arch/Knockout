@@ -12,7 +12,7 @@
         .custom-scroll::-webkit-scrollbar-thumb { background: #eab308; border-radius: 4px; }
     </style>
 </head>
-<body class="bg-gray-900 text-white pb-24">
+<body class="bg-gray-900 text-white pb-32">
 
     <!-- Header -->
     <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50 border-b border-gray-700">
@@ -25,22 +25,20 @@
 
     <div class="p-4 max-w-lg mx-auto">
         
-        <!-- Tournament Info -->
+        <!-- Info Card -->
         <div class="bg-gray-800 p-5 rounded-xl border border-gray-700 shadow-lg mb-6 relative overflow-hidden">
             <div class="absolute top-0 right-0 w-20 h-20 bg-yellow-500/10 rounded-full -mr-10 -mt-10 blur-xl"></div>
             <h2 class="text-xl font-bold text-white mb-1" id="tour_name_display">...</h2>
             <p class="text-xs text-gray-400 font-mono bg-gray-900 px-2 py-1 rounded inline-block border border-gray-700">ID: <span id="tour_id_display">...</span></p>
         </div>
 
-        <!-- Quick Actions -->
+        <!-- Tools -->
         <div class="grid grid-cols-2 gap-3 mb-6">
-            <button onclick="goToPage('groups')" class="bg-blue-600/20 border border-blue-600/50 hover:bg-blue-600 hover:text-white text-blue-400 py-4 rounded-xl font-bold shadow-lg transition flex flex-col items-center gap-1 active:scale-95">
-                <i class="fa-solid fa-users-rectangle text-2xl mb-1"></i>
-                <span class="text-xs uppercase">Groups</span>
+            <button onclick="goToPage('groups')" class="bg-blue-600/20 border border-blue-600/50 text-blue-400 py-4 rounded-xl font-bold shadow-lg transition flex flex-col items-center gap-1 active:scale-95">
+                <i class="fa-solid fa-users-rectangle text-2xl mb-1"></i><span class="text-xs uppercase">Groups</span>
             </button>
-            <button onclick="goToPage('schedule')" class="bg-purple-600/20 border border-purple-600/50 hover:bg-purple-600 hover:text-white text-purple-400 py-4 rounded-xl font-bold shadow-lg transition flex flex-col items-center gap-1 active:scale-95">
-                <i class="fa-solid fa-calendar-days text-2xl mb-1"></i>
-                <span class="text-xs uppercase">Schedule</span>
+            <button onclick="goToPage('schedule')" class="bg-purple-600/20 border border-purple-600/50 text-purple-400 py-4 rounded-xl font-bold shadow-lg transition flex flex-col items-center gap-1 active:scale-95">
+                <i class="fa-solid fa-calendar-days text-2xl mb-1"></i><span class="text-xs uppercase">Schedule</span>
             </button>
         </div>
 
@@ -55,26 +53,25 @@
             </button>
         </div>
 
-        <!-- REGISTERED TEAMS LIST (FULL VIEW) -->
-        <div class="flex justify-between items-end mb-3 border-l-4 border-blue-500 pl-3">
-            <h3 class="text-gray-400 font-bold uppercase text-xs tracking-wider">Registered Teams (<span id="team_count">0</span>)</h3>
-            
+        <!-- TEAMS LIST HEADER -->
+        <div class="flex justify-between items-center mb-3 px-1">
+            <h3 class="text-gray-400 font-bold uppercase text-xs tracking-wider border-l-2 border-blue-500 pl-2">Teams (<span id="team_count">0</span>)</h3>
             <div class="flex items-center gap-2">
-                <input type="number" id="bot_count" value="10" class="w-12 bg-gray-800 text-white text-xs p-1 rounded border border-gray-600 text-center outline-none">
-                <button onclick="addBotTeams()" class="bg-gray-700 text-gray-300 px-2 py-1 rounded text-[10px] font-bold border border-gray-600 hover:bg-gray-600 hover:text-white transition active:scale-95">
-                    <i class="fa-solid fa-robot"></i> Add Bots
+                <label class="text-[10px] text-blue-400 font-bold cursor-pointer select-none">
+                    <input type="checkbox" onclick="toggleAll(this)" class="mr-1 accent-blue-500"> Select All
+                </label>
+                <button onclick="addBotTeams()" class="bg-gray-700 text-gray-300 px-2 py-1 rounded text-[10px] font-bold border border-gray-600 hover:text-white transition">
+                    <i class="fa-solid fa-robot"></i> +Bots
                 </button>
             </div>
         </div>
 
+        <!-- LIST CONTAINER -->
         <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-lg">
-            <!-- Search Bar -->
             <div class="p-3 border-b border-gray-700">
-                <input type="text" id="search_team" onkeyup="filterTeams()" placeholder="Search team name..." class="w-full bg-gray-900 p-2 rounded-lg border border-gray-600 outline-none text-sm text-white focus:border-blue-500">
+                <input type="text" id="search_team" onkeyup="filterTeams()" placeholder="Search team..." class="w-full bg-gray-900 p-2 rounded-lg border border-gray-600 outline-none text-sm text-white focus:border-blue-500">
             </div>
-            
-            <!-- Scrollable List -->
-            <div id="team_list_full" class="max-h-[300px] overflow-y-auto custom-scroll p-2 space-y-1">
+            <div id="team_list_full" class="max-h-[350px] overflow-y-auto custom-scroll p-2 space-y-1">
                 <p class="text-center text-xs text-gray-500 py-4">Loading teams...</p>
             </div>
         </div>
@@ -85,16 +82,22 @@
     <div id="teamModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[60] p-4 backdrop-blur-sm">
         <div class="bg-gray-800 p-6 rounded-xl w-full max-w-sm border border-gray-600 shadow-2xl relative">
             <button onclick="document.getElementById('teamModal').style.display='none'" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-times text-xl"></i></button>
-            
             <h3 class="font-bold text-lg text-white mb-1" id="modal_team_name">Team Name</h3>
             <p class="text-xs text-blue-400 font-mono mb-4">ID: <span id="modal_team_id">...</span></p>
-            
             <div class="bg-gray-900 p-4 rounded-lg border border-gray-700">
                 <p class="text-[10px] text-gray-500 uppercase font-bold mb-2 border-b border-gray-700 pb-1">Team Members</p>
-                <div id="modal_members" class="space-y-2 text-sm text-gray-300">
-                    <!-- Members will be loaded here -->
-                </div>
+                <div id="modal_members" class="space-y-2 text-sm text-gray-300"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- FIXED BOTTOM BAR (Bulk Action) -->
+    <div id="bulk_action_bar" class="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 p-3 z-50 hidden shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+        <div class="max-w-lg mx-auto flex justify-between items-center">
+            <span class="text-xs text-gray-400 font-bold"><span id="selected_count">0</span> Selected</span>
+            <button onclick="bulkKick()" class="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg hover:bg-red-700 transition flex items-center gap-2">
+                <i class="fa-solid fa-trash"></i> Kick Selected
+            </button>
         </div>
     </div>
 
@@ -119,84 +122,38 @@
 
         async function loadTeams() {
             try {
-                // Fetching all teams
                 const res = await fetch('/api/official', { 
                     method: 'POST', 
                     headers: {'Content-Type':'application/json'},
                     body: JSON.stringify({ type: 'get_official_standings', tournament_id: tourId }) 
                 });
                 const data = await res.json();
-                allTeams = data; // Store for searching
-                
+                allTeams = data;
                 document.getElementById('team_count').innerText = data.length;
                 renderList(data);
-
             } catch(e) { console.error(e); }
         }
 
-                function renderList(teams) {
+        function renderList(teams) {
             const list = document.getElementById('team_list_full');
             if(teams.length > 0) {
                 list.innerHTML = teams.map((t, i) => `
-                    <div class="flex justify-between items-center bg-gray-700/30 p-3 rounded-lg hover:bg-gray-700 transition border border-transparent hover:border-gray-600 mb-1 group">
-                        <!-- Info Section (Click for Details) -->
-                        <div onclick='openTeamDetails(${JSON.stringify(t).replace(/'/g, "&#39;")})' class="flex items-center gap-3 cursor-pointer flex-1">
+                    <div class="flex justify-between items-center bg-gray-700/30 p-3 rounded-lg hover:bg-gray-700 transition border border-transparent hover:border-gray-600 mb-1 group cursor-pointer" onclick="toggleSelect(this, ${t.id})">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" class="team-checkbox w-4 h-4 rounded bg-gray-900 border-gray-600 accent-blue-600 pointer-events-none" value="${t.id}">
                             <span class="text-xs font-bold text-gray-500 w-5">#${i+1}</span>
                             <div>
                                 <p class="text-sm font-bold text-gray-200">${t.team_name}</p>
                                 <p class="text-[9px] text-blue-400 font-mono">ID: ${t.id}</p>
                             </div>
                         </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex gap-2">
-                            <button onclick='openTeamDetails(${JSON.stringify(t).replace(/'/g, "&#39;")})' class="text-gray-400 hover:text-white p-1"><i class="fa-solid fa-circle-info"></i></button>
-                            
-                            <!-- ✅ KICK BUTTON -->
-                            <button onclick="kickTeam(${t.id}, '${t.team_name}')" class="bg-red-500/10 text-red-500 p-1.5 rounded-lg border border-red-500/20 hover:bg-red-500 hover:text-white transition" title="Kick & Refund">
-                                <i class="fa-solid fa-user-minus"></i>
-                            </button>
-                        </div>
+                        <button onclick='event.stopPropagation(); openTeamDetails(${JSON.stringify(t).replace(/'/g, "&#39;")})' class="text-gray-400 hover:text-white p-2"><i class="fa-solid fa-circle-info"></i></button>
                     </div>
                 `).join('');
             } else {
                 list.innerHTML = '<p class="text-center text-xs text-gray-500 py-4">No teams found.</p>';
             }
-        }
-        async function kickTeam(tid, tname) {
-            if(!confirm(`⚠️ WARNING: Kick team "${tname}"?\n- User will be refunded.\n- Team will be removed permanently.`)) return;
-
-            const btn = event.target.closest('button'); // Get button reference
-            const originalContent = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
-            btn.disabled = true;
-
-            try {
-                const res = await fetch('/api/official', { 
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json'}, 
-                    body: JSON.stringify({ type: 'kick_official_team', team_id: tid }) 
-                });
-                
-                const d = await res.json();
-                
-                if(d.success) { 
-                    // alert(d.message); // Alert removed to prevent double popup
-                    loadTeamCount(); // Reload list
-                    loadTeams(); // Reload full list if needed
-                } else { 
-                    alert("Error: " + d.error); 
-                }
-            } catch(e) { 
-                console.error(e);
-                alert("Network Error: " + e.message); 
-            } finally {
-                // Restore button state (though list reloads, it's safer)
-                if(btn) {
-                    btn.innerHTML = originalContent;
-                    btn.disabled = false;
-                }
-            }
+            updateBulkBar();
         }
 
         function filterTeams() {
@@ -205,42 +162,77 @@
             renderList(filtered);
         }
 
-        // Open Modal with Details
+        // --- SELECTION LOGIC ---
+        function toggleSelect(div, id) {
+            const cb = div.querySelector('.team-checkbox');
+            cb.checked = !cb.checked;
+            
+            if(cb.checked) {
+                div.classList.add('bg-blue-900/20', 'border-blue-500/30');
+            } else {
+                div.classList.remove('bg-blue-900/20', 'border-blue-500/30');
+            }
+            updateBulkBar();
+        }
+
+        function toggleAll(source) {
+            document.querySelectorAll('.team-checkbox').forEach(cb => {
+                cb.checked = source.checked;
+                const div = cb.closest('div.group'); // Ensure correct parent
+                if(source.checked) div.classList.add('bg-blue-900/20', 'border-blue-500/30');
+                else div.classList.remove('bg-blue-900/20', 'border-blue-500/30');
+            });
+            updateBulkBar();
+        }
+
+        function updateBulkBar() {
+            const count = document.querySelectorAll('.team-checkbox:checked').length;
+            document.getElementById('selected_count').innerText = count;
+            const bar = document.getElementById('bulk_action_bar');
+            if(count > 0) bar.classList.remove('hidden'); else bar.classList.add('hidden');
+        }
+
+        // --- BULK KICK ---
+        async function bulkKick() {
+            const ids = Array.from(document.querySelectorAll('.team-checkbox:checked')).map(cb => cb.value);
+            if(ids.length === 0) return;
+
+            if(!confirm(`⚠️ Kick ${ids.length} selected teams?\n- They will be refunded.\n- This cannot be undone.`)) return;
+
+            const btn = event.target;
+            btn.innerText = "Processing..."; btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/official', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'bulk_kick_teams', team_ids: ids })
+                });
+                const d = await res.json();
+                if(d.success) { alert(d.message); loadTeams(); } else { alert("Error: " + d.error); }
+            } catch(e) { alert("Network Error"); }
+            
+            btn.innerHTML = '<i class="fa-solid fa-trash"></i> Kick Selected'; btn.disabled = false;
+        }
+
         function openTeamDetails(t) {
             document.getElementById('modal_team_name').innerText = t.team_name;
             document.getElementById('modal_team_id').innerText = t.id;
-            
-            // Format Members (Assuming comma separated or just string)
-            const members = t.team_members ? t.team_members.split(',') : ['No members info'];
-            
-            document.getElementById('modal_members').innerHTML = members.map(m => `
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-user text-gray-600 text-xs"></i>
-                    <span>${m.trim()}</span>
-                </div>
-            `).join('');
-            
+            const members = t.team_members ? t.team_members.split(',') : ['No info'];
+            document.getElementById('modal_members').innerHTML = members.map(m => `<div class="flex items-center gap-2"><i class="fa-solid fa-user text-gray-600 text-xs"></i><span>${m.trim()}</span></div>`).join('');
             document.getElementById('teamModal').style.display = 'flex';
         }
 
         async function addBotTeams() {
-            const count = document.getElementById('bot_count').value;
-            if(!confirm(`Add ${count} Fake Teams?`)) return;
-            
-            const btn = event.target;
-            btn.innerText = "..."; btn.disabled = true;
+            const input = prompt("How many bots?", "10");
+            if(input === null) return;
+            const count = parseInt(input);
+            if(isNaN(count) || count <= 0) return alert("Invalid number");
 
             try {
-                const res = await fetch('/api/official', { 
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json'}, 
-                    body: JSON.stringify({ type: 'add_test_teams', tournament_id: tourId, count: count }) 
-                });
-                const d = await res.json();
-                if(d.success) { loadTeams(); } else { alert("Error: " + JSON.stringify(d)); }
-            } catch(e) { alert("Network Error"); }
-            
-            btn.innerText = "Add Bots"; btn.disabled = false;
+                await fetch('/api/official', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'add_test_teams', tournament_id: tourId, count: count }) });
+                loadTeams();
+            } catch(e) { alert("Error"); }
         }
 
         loadTeams();
