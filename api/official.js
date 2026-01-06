@@ -1,6 +1,7 @@
 const db = require('../db');
 
 module.exports = async (req, res) => {
+    // 1. Basic Setup
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -11,7 +12,7 @@ module.exports = async (req, res) => {
     const { type, user_id, tournament_id, category_id, team_name, players, tour_id, stage_id, match_id, title, map, time, room_id, room_pass, status, team_ids, target_group, next_stage_id, points_to_add, kills_to_add, team_id } = body;
 
     try {
-        // --- 1. ADMIN: TOURNAMENT ---
+        // --- ADMIN: TOURNAMENT ---
         if (type === 'get_admin_tournaments') {
             const [rows] = await db.execute('SELECT * FROM tournaments WHERE category_id = ? ORDER BY schedule_time DESC', [category_id]);
             return res.status(200).json(rows);
@@ -36,7 +37,7 @@ module.exports = async (req, res) => {
             return res.status(200).json({ success: true });
         }
 
-        // --- 2. ADMIN: STAGE & MATCH (Fixed) ---
+        // --- ADMIN: STAGE & MATCH ---
         if (type === 'get_stages_and_matches') {
             const [stages] = await db.execute('SELECT * FROM tournament_stages WHERE tournament_id = ? ORDER BY stage_order ASC', [tournament_id]);
             for (let stage of stages) {
@@ -45,47 +46,34 @@ module.exports = async (req, res) => {
             }
             return res.status(200).json(stages);
         }
-
-        // ✅ Create Stage with Round No
         if (type === 'create_stage') {
             const order = parseInt(body.stage_order) || 1;
             await db.execute(`INSERT INTO tournament_stages (tournament_id, stage_name, stage_order, status) VALUES (?, ?, ?, 'upcoming')`, [tournament_id, body.stage_name, order]);
             return res.status(200).json({ success: true });
         }
-
-        // ✅ Update Stage (Name & Round No)
         if (type === 'update_stage') {
             await db.execute(`UPDATE tournament_stages SET stage_name = ?, stage_order = ? WHERE id = ?`, [body.stage_name, body.stage_order, stage_id]);
             return res.status(200).json({ success: true });
         }
-
         if (type === 'delete_stage') {
             await db.execute('DELETE FROM stage_matches WHERE stage_id = ?', [stage_id]);
             await db.execute('DELETE FROM tournament_stages WHERE id = ?', [stage_id]);
             return res.status(200).json({ success: true });
         }
-
-        // ✅ Create Match (Ensure participants column exists in DB)
         if (type === 'create_stage_match') {
-            await db.execute(
-                `INSERT INTO stage_matches (stage_id, match_title, participants, map_name, schedule_time, status) 
-                 VALUES (?, ?, ?, ?, ?, 'upcoming')`,
-                [stage_id, title, body.participants || 'All', map, time]
-            );
+            await db.execute(`INSERT INTO stage_matches (stage_id, match_title, participants, map_name, schedule_time, status) VALUES (?, ?, ?, ?, ?, 'upcoming')`, [stage_id, title, body.participants || 'All', map, time]);
             return res.status(200).json({ success: true });
         }
-
         if (type === 'update_stage_room') {
             await db.execute(`UPDATE stage_matches SET room_id=?, room_pass=?, status=? WHERE id=?`, [room_id, room_pass, status, match_id]);
             return res.status(200).json({ success: true });
         }
-
         if (type === 'delete_stage_match') {
             await db.execute('DELETE FROM stage_matches WHERE id=?', [match_id]);
             return res.status(200).json({ success: true });
         }
 
-        // --- 3. TEAM & GROUP ---
+        // --- ADMIN: TEAM & GROUP ---
         if (type === 'get_stage_teams') {
             let [teams] = await db.execute('SELECT * FROM stage_standings WHERE stage_id = ? ORDER BY total_points DESC', [stage_id]);
             if (teams.length === 0) {
@@ -121,7 +109,7 @@ module.exports = async (req, res) => {
             return res.status(200).json({ success: true });
         }
 
-        // --- 4. BOTS & USER ---
+        // --- 🤖 ADD BOTS ---
         if (type === 'add_test_teams') {
             const count = parseInt(body.count) || 10;
             const prefixes = ["Dark", "Red", "Blue", "Team", "Pro", "BD", "Royal", "King", "Elite", "Max"];
@@ -129,7 +117,8 @@ module.exports = async (req, res) => {
             for (let i = 0; i < count; i++) {
                 const username = "Bot_" + Math.floor(Math.random() * 100000);
                 const email = `bot${Date.now()}_${i}@test.local`;
-                const [uRes] = await db.execute(`INSERT INTO users (username, email, password, phone, role, status, wallet_balance, created_at) VALUES (?, ?, '$2a$10$FakeHash', '0000000000', 'user', 'active', 0, NOW())`, [username, email]);
+                const phone = "01" + Math.floor(Math.random() * 1000000000); 
+                const [uRes] = await db.execute(`INSERT INTO users (username, email, password, phone, role, status, wallet_balance, created_at) VALUES (?, ?, '$2a$10$FakeHashForBot123456', ?, 'user', 'active', 0, NOW())`, [username, email, phone]);
                 const botUserId = uRes.insertId;
                 const teamName = prefixes[Math.floor(Math.random() * prefixes.length)] + " " + suffixes[Math.floor(Math.random() * suffixes.length)] + " " + Math.floor(Math.random() * 999);
                 const members = `P1_${i}, P2_${i}, P3_${i}, P4_${i}`;
@@ -138,6 +127,62 @@ module.exports = async (req, res) => {
             return res.status(200).json({ success: true, message: `${count} Bots Added!` });
         }
 
+        // --- ❌ KICK SINGLE TEAM (FIXED: Deletes from everywhere) ---
+        if (type === 'kick_official_team') {
+            const teamId = body.team_id;
+            const [teamInfo] = await db.execute(`SELECT p.user_id, p.team_name, p.tournament_id, t.entry_fee FROM participants p JOIN tournaments t ON p.tournament_id = t.id WHERE p.id = ?`, [teamId]);
+
+            if (teamInfo.length > 0) {
+                const { user_id, entry_fee, team_name, tournament_id } = teamInfo[0];
+                const refund = parseFloat(entry_fee);
+
+                if (refund > 0) {
+                    await db.execute('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?', [refund, user_id]);
+                    await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Refund", "Kicked from Tournament", "completed", NOW())', [user_id, refund]);
+                }
+
+                // ✅ DELETE FROM STAGE STANDINGS (Remove from all stages of this tournament)
+                await db.execute('DELETE FROM stage_standings WHERE tournament_id = ? AND team_name = ?', [tournament_id, team_name]);
+                
+                // ✅ DELETE FROM PARTICIPANTS
+                await db.execute('DELETE FROM participants WHERE id = ?', [teamId]);
+                
+                return res.status(200).json({ success: true, message: "Team Kicked & Refunded!" });
+            } else {
+                return res.status(404).json({ error: "Team Not Found" });
+            }
+        }
+
+        // --- ❌ BULK KICK (FIXED: Deletes from everywhere) ---
+        if (type === 'bulk_kick_teams') {
+            const teamIds = body.team_ids; 
+            if (!teamIds || teamIds.length === 0) return res.status(400).json({ error: "No teams selected" });
+
+            let kickedCount = 0;
+            for (let tid of teamIds) {
+                const [teamInfo] = await db.execute(`SELECT p.user_id, p.team_name, p.tournament_id, t.entry_fee FROM participants p JOIN tournaments t ON p.tournament_id = t.id WHERE p.id = ?`, [tid]);
+
+                if (teamInfo.length > 0) {
+                    const { user_id, entry_fee, team_name, tournament_id } = teamInfo[0];
+                    const refund = parseFloat(entry_fee);
+
+                    if (refund > 0) {
+                        await db.execute('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?', [refund, user_id]);
+                        await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Refund", "Kicked from Tournament", "completed", NOW())', [user_id, refund]);
+                    }
+
+                    // ✅ DELETE FROM STAGE STANDINGS
+                    await db.execute('DELETE FROM stage_standings WHERE tournament_id = ? AND team_name = ?', [tournament_id, team_name]);
+                    
+                    // ✅ DELETE FROM PARTICIPANTS
+                    await db.execute('DELETE FROM participants WHERE id = ?', [tid]);
+                    kickedCount++;
+                }
+            }
+            return res.status(200).json({ success: true, message: `${kickedCount} Teams Kicked!` });
+        }
+
+        // --- USER ACTIONS ---
         if (type === 'get_official_details') {
             const [rows] = await db.execute('SELECT * FROM tournaments WHERE id = ?', [tournament_id]);
             if(rows.length === 0) return res.status(404).json({ error: 'Not Found' });
@@ -147,75 +192,6 @@ module.exports = async (req, res) => {
                 if(chk.length > 0) isReg = true;
             }
             return res.status(200).json({ data: rows[0], is_registered: isReg });
-        }
-                // --- ❌ KICK OFFICIAL TEAM (WITH REFUND) ---
-        if (type === 'kick_official_team') {
-            const teamId = body.team_id;
-            
-            // 1. Get Details (Fee & User ID)
-            const [teamInfo] = await db.execute(`
-                SELECT p.user_id, t.entry_fee 
-                FROM participants p 
-                JOIN tournaments t ON p.tournament_id = t.id 
-                WHERE p.id = ?`, 
-                [teamId]
-            );
-
-            if (teamInfo.length > 0) {
-                const { user_id, entry_fee } = teamInfo[0];
-                const refund = parseFloat(entry_fee);
-
-                // 2. Refund Logic
-                if (refund > 0) {
-                    await db.execute('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?', [refund, user_id]);
-                    await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Refund", "Kicked from Tournament", "completed", NOW())', 
-                        [user_id, refund]);
-                }
-
-                // 3. Delete Team
-                await db.execute('DELETE FROM participants WHERE id = ?', [teamId]);
-                // Also remove from stage_standings if exists
-                // (Optional: Cascade delete should handle it if foreign key set, else manual delete safe)
-                // await db.execute('DELETE FROM stage_standings WHERE team_name = (SELECT team_name FROM participants WHERE id=?)', [teamId]); 
-                
-                return res.status(200).json({ success: true, message: "Team Kicked & Refunded!" });
-            } else {
-                return res.status(404).json({ error: "Team Not Found" });
-            }
-        } 
-        if (type === 'bulk_kick_teams') {
-            const teamIds = body.team_ids; // Array of IDs [1, 2, 5]
-            if (!teamIds || teamIds.length === 0) return res.status(400).json({ error: "No teams selected" });
-
-            let kickedCount = 0;
-
-            for (let tid of teamIds) {
-                // 1. Get Details
-                const [teamInfo] = await db.execute(`
-                    SELECT p.user_id, t.entry_fee 
-                    FROM participants p 
-                    JOIN tournaments t ON p.tournament_id = t.id 
-                    WHERE p.id = ?`, 
-                    [tid]
-                );
-
-                if (teamInfo.length > 0) {
-                    const { user_id, entry_fee } = teamInfo[0];
-                    const refund = parseFloat(entry_fee);
-
-                    // 2. Refund Logic
-                    if (refund > 0) {
-                        await db.execute('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?', [refund, user_id]);
-                        await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Refund", "Kicked from Tournament", "completed", NOW())', 
-                            [user_id, refund]);
-                    }
-
-                    // 3. Delete Team
-                    await db.execute('DELETE FROM participants WHERE id = ?', [tid]);
-                    kickedCount++;
-                }
-            }
-            return res.status(200).json({ success: true, message: `${kickedCount} Teams Kicked & Refunded!` });
         }
         if (type === 'register_official_team') {
             const connection = await db.getConnection();
