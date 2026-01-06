@@ -148,6 +148,41 @@ module.exports = async (req, res) => {
             }
             return res.status(200).json({ data: rows[0], is_registered: isReg });
         }
+                // --- ❌ KICK OFFICIAL TEAM (WITH REFUND) ---
+        if (type === 'kick_official_team') {
+            const teamId = body.team_id;
+            
+            // 1. Get Details (Fee & User ID)
+            const [teamInfo] = await db.execute(`
+                SELECT p.user_id, t.entry_fee 
+                FROM participants p 
+                JOIN tournaments t ON p.tournament_id = t.id 
+                WHERE p.id = ?`, 
+                [teamId]
+            );
+
+            if (teamInfo.length > 0) {
+                const { user_id, entry_fee } = teamInfo[0];
+                const refund = parseFloat(entry_fee);
+
+                // 2. Refund Logic
+                if (refund > 0) {
+                    await db.execute('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?', [refund, user_id]);
+                    await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Refund", "Kicked from Tournament", "completed", NOW())', 
+                        [user_id, refund]);
+                }
+
+                // 3. Delete Team
+                await db.execute('DELETE FROM participants WHERE id = ?', [teamId]);
+                // Also remove from stage_standings if exists
+                // (Optional: Cascade delete should handle it if foreign key set, else manual delete safe)
+                // await db.execute('DELETE FROM stage_standings WHERE team_name = (SELECT team_name FROM participants WHERE id=?)', [teamId]); 
+                
+                return res.status(200).json({ success: true, message: "Team Kicked & Refunded!" });
+            } else {
+                return res.status(404).json({ error: "Team Not Found" });
+            }
+        }
         if (type === 'register_official_team') {
             const connection = await db.getConnection();
             try {
