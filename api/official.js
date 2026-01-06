@@ -182,6 +182,40 @@ module.exports = async (req, res) => {
             } else {
                 return res.status(404).json({ error: "Team Not Found" });
             }
+        } 
+        if (type === 'bulk_kick_teams') {
+            const teamIds = body.team_ids; // Array of IDs [1, 2, 5]
+            if (!teamIds || teamIds.length === 0) return res.status(400).json({ error: "No teams selected" });
+
+            let kickedCount = 0;
+
+            for (let tid of teamIds) {
+                // 1. Get Details
+                const [teamInfo] = await db.execute(`
+                    SELECT p.user_id, t.entry_fee 
+                    FROM participants p 
+                    JOIN tournaments t ON p.tournament_id = t.id 
+                    WHERE p.id = ?`, 
+                    [tid]
+                );
+
+                if (teamInfo.length > 0) {
+                    const { user_id, entry_fee } = teamInfo[0];
+                    const refund = parseFloat(entry_fee);
+
+                    // 2. Refund Logic
+                    if (refund > 0) {
+                        await db.execute('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?', [refund, user_id]);
+                        await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Refund", "Kicked from Tournament", "completed", NOW())', 
+                            [user_id, refund]);
+                    }
+
+                    // 3. Delete Team
+                    await db.execute('DELETE FROM participants WHERE id = ?', [tid]);
+                    kickedCount++;
+                }
+            }
+            return res.status(200).json({ success: true, message: `${kickedCount} Teams Kicked & Refunded!` });
         }
         if (type === 'register_official_team') {
             const connection = await db.getConnection();
