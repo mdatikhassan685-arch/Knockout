@@ -134,21 +134,55 @@
             } catch(e) { console.error(e); }
         }
 
-        function renderList(teams) {
+                function renderList(teams) {
             const list = document.getElementById('team_list_full');
             if(teams.length > 0) {
                 list.innerHTML = teams.map((t, i) => `
-                    <div onclick='openTeamDetails(${JSON.stringify(t).replace(/'/g, "&#39;")})' class="flex justify-between items-center bg-gray-700/30 p-2.5 rounded-lg cursor-pointer hover:bg-gray-700 transition border border-transparent hover:border-gray-600">
-                        <div class="flex items-center gap-3">
+                    <div class="flex justify-between items-center bg-gray-700/30 p-3 rounded-lg hover:bg-gray-700 transition border border-transparent hover:border-gray-600 mb-1 group">
+                        <!-- Info Section (Click for Details) -->
+                        <div onclick='openTeamDetails(${JSON.stringify(t).replace(/'/g, "&#39;")})' class="flex items-center gap-3 cursor-pointer flex-1">
                             <span class="text-xs font-bold text-gray-500 w-5">#${i+1}</span>
-                            <span class="text-sm font-bold text-gray-200">${t.team_name}</span>
+                            <div>
+                                <p class="text-sm font-bold text-gray-200">${t.team_name}</p>
+                                <p class="text-[9px] text-blue-400 font-mono">ID: ${t.id}</p>
+                            </div>
                         </div>
-                        <i class="fa-solid fa-circle-info text-blue-500/50 text-sm"></i>
+
+                        <!-- Action Buttons -->
+                        <div class="flex gap-2">
+                            <button onclick='openTeamDetails(${JSON.stringify(t).replace(/'/g, "&#39;")})' class="text-gray-400 hover:text-white p-1"><i class="fa-solid fa-circle-info"></i></button>
+                            
+                            <!-- ✅ KICK BUTTON -->
+                            <button onclick="kickTeam(${t.id}, '${t.team_name}')" class="bg-red-500/10 text-red-500 p-1.5 rounded-lg border border-red-500/20 hover:bg-red-500 hover:text-white transition" title="Kick & Refund">
+                                <i class="fa-solid fa-user-minus"></i>
+                            </button>
+                        </div>
                     </div>
                 `).join('');
             } else {
                 list.innerHTML = '<p class="text-center text-xs text-gray-500 py-4">No teams found.</p>';
             }
+        }
+
+        // ✅ KICK FUNCTION
+        async function kickTeam(tid, tname) {
+            if(!confirm(`⚠️ WARNING: Kick team "${tname}"?\n- User will be refunded.\n- Team will be removed permanently.`)) return;
+
+            try {
+                const res = await fetch('/api/official', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ type: 'kick_official_team', team_id: tid }) 
+                });
+                const d = await res.json();
+                
+                if(d.success) { 
+                    alert(d.message); 
+                    loadTeamCount(); // Reload list
+                } else { 
+                    alert("Error: " + d.error); 
+                }
+            } catch(e) { alert("Network Error"); }
         }
 
         function filterTeams() {
