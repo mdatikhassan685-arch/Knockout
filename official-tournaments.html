@@ -60,10 +60,6 @@
     </div>
 
     <!-- REGISTER MODAL -->
-    <!-- (Registration is now handled in list page, but keeping hidden in case needed or removed) -->
-    <!-- Since user wants no registration here, we hide the button logic -->
-    
-    <!-- Registration Status Button (Dynamic) -->
     <div id="reg_status_bar" class="fixed bottom-0 w-full bg-gray-800 border-t border-gray-700 p-4 z-50 hidden">
         <button class="w-full bg-green-600/20 text-green-500 border border-green-500/50 py-3 rounded-xl font-bold uppercase cursor-default tracking-widest shadow-sm">
             <i class="fa-solid fa-check-circle"></i> Registered
@@ -118,12 +114,12 @@
             } catch(e) {}
         }
 
-        async function loadMatches() {
+                async function loadMatches() {
             try {
                 const res = await fetch('/api/official', { 
                     method: 'POST', 
                     headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({ type: 'get_stages_and_matches', tournament_id: tourId }) 
+                    body: JSON.stringify({ type: 'get_stages_and_matches', tournament_id: tourId, user_id: user.id }) // user_id পাঠানো হচ্ছে চেক করার জন্য
                 });
                 const stages = await res.json();
                 const container = document.getElementById('matches_container');
@@ -132,24 +128,38 @@
                 if(stages.length > 0) {
                     container.innerHTML = stages.map(s => {
                         const matchesHtml = s.matches.map(m => {
-                            let btn = `<button disabled class="bg-gray-700 text-gray-500 px-3 py-1 rounded text-[10px] font-bold cursor-not-allowed">Upcoming</button>`;
-                            if (m.status === 'live' || (m.room_id && m.room_id !== '')) {
-                                btn = `<button onclick='viewRoom("${m.room_id}", "${m.room_pass}")' class="bg-green-600 text-white px-3 py-1 rounded text-[10px] font-bold shadow animate-pulse">Room ID</button>`;
+                            let btn = '';
+
+                            if (m.status === 'completed') {
+                                btn = `<span class="text-[10px] text-gray-500 font-bold border border-gray-600 px-2 py-1 rounded">COMPLETED</span>`;
+                            } 
+                            else if (m.locked) {
+                                // 🔒 User Not Eligible (Not registered / Wrong Group / Eliminated)
+                                btn = `<button disabled class="bg-gray-700/50 text-gray-500 px-3 py-1 rounded text-[10px] font-bold cursor-not-allowed flex items-center gap-1"><i class="fa-solid fa-lock"></i> Locked</button>`;
                             }
+                            else if (m.status === 'live' || (m.room_id && m.room_id !== '')) {
+                                // 🔓 User Eligible & Room Set
+                                btn = `<button onclick='viewRoom("${m.room_id}", "${m.room_pass}")' class="bg-green-600 text-white px-3 py-1 rounded text-[10px] font-bold shadow animate-pulse hover:bg-green-500">View Room</button>`;
+                            } 
+                            else {
+                                btn = `<span class="text-[10px] text-yellow-500 font-bold animate-pulse">Wait for ID</span>`;
+                            }
+
                             return `
-                            <div class="bg-gray-800 p-3 rounded-lg border border-gray-700 mb-2 flex justify-between items-center">
+                            <div class="bg-gray-800 p-3 rounded-lg border border-gray-700 mb-2 flex justify-between items-center hover:border-gray-600 transition">
                                 <div>
                                     <p class="text-sm font-bold text-white">${m.match_title}</p>
                                     <p class="text-[10px] text-gray-400">${m.map_name} • <span class="text-blue-400">${new Date(m.schedule_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span></p>
+                                    <p class="text-[9px] text-gray-500 mt-0.5">${m.participants || 'All Groups'}</p>
                                 </div>
                                 <div>${btn}</div>
                             </div>`;
                         }).join('');
 
                         return `
-                        <div class="mb-4">
+                        <div class="mb-5">
                             <h3 class="text-xs font-bold text-gray-400 uppercase mb-2 ml-1 border-l-2 border-yellow-500 pl-2">${s.stage_name}</h3>
-                            ${matchesHtml || '<p class="text-xs text-gray-600 text-center py-2">No matches scheduled.</p>'}
+                            ${matchesHtml || '<p class="text-xs text-gray-600 text-center py-2 border border-dashed border-gray-700 rounded">No matches scheduled.</p>'}
                         </div>`;
                     }).join('');
                 } else {
