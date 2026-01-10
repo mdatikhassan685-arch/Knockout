@@ -24,7 +24,7 @@
         <p class="text-center text-gray-500 mt-10 animate-pulse">Loading Tournaments...</p>
     </div>
 
-    <!-- ✅ REGISTRATION MODAL (Included Here) -->
+    <!-- REGISTRATION MODAL -->
     <div id="regModal" class="fixed inset-0 bg-black/95 z-[60] hidden items-end md:items-center justify-center p-0 md:p-4 backdrop-blur-sm">
         <div class="bg-gray-900 w-full max-w-sm h-[85vh] md:h-auto rounded-t-3xl md:rounded-2xl border-t md:border border-gray-700 flex flex-col relative shadow-2xl overflow-hidden">
             <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-800/80 backdrop-blur-md sticky top-0 z-10">
@@ -38,7 +38,6 @@
                     <label class="text-[10px] font-bold text-blue-400 uppercase ml-1 block mb-1">Team Name (Required)</label>
                     <input type="text" id="reg_team_name" class="w-full bg-gray-800 p-3 rounded-lg border border-gray-600 text-white outline-none focus:border-blue-500 text-sm font-bold placeholder-gray-600">
                 </div>
-                
                 <div class="space-y-3">
                     <p class="text-[10px] text-gray-500 font-bold uppercase border-b border-gray-700 pb-1">Team Members (4 Players)</p>
                     <div id="player_inputs" class="space-y-3"></div>
@@ -65,8 +64,12 @@
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user) window.location.href = '/';
         const params = new URLSearchParams(window.location.search);
-        const catId = params.get('cat_id');
+        
+        // ✅ FIX: Get catId from URL OR Session Storage
+        let catId = params.get('cat_id') || sessionStorage.getItem('last_cat_id');
         const catName = params.get('name');
+        
+        if(catId) sessionStorage.setItem('last_cat_id', catId);
         if(catName) document.getElementById('page_title').innerText = decodeURIComponent(catName);
 
         function showToast(msg, type) {
@@ -81,7 +84,7 @@
             try {
                 const res = await fetch('/api/official', { 
                     method: 'POST', 
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {'Content-Type': 'application/json'}, 
                     body: JSON.stringify({ type: 'get_admin_tournaments', category_id: catId }) 
                 });
                 const data = await res.json();
@@ -90,7 +93,6 @@
                 if(data.length > 0) {
                     list.innerHTML = data.map(t => `
                         <div class="bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 group transition hover:border-yellow-500/50">
-                            <!-- Banner -->
                             <div class="h-32 bg-gray-700 relative">
                                 <img src="https://placehold.co/600x300/1f2937/FFF?text=${encodeURIComponent(t.title)}" class="w-full h-full object-cover">
                                 <span class="absolute top-2 left-2 bg-yellow-600 text-black text-[10px] font-bold px-2 py-0.5 rounded uppercase">Official</span>
@@ -104,15 +106,8 @@
                                 </div>
 
                                 <div class="flex gap-2">
-                                    <!-- View Details Button -->
-                                    <button onclick="window.location.href='/official-tournaments?id=${t.id}'" class="flex-1 bg-gray-700 text-gray-300 py-2.5 rounded-lg text-xs font-bold hover:bg-gray-600 transition border border-gray-600">
-                                        View Info
-                                    </button>
-                                    
-                                    <!-- ✅ Register Button -->
-                                    <button onclick="openRegister(${t.id})" class="flex-1 bg-gradient-to-r from-yellow-600 to-orange-600 text-black py-2.5 rounded-lg text-xs font-bold hover:opacity-90 transition shadow-lg uppercase tracking-wide">
-                                        Register
-                                    </button>
+                                    <button onclick="window.location.href='/official-tournaments?id=${t.id}'" class="flex-1 bg-gray-700 text-gray-300 py-2.5 rounded-lg text-xs font-bold hover:bg-gray-600 transition border border-gray-600">View Info</button>
+                                    <button onclick="openRegister(${t.id})" class="flex-1 bg-gradient-to-r from-yellow-600 to-orange-600 text-black py-2.5 rounded-lg text-xs font-bold hover:opacity-90 transition shadow-lg uppercase tracking-wide">Register</button>
                                 </div>
                             </div>
                         </div>
@@ -126,8 +121,6 @@
         // --- MODAL LOGIC ---
         function openRegister(tid) {
             document.getElementById('target_tour_id').value = tid;
-            
-            // Generate Inputs
             let html = '';
             for(let i=1; i<=4; i++) {
                 const label = i === 1 ? '(Leader)' : '';
