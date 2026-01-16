@@ -1,7 +1,7 @@
 const db = require('../db');
 
 module.exports = async (req, res) => {
-    // 1. Basic Setup
+    // 1. Basic Config
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -9,10 +9,10 @@ module.exports = async (req, res) => {
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     const body = req.body || {};
-    const { type, user_id, tournament_id, category_id, team_name, players, tour_id, stage_id, match_id, title, map, time, room_id, room_pass, status, team_ids, target_group, next_stage_id, points_to_add, kills_to_add, team_id } = body;
+    const { type, user_id, tournament_id, category_id, team_name, players, tour_id, stage_id, match_id, title, map, time, room_id, room_pass, status, team_ids, target_group, next_stage_id, results } = body;
 
     try {
-        // --- ADMIN: TOURNAMENT ---
+        // --- 1. TOURNAMENT MANAGEMENT ---
         if (type === 'get_admin_tournaments') {
             const [rows] = await db.execute('SELECT * FROM tournaments WHERE category_id = ? ORDER BY schedule_time DESC', [category_id]);
             return res.status(200).json(rows);
@@ -24,27 +24,18 @@ module.exports = async (req, res) => {
                  VALUES (?, ?, ?, ?, ?, ?, NOW())`,
                 [category_id, body.title, body.entry_fee, body.winning_prize, body.total_spots, body.schedule_time]
             );
-            
             const newTourId = result.insertId;
-
             if (body.stages) {
                 const stageList = body.stages.split(',').map(s => s.trim());
                 for (let i = 0; i < stageList.length; i++) {
-                    await db.execute(
-                        `INSERT INTO tournament_stages (tournament_id, stage_name, stage_order, status) 
-                         VALUES (?, ?, ?, 'upcoming')`,
-                        [newTourId, stageList[i], i + 1]
-                    );
+                    await db.execute(`INSERT INTO tournament_stages (tournament_id, stage_name, stage_order, status) VALUES (?, ?, ?, 'upcoming')`, [newTourId, stageList[i], i + 1]);
                 }
             }
             return res.status(200).json({ success: true });
         }
 
         if (type === 'edit_tournament') {
-            await db.execute(
-                `UPDATE tournaments SET title=?, entry_fee=?, winning_prize=?, total_spots=?, schedule_time=? WHERE id=?`,
-                [body.title, body.entry_fee, body.winning_prize, body.total_spots, body.schedule_time, tour_id]
-            );
+            await db.execute(`UPDATE tournaments SET title=?, entry_fee=?, winning_prize=?, total_spots=?, schedule_time=? WHERE id=?`, [body.title, body.entry_fee, body.winning_prize, body.total_spots, body.schedule_time, tour_id]);
             return res.status(200).json({ success: true });
         }
 
@@ -53,11 +44,11 @@ module.exports = async (req, res) => {
             return res.status(200).json({ success: true });
         }
 
-        // --- ADMIN: STAGE & MATCH ---
+        // --- 2. STAGE & MATCH MANAGEMENT ---
         if (type === 'get_stages_and_matches') {
             const [stages] = await db.execute('SELECT * FROM tournament_stages WHERE tournament_id = ? ORDER BY stage_order ASC', [tournament_id]);
             
-            // User Visibility Logic
+            // Check User Visibility
             let userTeam = null;
             if (user_id) {
                 const [team] = await db.execute(`
@@ -72,6 +63,7 @@ module.exports = async (req, res) => {
 
             for (let stage of stages) {
                 const [matches] = await db.execute('SELECT * FROM stage_matches WHERE stage_id = ? ORDER BY schedule_time ASC', [stage.id]);
+                
                 matches.forEach(m => {
                     let canSee = false;
                     if (userTeam) {
@@ -122,9 +114,20 @@ module.exports = async (req, res) => {
             return res.status(200).json({ success: true });
         }
 
-        // --- ADMIN: TEAMS & GROUPS ---
+        // --- 3. TEAM & GROUP MANAGEMENT ---
         if (type === 'get_stage_teams') {
-            const [teams] = await db.execute('SELECT * FROM stage_standings WHERE stage_id = ? ORDER BY id DESC', [stage_id]);
+            // Auto Sync First Stage
+            let [teams] = await db.execute('SELECT * FROM stage_standings WHERE stage_id = ? ORDER BY total_points DESC', [stage_id]);
+            if (teams.length === 0) {
+                const [stageInfo] = await db.execute('SELECT tournament_id, stage_order FROM tournament_stages WHERE id=?', [stage_id]);
+                if(stageInfo.length > 0 && stageInfo[0].stage_order === 1) {
+                    const [allParticipants] = await db.execute('SELECT team_name FROM participants WHERE tournament_id=?', [stageInfo[0].tournament_id]);
+                    for(let p of allParticipants) {
+                        await db.execute('INSERT INTO stage_standings (tournament_id, stage_id, team_name, group_name) VALUES (?, ?, ?, "None")', [stageInfo[0].tournament_id, stage_id, p.team_name]);
+                    }
+                    [teams] = await db.execute('SELECT * FROM stage_standings WHERE stage_id = ?', [stage_id]);
+                }
+            }
             return res.status(200).json(teams);
         }
 
@@ -140,30 +143,47 @@ module.exports = async (req, res) => {
             for(let team of currentTeams) {
                 const [dup] = await db.execute('SELECT id FROM stage_standings WHERE stage_id=? AND team_name=?', [next_stage_id, team.team_name]);
                 if(dup.length === 0) {
-                    await db.execute('INSERT INTO stage_standings (tournament_id, stage_id, team_name, group_name) VALUES (?, ?, ?, "A")', 
-                        [team.tournament_id, next_stage_id, team.team_name]);
+                    await db.execute('INSERT INTO stage_standings (tournament_id, stage_id, team_name, group_name) VALUES (?, ?, ?, "A")', [team.tournament_id, next_stage_id, team.team_name]);
                 }
             }
             return res.status(200).json({ success: true });
         }
 
-        if (type === 'admin_update_points') {
-            await db.execute(`
-                UPDATE stage_standings 
-                SET kills = kills + ?, 
-                    position_points = position_points + ?,
-                    total_points = total_points + ? + ? 
-                WHERE id = ?`, 
-                [kills_to_add, points_to_add, kills_to_add, points_to_add, team_id]
-            );
+        // --- 4. RESULT UPDATE (NEW & CRITICAL) ---
+        if (type === 'admin_update_match_result') {
+            // results = [{team_name: 'A', kills: 5, place_pts: 12, place: 1}, ...]
+            const resultsJson = JSON.stringify(results);
+            
+            // 1. Save Result JSON to Match
+            await db.execute(`UPDATE stage_matches SET match_results = ?, status = 'completed' WHERE id = ?`, [resultsJson, match_id]);
+
+            // 2. Update Overall Points in Stage Standings
+            // Need stage_id to filter correct standings
+            const [matchInfo] = await db.execute('SELECT stage_id FROM stage_matches WHERE id=?', [match_id]);
+            if(matchInfo.length > 0) {
+                const sId = matchInfo[0].stage_id;
+                for (let r of results) {
+                    const total = parseInt(r.kills) + parseInt(r.place_pts); 
+                    await db.execute(`
+                        UPDATE stage_standings 
+                        SET kills = kills + ?, position_points = position_points + ?, total_points = total_points + ? 
+                        WHERE team_name = ? AND stage_id = ?`,
+                        [r.kills, r.place_pts, total, r.team_name, sId]
+                    );
+                }
+            }
             return res.status(200).json({ success: true });
         }
 
-        // --- ❌ KICK LOGIC (Fixed) ---
+        if (type === 'get_match_result') {
+            const [rows] = await db.execute('SELECT match_results FROM stage_matches WHERE id = ?', [match_id]);
+            return res.status(200).json(rows[0]?.match_results || []);
+        }
+
+        // --- 5. KICK & BOTS ---
         if (type === 'kick_official_team') {
             const teamId = body.team_id;
             const [teamInfo] = await db.execute(`SELECT p.user_id, p.team_name, p.tournament_id, t.entry_fee FROM participants p JOIN tournaments t ON p.tournament_id = t.id WHERE p.id = ?`, [teamId]);
-
             if (teamInfo.length > 0) {
                 const { user_id, entry_fee, team_name, tournament_id } = teamInfo[0];
                 const refund = parseFloat(entry_fee);
@@ -173,7 +193,7 @@ module.exports = async (req, res) => {
                 }
                 await db.execute('DELETE FROM stage_standings WHERE tournament_id = ? AND team_name = ?', [tournament_id, team_name]);
                 await db.execute('DELETE FROM participants WHERE id = ?', [teamId]);
-                return res.status(200).json({ success: true, message: "Team Kicked!" });
+                return res.status(200).json({ success: true, message: "Team Kicked & Refunded!" });
             } else { return res.status(404).json({ error: "Team Not Found" }); }
         }
 
@@ -198,13 +218,10 @@ module.exports = async (req, res) => {
             return res.status(200).json({ success: true, message: `${kickedCount} Teams Kicked!` });
         }
 
-        // --- 🤖 ADD BOTS (Fixed: Insert to Both Tables) ---
         if (type === 'add_test_teams') {
             const count = parseInt(body.count) || 10;
             const prefixes = ["Dark", "Red", "Blue", "Team", "Pro", "BD", "Royal", "King", "Elite", "Max"];
             const suffixes = ["Warriors", "Snipers", "Esports", "Gaming", "Squad", "Killers", "Legends", "Hunters", "Army", "Boys"];
-            
-            // Get 1st Stage
             const [stages] = await db.execute('SELECT id FROM tournament_stages WHERE tournament_id=? ORDER BY stage_order ASC LIMIT 1', [tournament_id]);
             const firstStageId = stages.length > 0 ? stages[0].id : null;
 
@@ -212,51 +229,19 @@ module.exports = async (req, res) => {
                 const username = "Bot_" + Math.floor(Math.random() * 100000);
                 const email = `bot${Date.now()}_${i}@test.local`;
                 const phone = "01" + Math.floor(Math.random() * 1000000000); 
-                const [uRes] = await db.execute(`INSERT INTO users (username, email, password, phone, role, status, wallet_balance, created_at) VALUES (?, ?, '$2a$10$FakeHashForBot123456', ?, 'user', 'active', 0, NOW())`, [username, email, phone]);
+                const [uRes] = await db.execute(`INSERT INTO users (username, email, password, phone, role, status, wallet_balance, created_at) VALUES (?, ?, '$2a$10$FakeHash', ?, 'user', 'active', 0, NOW())`, [username, email, phone]);
                 const botUserId = uRes.insertId;
                 const teamName = prefixes[Math.floor(Math.random() * prefixes.length)] + " " + suffixes[Math.floor(Math.random() * suffixes.length)] + " " + Math.floor(Math.random() * 999);
                 const members = `P1_${i}, P2_${i}, P3_${i}, P4_${i}`;
-                
                 await db.execute(`INSERT INTO participants (user_id, tournament_id, team_name, team_members, kills, prize_won, joined_at, \`rank\`) VALUES (?, ?, ?, ?, 0, 0, NOW(), 0)`, [botUserId, tournament_id, teamName, members]);
-                
                 if (firstStageId) {
                     await db.execute(`INSERT INTO stage_standings (tournament_id, stage_id, team_name, group_name) VALUES (?, ?, ?, 'None')`, [tournament_id, firstStageId, teamName]);
                 }
             }
             return res.status(200).json({ success: true, message: `${count} Bots Added!` });
         }
-                // --- 📊 UPDATE MATCH SPECIFIC RESULT ---
-        if (type === 'admin_update_match_result') {
-            // body.results = [{team_name: 'TeamA', kills: 5, place: 1}, ...]
-            const resultsJson = JSON.stringify(body.results);
-            
-            await db.execute(
-                `UPDATE stage_matches SET match_results = ?, status = 'completed' WHERE id = ?`,
-                [resultsJson, match_id]
-            );
-            
-            for (let r of body.results) {
-                // Assuming 1 kill = 1 pt logic
-                const total = parseInt(r.kills) + parseInt(r.place_pts); 
-                await db.execute(`
-                    UPDATE stage_standings 
-                    SET kills = kills + ?, position_points = position_points + ?, total_points = total_points + ? 
-                    WHERE team_name = ? AND stage_id = (SELECT stage_id FROM stage_matches WHERE id=?)`,
-                    [r.kills, r.place_pts, total, r.team_name, match_id]
-                );
-            }
 
-            return res.status(200).json({ success: true });
-        }
-        
-        // --- 👤 GET MATCH RESULT (USER) ---
-        if (type === 'get_match_result') {
-            const [rows] = await db.execute('SELECT match_results FROM stage_matches WHERE id = ?', [match_id]);
-            return res.status(200).json(rows[0]?.match_results || []);
-        }
-
-        // --- USER ACTIONS ---
-        // ✅ NEW: User Tournament List
+        // --- 6. USER VIEW & REGISTRATION ---
         if (type === 'get_user_tournaments') {
             const [tournaments] = await db.execute('SELECT * FROM tournaments WHERE category_id = ? ORDER BY schedule_time DESC', [category_id]);
             if (user_id) {
@@ -279,7 +264,6 @@ module.exports = async (req, res) => {
             return res.status(200).json({ data: rows[0], is_registered: isReg });
         }
 
-        // ✅ Register Team (Insert to Both Tables)
         if (type === 'register_official_team') {
             const connection = await db.getConnection();
             try {
@@ -289,23 +273,20 @@ module.exports = async (req, res) => {
                 const [count] = await connection.execute('SELECT COUNT(*) as c FROM participants WHERE tournament_id=?', [tournament_id]);
                 if (count[0].c >= tour[0].total_spots) throw new Error("Full");
                 const [dup] = await connection.execute('SELECT id FROM participants WHERE tournament_id=? AND user_id=?', [tournament_id, user_id]);
-                if (dup.length > 0) throw new Error("Registered");
+                if (dup.length > 0) throw new Error("Already Registered");
                 const fee = parseFloat(tour[0].entry_fee);
                 const [u] = await connection.execute('SELECT wallet_balance FROM users WHERE id=?', [user_id]);
-                if (parseFloat(u[0].wallet_balance) < fee) throw new Error("Low Balance");
+                if (parseFloat(u[0].wallet_balance) < fee) throw new Error("Insufficient Balance");
                 if (fee > 0) {
                     await connection.execute('UPDATE users SET wallet_balance = wallet_balance - ? WHERE id=?', [fee, user_id]);
                     await connection.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Tournament Fee", ?, "completed", NOW())', [user_id, fee, `Reg: ${team_name}`]);
                 }
                 const memberString = players.join(', '); 
                 await connection.execute(`INSERT INTO participants (user_id, tournament_id, team_name, team_members, kills, prize_won, joined_at, \`rank\`) VALUES (?, ?, ?, ?, 0, 0, NOW(), 0)`, [user_id, tournament_id, team_name, memberString]);
-                
-                // Add to First Stage
                 const [stages] = await connection.execute('SELECT id FROM tournament_stages WHERE tournament_id=? ORDER BY stage_order ASC LIMIT 1', [tournament_id]);
                 if (stages.length > 0) {
                     await connection.execute(`INSERT INTO stage_standings (tournament_id, stage_id, team_name, group_name) VALUES (?, ?, ?, 'None')`, [tournament_id, stages[0].id, team_name]);
                 }
-
                 await connection.commit();
                 connection.release();
                 return res.status(200).json({ success: true });
