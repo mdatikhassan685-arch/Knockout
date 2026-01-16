@@ -23,7 +23,8 @@
     { "source": "/admin-tournament-panel", "destination": "/admin-tournament-panel.html" },
     { "source": "/admin-stages", "destination": "/admin-stages.html" },
     { "source": "/admin-groups", "destination": "/admin-groups.html" },
-
+    { "source": "/admin-results", "destination": "/admin-results.html" },
+    
     { "source": "/home", "destination": "/home.html" },
     { "source": "/signup", "destination": "/signup.html" },
     { "source": "/wallet", "destination": "/wallet.html" },
