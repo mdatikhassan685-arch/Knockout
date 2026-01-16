@@ -10,7 +10,6 @@
 </head>
 <body class="bg-gray-900 text-white pb-32">
 
-    <!-- Header -->
     <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50 border-b border-gray-700">
         <a href="javascript:history.back()" class="mr-4 text-gray-400 active:scale-90"><i class="fa-solid fa-arrow-left text-xl"></i></a>
         <div>
@@ -37,19 +36,11 @@
                 </select>
             </div>
 
-            <button onclick="loadTeams()" class="w-full bg-blue-600 py-3 rounded-lg font-bold text-sm shadow-lg hover:bg-blue-500 transition uppercase tracking-wide mt-2">
-                Load Teams
-            </button>
+            <button onclick="loadTeams()" class="w-full bg-blue-600 py-3 rounded-lg font-bold text-sm shadow-lg hover:bg-blue-500 transition uppercase tracking-wide mt-2">Load Teams</button>
         </div>
 
         <!-- Team List Input -->
         <div id="scoring_list" class="space-y-2 hidden">
-            <!-- Header Row -->
-            <div class="flex justify-between px-2 mb-1 text-[10px] text-gray-500 font-bold uppercase">
-                <span class="w-1/3">Team Name</span>
-                <span class="w-1/3 text-center">Place #</span>
-                <span class="w-1/3 text-center">Kills</span>
-            </div>
             <!-- Rows will be injected here -->
         </div>
         
@@ -57,14 +48,14 @@
 
     <!-- Floating Save Button -->
     <div id="save_bar" class="fixed bottom-0 left-0 right-0 p-4 bg-gray-800 border-t border-gray-700 hidden z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
-        <button onclick="saveAllResults()" id="save_btn" class="w-full bg-green-600 py-3.5 rounded-xl font-bold text-white shadow-lg text-center uppercase tracking-widest hover:bg-green-500 transition">
-            Save & Publish Result
-        </button>
+        <button onclick="saveAllResults()" id="save_btn" class="w-full bg-green-600 py-3.5 rounded-xl font-bold text-white shadow-lg text-center uppercase tracking-widest hover:bg-green-500 transition">Save & Publish Result</button>
     </div>
 
     <script>
         const params = new URLSearchParams(window.location.search);
         const tourId = params.get('tour_id');
+        const preStageId = params.get('stage_id');
+        const preMatchId = params.get('match_id');
         let allTeams = [];
 
         async function init() {
@@ -78,6 +69,7 @@
                 const select = document.getElementById('stage_select');
                 if (stages.length > 0) {
                     select.innerHTML = stages.map(s => `<option value="${s.id}" data-matches='${JSON.stringify(s.matches)}'>${s.stage_name}</option>`).join('');
+                    if (preStageId) { select.value = preStageId; }
                     loadMatches();
                 } else {
                     select.innerHTML = '<option>No Stages Found</option>';
@@ -88,34 +80,31 @@
         function loadMatches() {
             const stageSelect = document.getElementById('stage_select');
             const selectedOption = stageSelect.options[stageSelect.selectedIndex];
-            // Safe JSON parse
             let matches = [];
             try { matches = JSON.parse(selectedOption.getAttribute('data-matches')); } catch(e){}
             
             const matchSelect = document.getElementById('match_select');
             matchSelect.innerHTML = matches.length ? matches.map(m => `<option value="${m.id}">${m.match_title}</option>`).join('') : '<option value="">No Matches Created</option>';
+
+            if (preMatchId && matches.some(m => m.id == preMatchId)) {
+                matchSelect.value = preMatchId;
+                loadTeams();
+            }
         }
 
         async function loadTeams() {
             const stageId = document.getElementById('stage_select').value;
             const matchId = document.getElementById('match_select').value;
-            
-            if(!matchId) return alert("Please create and select a match first!");
+            if(!matchId) return alert("Select a Match!");
 
             document.getElementById('scoring_list').classList.remove('hidden');
             document.getElementById('scoring_list').innerHTML = '<p class="text-center text-gray-500 py-10 animate-pulse">Loading Teams...</p>';
 
             try {
-                const res = await fetch('/api/official', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ type: 'get_stage_teams', stage_id: stageId })
-                });
+                const res = await fetch('/api/official', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'get_stage_teams', stage_id: stageId }) });
                 allTeams = await res.json();
                 renderInputs(allTeams);
-                
                 if(allTeams.length > 0) document.getElementById('save_bar').classList.remove('hidden');
-                else document.getElementById('save_bar').classList.add('hidden');
-
             } catch(e) { console.error(e); }
         }
 
@@ -123,30 +112,24 @@
             const list = document.getElementById('scoring_list');
             if(teams.length > 0) {
                 list.innerHTML = teams.map((t, i) => `
-                    <div class="bg-gray-800 p-3 rounded-lg border border-gray-700 flex justify-between items-center team-row hover:border-gray-600 transition" data-name="${t.team_name}">
+                    <div class="bg-gray-800 p-3 rounded-lg border border-gray-700 flex justify-between items-center team-row" data-name="${t.team_name}">
                         <div class="w-1/3 pr-2">
                             <p class="font-bold text-sm text-white truncate">${t.team_name}</p>
                             <p class="text-[9px] text-gray-500">ID: ${t.id}</p>
                         </div>
                         <div class="flex gap-2 w-2/3">
                             <input type="number" placeholder="#" class="w-1/2 bg-gray-900 p-2 rounded border border-gray-600 text-center text-white outline-none focus:border-yellow-500 place-input text-sm font-bold">
-                            <input type="number" placeholder="0" class="w-1/2 bg-gray-900 p-2 rounded border border-gray-600 text-center text-white outline-none focus:border-red-500 kills-input text-sm font-bold">
+                            <input type="number" placeholder="Kills" class="w-1/2 bg-gray-900 p-2 rounded border border-gray-600 text-center text-white outline-none focus:border-red-500 kills-input text-sm font-bold">
                         </div>
-                    </div>
-                `).join('');
-            } else {
-                list.innerHTML = '<div class="text-center py-10 text-gray-500 border-2 border-dashed border-gray-700 rounded-xl">No teams found in this stage.<br>Please assign teams to groups first.</div>';
-            }
+                    </div>`).join('');
+            } else { list.innerHTML = '<div class="text-center py-10 text-gray-500">No teams found in this stage.</div>'; }
         }
 
         async function saveAllResults() {
-            if(!confirm("Are you sure? This will update Standings & Mark match as Completed.")) return;
-
+            if(!confirm("Save Results & Update Standings?")) return;
             const matchId = document.getElementById('match_select').value;
             const rows = document.querySelectorAll('.team-row');
             let results = [];
-
-            // Standard Point System (FF Official)
             const placePtsMap = {1:12, 2:9, 3:8, 4:7, 5:6, 6:5, 7:4, 8:3, 9:2, 10:1, 11:0, 12:0};
 
             rows.forEach(row => {
@@ -157,47 +140,23 @@
                 if(placeVal && killsVal) {
                     const place = parseInt(placeVal);
                     const kills = parseInt(killsVal);
-                    const placePts = placePtsMap[place] || 0; // 0 if rank > 12
-
-                    results.push({ 
-                        team_name: name, 
-                        place: place, 
-                        kills: kills, 
-                        place_pts: placePts 
-                    });
+                    const placePts = placePtsMap[place] || 0; 
+                    results.push({ team_name: name, place: place, kills: kills, place_pts: placePts });
                 }
             });
 
             if(results.length === 0) return alert("Enter data for at least one team!");
-
-            const btn = document.getElementById('save_btn');
-            const originalText = btn.innerText;
-            btn.innerText = "Processing..."; btn.disabled = true;
+            const btn = document.getElementById('save_btn'); btn.innerText = "Processing..."; btn.disabled = true;
 
             try {
-                const res = await fetch('/api/official', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        type: 'admin_update_match_result', 
-                        match_id: matchId, 
-                        results: results 
-                    })
-                });
-                
+                const res = await fetch('/api/official', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'admin_update_match_result', match_id: matchId, results: results }) });
                 const d = await res.json();
-                if(d.success) {
-                    alert("✅ Results Published Successfully!");
-                    location.reload();
-                } else {
-                    alert("❌ Error: " + (d.error || "Failed"));
-                }
+                if(d.success) { alert("✅ Results Published Successfully!"); location.reload(); } else { alert("❌ Error: " + d.error); }
             } catch(e) { alert("Network Error"); }
-            
-            btn.innerText = originalText; btn.disabled = false;
+            btn.innerText = "SAVE & PUBLISH RESULT"; btn.disabled = false;
         }
 
         init();
     </script>
 </body>
-  </html>
+</html>
