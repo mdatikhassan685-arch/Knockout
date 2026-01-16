@@ -45,9 +45,9 @@
 
     </div>
 
-    <!-- ✅ ADD MATCH MODAL (Fixed Z-Index & Display Logic) -->
+    <!-- ADD MATCH MODAL -->
     <div id="matchModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[100] p-4 backdrop-blur-sm">
-        <div class="bg-gray-800 p-6 rounded-xl w-full max-w-sm border border-gray-600 shadow-2xl relative animate-bounce-in">
+        <div class="bg-gray-800 p-6 rounded-xl w-full max-w-sm border border-gray-600 shadow-2xl relative">
             <h3 class="font-bold text-lg mb-4 text-white">Add New Match</h3>
             <input type="hidden" id="target_stage_id">
             
@@ -79,7 +79,7 @@
         </div>
     </div>
 
-    <!-- ✅ EDIT STAGE MODAL -->
+    <!-- EDIT STAGE MODAL -->
     <div id="editStageModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[100] p-4 backdrop-blur-sm">
         <div class="bg-gray-800 p-6 rounded-xl w-full max-w-sm border border-gray-600 shadow-2xl">
             <h3 class="font-bold text-lg mb-4 text-blue-400">Edit Stage</h3>
@@ -96,18 +96,26 @@
         </div>
     </div>
 
-    <!-- ROOM EDIT MODAL -->
+    <!-- ROOM / STATUS MODAL (Updated with Status Dropdown) -->
     <div id="roomModal" class="fixed inset-0 bg-black/95 hidden items-center justify-center z-[100] p-4 backdrop-blur-sm">
         <div class="bg-gray-800 p-6 rounded-xl w-full max-w-xs border border-yellow-500/30 shadow-2xl">
-            <h3 class="font-bold text-lg mb-4 text-yellow-500">Update Room</h3>
+            <h3 class="font-bold text-lg mb-4 text-yellow-500">Update Match Status</h3>
             <input type="hidden" id="room_match_id">
+            
+            <label class="text-[10px] text-gray-400 uppercase font-bold">Room ID</label>
             <input type="text" id="room_id" placeholder="Room ID" class="w-full bg-gray-900 p-2.5 rounded-lg mb-2 border border-gray-600 text-white text-sm font-mono">
+            
+            <label class="text-[10px] text-gray-400 uppercase font-bold">Password</label>
             <input type="text" id="room_pass" placeholder="Password" class="w-full bg-gray-900 p-2.5 rounded-lg mb-4 border border-gray-600 text-white text-sm font-mono">
-            <label class="flex items-center gap-2 mb-4 cursor-pointer">
-                <input type="checkbox" id="match_live" class="w-4 h-4 accent-red-500">
-                <span class="text-sm text-gray-300">Set Match LIVE 🔴</span>
-            </label>
-            <button onclick="saveRoom()" class="w-full bg-yellow-600 py-2 rounded-lg font-bold text-black hover:bg-yellow-500">Save</button>
+            
+            <label class="text-[10px] text-gray-400 uppercase font-bold">Status</label>
+            <select id="match_status" class="w-full bg-gray-900 p-2.5 rounded-lg mb-4 border border-gray-600 text-white text-sm outline-none">
+                <option value="upcoming">🕒 Upcoming</option>
+                <option value="live">🔴 Live</option>
+                <option value="completed">✅ Completed</option>
+            </select>
+
+            <button onclick="saveRoom()" class="w-full bg-yellow-600 py-2 rounded-lg font-bold text-black hover:bg-yellow-500">Save Update</button>
             <button onclick="closeModal('roomModal')" class="w-full mt-2 text-gray-500 text-xs">Close</button>
         </div>
     </div>
@@ -116,13 +124,9 @@
         const params = new URLSearchParams(window.location.search);
         const tourId = params.get('tour_id');
 
-        // Modal Helpers
-        function openModal(id) {
-            document.getElementById(id).style.display = 'flex';
-        }
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
-        }
+        // Helper Functions
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
         async function init() {
             try {
@@ -152,13 +156,20 @@
                             <div>
                                 <p class="text-sm font-bold text-white">${m.match_title}</p>
                                 <p class="text-[10px] text-gray-400">${m.participants || 'All Groups'} • <span class="text-blue-400">${m.map_name}</span></p>
-                                <p class="text-[10px] text-yellow-500 font-mono mt-1">
-                                    ${m.status === 'live' ? '🔴 LIVE' : (m.room_id ? '🔑 Room Set' : '🕒 Upcoming')} 
-                                    • ${new Date(m.schedule_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                                
+                                <p class="text-[10px] font-mono mt-1 flex items-center gap-2">
+                                    ${m.status === 'live' 
+                                        ? '<span class="text-red-500 font-bold animate-pulse">● LIVE</span>' 
+                                        : (m.status === 'completed' 
+                                            ? '<span class="text-green-500 font-bold">✔ Completed</span>' 
+                                            : '<span class="text-gray-400">🕒 Upcoming</span>')}
+                                    
+                                    <span class="text-gray-600">|</span>
+                                    <span class="text-yellow-500">${m.room_id ? '🔑 Room Set' : 'No Room'}</span>
                                 </p>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick='openRoomModal(${JSON.stringify(m)})' class="bg-gray-700 p-1.5 rounded text-white hover:bg-gray-600" title="Edit Room"><i class="fa-solid fa-key"></i></button>
+                                <button onclick='openRoomModal(${JSON.stringify(m)})' class="bg-gray-700 p-1.5 rounded text-white hover:bg-gray-600" title="Edit Room/Status"><i class="fa-solid fa-pen-to-square"></i></button>
                                 <button onclick="deleteMatch(${m.id})" class="bg-red-900/30 p-1.5 rounded text-red-500 hover:bg-red-600 hover:text-white" title="Delete"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
@@ -205,7 +216,7 @@
             document.getElementById('edit_stage_id').value = sid;
             document.getElementById('edit_stage_name').value = name;
             document.getElementById('edit_stage_round').value = round;
-            openModal('editStageModal'); // ✅ FIX: Use openModal function
+            openModal('editStageModal'); 
         }
 
         async function saveStageEdit() {
@@ -232,7 +243,7 @@
         // --- MATCH ACTIONS ---
         function openMatchModal(sid) {
             document.getElementById('target_stage_id').value = sid;
-            openModal('matchModal'); // ✅ FIX: Use openModal function
+            openModal('matchModal'); 
         }
 
         async function addMatch() {
@@ -258,7 +269,7 @@
             document.getElementById('room_match_id').value = m.id;
             document.getElementById('room_id').value = m.room_id || '';
             document.getElementById('room_pass').value = m.room_pass || '';
-            document.getElementById('match_live').checked = (m.status === 'live');
+            document.getElementById('match_status').value = m.status || 'upcoming'; // ✅ Status Set
             openModal('roomModal');
         }
 
@@ -266,15 +277,21 @@
             const mid = document.getElementById('room_match_id').value;
             const rid = document.getElementById('room_id').value;
             const pass = document.getElementById('room_pass').value;
-            const status = document.getElementById('match_live').checked ? 'live' : 'upcoming';
+            const status = document.getElementById('match_status').value; // ✅ Status Get
 
-            await fetch('/api/official', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ type: 'update_stage_room', match_id: mid, room_id: rid, room_pass: pass, status })
-            });
-            closeModal('roomModal');
-            init();
+            const btn = event.target;
+            btn.innerText = "Saving..."; btn.disabled = true;
+
+            try {
+                await fetch('/api/official', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'update_stage_room', match_id: mid, room_id: rid, room_pass: pass, status: status })
+                });
+                closeModal('roomModal');
+                init();
+            } catch(e) { alert("Error"); }
+            btn.innerText = "Save Update"; btn.disabled = false;
         }
 
         async function deleteMatch(mid) {
