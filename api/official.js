@@ -225,6 +225,35 @@ module.exports = async (req, res) => {
             }
             return res.status(200).json({ success: true, message: `${count} Bots Added!` });
         }
+                // --- 📊 UPDATE MATCH SPECIFIC RESULT ---
+        if (type === 'admin_update_match_result') {
+            // body.results = [{team_name: 'TeamA', kills: 5, place: 1}, ...]
+            const resultsJson = JSON.stringify(body.results);
+            
+            await db.execute(
+                `UPDATE stage_matches SET match_results = ?, status = 'completed' WHERE id = ?`,
+                [resultsJson, match_id]
+            );
+            
+            for (let r of body.results) {
+                // Assuming 1 kill = 1 pt logic
+                const total = parseInt(r.kills) + parseInt(r.place_pts); 
+                await db.execute(`
+                    UPDATE stage_standings 
+                    SET kills = kills + ?, position_points = position_points + ?, total_points = total_points + ? 
+                    WHERE team_name = ? AND stage_id = (SELECT stage_id FROM stage_matches WHERE id=?)`,
+                    [r.kills, r.place_pts, total, r.team_name, match_id]
+                );
+            }
+
+            return res.status(200).json({ success: true });
+        }
+        
+        // --- 👤 GET MATCH RESULT (USER) ---
+        if (type === 'get_match_result') {
+            const [rows] = await db.execute('SELECT match_results FROM stage_matches WHERE id = ?', [match_id]);
+            return res.status(200).json(rows[0]?.match_results || []);
+        }
 
         // --- USER ACTIONS ---
         // ✅ NEW: User Tournament List
