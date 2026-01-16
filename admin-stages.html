@@ -19,11 +19,9 @@
     </header>
 
     <div class="p-4 max-w-lg mx-auto">
-        
         <!-- Add New Day/Stage Form -->
         <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 mb-6 shadow-lg">
             <h3 class="font-bold text-md mb-3 text-white border-b border-gray-700 pb-2">Add New Stage / Day</h3>
-            
             <div class="grid grid-cols-3 gap-2 mb-3">
                 <div class="col-span-2">
                     <label class="text-[10px] text-gray-400 uppercase font-bold">Stage Name</label>
@@ -34,38 +32,27 @@
                     <input type="number" id="day_round" placeholder="1" class="w-full bg-gray-900 p-2 rounded border border-gray-600 text-sm text-white outline-none focus:border-blue-500 text-center">
                 </div>
             </div>
-
             <button onclick="createDay()" class="w-full bg-blue-600 py-2.5 rounded-lg font-bold text-sm shadow-lg hover:bg-blue-500 transition">Add Stage</button>
         </div>
-
-        <!-- Schedule List -->
         <div id="schedule_list" class="space-y-4">
             <p class="text-center text-gray-500 mt-10 animate-pulse">Loading Schedule...</p>
         </div>
-
     </div>
 
-    <!-- ADD MATCH MODAL -->
+    <!-- Modals -->
     <div id="matchModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[100] p-4 backdrop-blur-sm">
         <div class="bg-gray-800 p-6 rounded-xl w-full max-w-sm border border-gray-600 shadow-2xl relative">
             <h3 class="font-bold text-lg mb-4 text-white">Add New Match</h3>
             <input type="hidden" id="target_stage_id">
-            
             <label class="text-[10px] text-gray-400 font-bold uppercase">Match Title</label>
             <input type="text" id="m_title" placeholder="e.g. Match 1" class="w-full bg-gray-900 p-2.5 rounded-lg mb-2 border border-gray-600 text-white outline-none text-sm">
-            
             <label class="text-[10px] text-gray-400 font-bold uppercase">Participants (Groups/Teams)</label>
             <input type="text" id="m_parts" placeholder="e.g. Group A vs Group B" class="w-full bg-gray-900 p-2.5 rounded-lg mb-2 border border-gray-600 text-white outline-none text-sm">
-
             <div class="grid grid-cols-2 gap-2 mb-4">
                 <div>
                     <label class="text-[10px] text-gray-400 font-bold uppercase">Map</label>
                     <select id="m_map" class="w-full bg-gray-900 p-2.5 rounded-lg border border-gray-600 text-white outline-none text-sm">
-                        <option value="Bermuda">Bermuda</option>
-                        <option value="Purgatory">Purgatory</option>
-                        <option value="Kalahari">Kalahari</option>
-                        <option value="Alpine">Alpine</option>
-                        <option value="Nexterra">Nexterra</option>
+                        <option value="Bermuda">Bermuda</option><option value="Purgatory">Purgatory</option><option value="Kalahari">Kalahari</option><option value="Alpine">Alpine</option><option value="Nexterra">Nexterra</option>
                     </select>
                 </div>
                 <div>
@@ -73,48 +60,36 @@
                     <input type="time" id="m_time" class="w-full bg-gray-900 p-2.5 rounded-lg border border-gray-600 text-gray-400 outline-none text-sm">
                 </div>
             </div>
-
             <button onclick="addMatch()" class="w-full bg-green-600 py-2.5 rounded-lg font-bold hover:bg-green-500 shadow-lg">Create Match</button>
             <button onclick="closeModal('matchModal')" class="w-full mt-3 text-gray-400 text-xs hover:text-white">Cancel</button>
         </div>
     </div>
 
-    <!-- EDIT STAGE MODAL -->
     <div id="editStageModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[100] p-4 backdrop-blur-sm">
         <div class="bg-gray-800 p-6 rounded-xl w-full max-w-sm border border-gray-600 shadow-2xl">
             <h3 class="font-bold text-lg mb-4 text-blue-400">Edit Stage</h3>
             <input type="hidden" id="edit_stage_id">
-            
             <label class="text-[10px] text-gray-400 font-bold uppercase">Stage Name</label>
             <input type="text" id="edit_stage_name" class="w-full bg-gray-900 p-2.5 rounded-lg mb-3 border border-gray-600 text-white outline-none">
-            
             <label class="text-[10px] text-gray-400 font-bold uppercase">Round No</label>
             <input type="number" id="edit_stage_round" class="w-full bg-gray-900 p-2.5 rounded-lg mb-4 border border-gray-600 text-white outline-none">
-
             <button onclick="saveStageEdit()" class="w-full bg-blue-600 py-2.5 rounded-lg font-bold hover:bg-blue-500">Update</button>
             <button onclick="closeModal('editStageModal')" class="w-full mt-3 text-gray-400 text-xs hover:text-white">Cancel</button>
         </div>
     </div>
 
-    <!-- ROOM / STATUS MODAL (Updated with Status Dropdown) -->
     <div id="roomModal" class="fixed inset-0 bg-black/95 hidden items-center justify-center z-[100] p-4 backdrop-blur-sm">
         <div class="bg-gray-800 p-6 rounded-xl w-full max-w-xs border border-yellow-500/30 shadow-2xl">
             <h3 class="font-bold text-lg mb-4 text-yellow-500">Update Match Status</h3>
             <input type="hidden" id="room_match_id">
-            
             <label class="text-[10px] text-gray-400 uppercase font-bold">Room ID</label>
             <input type="text" id="room_id" placeholder="Room ID" class="w-full bg-gray-900 p-2.5 rounded-lg mb-2 border border-gray-600 text-white text-sm font-mono">
-            
             <label class="text-[10px] text-gray-400 uppercase font-bold">Password</label>
             <input type="text" id="room_pass" placeholder="Password" class="w-full bg-gray-900 p-2.5 rounded-lg mb-4 border border-gray-600 text-white text-sm font-mono">
-            
             <label class="text-[10px] text-gray-400 uppercase font-bold">Status</label>
             <select id="match_status" class="w-full bg-gray-900 p-2.5 rounded-lg mb-4 border border-gray-600 text-white text-sm outline-none">
-                <option value="upcoming">🕒 Upcoming</option>
-                <option value="live">🔴 Live</option>
-                <option value="completed">✅ Completed</option>
+                <option value="upcoming">🕒 Upcoming</option><option value="live">🔴 Live</option><option value="completed">✅ Completed</option>
             </select>
-
             <button onclick="saveRoom()" class="w-full bg-yellow-600 py-2 rounded-lg font-bold text-black hover:bg-yellow-500">Save Update</button>
             <button onclick="closeModal('roomModal')" class="w-full mt-2 text-gray-500 text-xs">Close</button>
         </div>
@@ -124,17 +99,12 @@
         const params = new URLSearchParams(window.location.search);
         const tourId = params.get('tour_id');
 
-        // Helper Functions
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
         async function init() {
             try {
-                const res = await fetch('/api/official', { 
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json'}, 
-                    body: JSON.stringify({ type: 'get_stages_and_matches', tournament_id: tourId }) 
-                });
+                const res = await fetch('/api/official', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'get_stages_and_matches', tournament_id: tourId }) });
                 const stages = await res.json();
                 renderSchedule(stages);
             } catch(e) { console.error(e); }
@@ -143,11 +113,7 @@
         function renderSchedule(stages) {
             const list = document.getElementById('schedule_list');
             list.innerHTML = '';
-            
-            if(stages.length === 0) {
-                list.innerHTML = '<p class="text-center text-gray-500">No stages created.</p>';
-                return;
-            }
+            if(stages.length === 0) { list.innerHTML = '<p class="text-center text-gray-500">No stages created.</p>'; return; }
 
             stages.forEach(s => {
                 const matchesHtml = s.matches ? s.matches.map(m => `
@@ -156,149 +122,79 @@
                             <div>
                                 <p class="text-sm font-bold text-white">${m.match_title}</p>
                                 <p class="text-[10px] text-gray-400">${m.participants || 'All Groups'} • <span class="text-blue-400">${m.map_name}</span></p>
-                                
                                 <p class="text-[10px] font-mono mt-1 flex items-center gap-2">
-                                    ${m.status === 'live' 
-                                        ? '<span class="text-red-500 font-bold animate-pulse">● LIVE</span>' 
-                                        : (m.status === 'completed' 
-                                            ? '<span class="text-green-500 font-bold">✔ Completed</span>' 
-                                            : '<span class="text-gray-400">🕒 Upcoming</span>')}
-                                    
-                                    <span class="text-gray-600">|</span>
-                                    <span class="text-yellow-500">${m.room_id ? '🔑 Room Set' : 'No Room'}</span>
+                                    ${m.status === 'live' ? '<span class="text-red-500 font-bold animate-pulse">● LIVE</span>' : (m.status === 'completed' ? '<span class="text-green-500 font-bold">✔ Completed</span>' : '<span class="text-gray-400">🕒 Upcoming</span>')}
+                                    <span class="text-gray-600">|</span> <span class="text-yellow-500">${m.room_id ? '🔑 Set' : 'No Room'}</span>
                                 </p>
                             </div>
                             <div class="flex gap-2">
+                                <!-- ✅ RESULT BUTTON -->
+                                <button onclick="window.location.href='/admin-results?tour_id=${tourId}&stage_id=${s.id}&match_id=${m.id}'" class="bg-blue-600/20 text-blue-400 p-1.5 rounded hover:bg-blue-600 hover:text-white" title="Add Result"><i class="fa-solid fa-chart-bar"></i></button>
                                 <button onclick='openRoomModal(${JSON.stringify(m)})' class="bg-gray-700 p-1.5 rounded text-white hover:bg-gray-600" title="Edit Room/Status"><i class="fa-solid fa-pen-to-square"></i></button>
                                 <button onclick="deleteMatch(${m.id})" class="bg-red-900/30 p-1.5 rounded text-red-500 hover:bg-red-600 hover:text-white" title="Delete"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
-                    </div>
-                `).join('') : '';
+                    </div>`).join('') : '';
 
                 list.innerHTML += `
                 <div class="bg-gray-800 rounded-xl border border-gray-700 shadow-md overflow-hidden">
                     <div class="p-3 bg-gray-800 border-b border-gray-700 flex justify-between items-center">
-                        <div>
-                            <h3 class="font-bold text-md text-white">${s.stage_name}</h3>
-                            <span class="bg-blue-600 text-white text-[9px] px-2 py-0.5 rounded font-bold uppercase">Round ${s.stage_order}</span>
-                        </div>
+                        <div><h3 class="font-bold text-md text-white">${s.stage_name}</h3><span class="bg-blue-600 text-white text-[9px] px-2 py-0.5 rounded font-bold uppercase">Round ${s.stage_order}</span></div>
                         <div class="flex gap-2">
                             <button onclick="openEditStageModal(${s.id}, '${s.stage_name}', ${s.stage_order})" class="text-blue-400 hover:text-white p-1"><i class="fa-solid fa-pen"></i></button>
                             <button onclick="deleteStage(${s.id})" class="text-red-400 hover:text-white p-1"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
-                    
-                    <div class="p-3 bg-gray-800 space-y-2">
-                        ${matchesHtml}
-                        <button onclick="openMatchModal(${s.id})" class="w-full py-2 border-2 border-dashed border-gray-600 rounded-lg text-gray-400 text-xs font-bold hover:text-white hover:border-gray-500 transition">+ Add Match</button>
-                    </div>
+                    <div class="p-3 bg-gray-800 space-y-2">${matchesHtml}<button onclick="openMatchModal(${s.id})" class="w-full py-2 border-2 border-dashed border-gray-600 rounded-lg text-gray-400 text-xs font-bold hover:text-white hover:border-gray-500 transition">+ Add Match</button></div>
                 </div>`;
             });
         }
 
-        // --- STAGE ACTIONS ---
         async function createDay() {
             const title = document.getElementById('day_title').value;
             const round = document.getElementById('day_round').value || 1;
             if(!title) return alert("Enter Stage Name");
-
-            await fetch('/api/official', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ type: 'create_stage', tournament_id: tourId, stage_name: title, stage_order: round })
-            });
-            document.getElementById('day_title').value = '';
-            init();
+            await fetch('/api/official', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'create_stage', tournament_id: tourId, stage_name: title, stage_order: round }) });
+            document.getElementById('day_title').value = ''; init();
         }
 
         function openEditStageModal(sid, name, round) {
-            document.getElementById('edit_stage_id').value = sid;
-            document.getElementById('edit_stage_name').value = name;
-            document.getElementById('edit_stage_round').value = round;
-            openModal('editStageModal'); 
+            document.getElementById('edit_stage_id').value = sid; document.getElementById('edit_stage_name').value = name; document.getElementById('edit_stage_round').value = round; openModal('editStageModal');
         }
 
         async function saveStageEdit() {
-            const sid = document.getElementById('edit_stage_id').value;
-            const name = document.getElementById('edit_stage_name').value;
-            const round = document.getElementById('edit_stage_round').value;
-
-            await fetch('/api/official', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ type: 'update_stage', stage_id: sid, stage_name: name, stage_order: round })
-            });
-            closeModal('editStageModal');
-            init();
+            const sid = document.getElementById('edit_stage_id').value; const name = document.getElementById('edit_stage_name').value; const round = document.getElementById('edit_stage_round').value;
+            await fetch('/api/official', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'update_stage', stage_id: sid, stage_name: name, stage_order: round }) });
+            closeModal('editStageModal'); init();
         }
 
         async function deleteStage(sid) {
-            if(confirm("Delete Stage & Matches?")) {
-                await fetch('/api/official', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'delete_stage', stage_id:sid }) });
-                init();
-            }
+            if(confirm("Delete Stage & Matches?")) { await fetch('/api/official', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'delete_stage', stage_id:sid }) }); init(); }
         }
 
-        // --- MATCH ACTIONS ---
-        function openMatchModal(sid) {
-            document.getElementById('target_stage_id').value = sid;
-            openModal('matchModal'); 
-        }
+        function openMatchModal(sid) { document.getElementById('target_stage_id').value = sid; openModal('matchModal'); }
 
         async function addMatch() {
-            const sid = document.getElementById('target_stage_id').value;
-            const title = document.getElementById('m_title').value;
-            const parts = document.getElementById('m_parts').value || 'All Groups';
-            const map = document.getElementById('m_map').value;
-            const timeVal = document.getElementById('m_time').value;
-            
+            const sid = document.getElementById('target_stage_id').value; const title = document.getElementById('m_title').value; const parts = document.getElementById('m_parts').value || 'All Groups'; const map = document.getElementById('m_map').value; const timeVal = document.getElementById('m_time').value;
             if(!title || !timeVal) return alert("Fill Details");
             const time = new Date().toISOString().slice(0, 10) + ' ' + timeVal + ':00'; 
-
-            await fetch('/api/official', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ type: 'create_stage_match', stage_id: sid, title, participants: parts, map, time })
-            });
-            closeModal('matchModal');
-            init();
+            await fetch('/api/official', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'create_stage_match', stage_id: sid, title, participants: parts, map, time }) });
+            closeModal('matchModal'); init();
         }
 
         function openRoomModal(m) {
-            document.getElementById('room_match_id').value = m.id;
-            document.getElementById('room_id').value = m.room_id || '';
-            document.getElementById('room_pass').value = m.room_pass || '';
-            document.getElementById('match_status').value = m.status || 'upcoming'; // ✅ Status Set
-            openModal('roomModal');
+            document.getElementById('room_match_id').value = m.id; document.getElementById('room_id').value = m.room_id || ''; document.getElementById('room_pass').value = m.room_pass || ''; document.getElementById('match_status').value = m.status || 'upcoming'; openModal('roomModal');
         }
 
         async function saveRoom() {
-            const mid = document.getElementById('room_match_id').value;
-            const rid = document.getElementById('room_id').value;
-            const pass = document.getElementById('room_pass').value;
-            const status = document.getElementById('match_status').value; // ✅ Status Get
-
-            const btn = event.target;
-            btn.innerText = "Saving..."; btn.disabled = true;
-
-            try {
-                await fetch('/api/official', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ type: 'update_stage_room', match_id: mid, room_id: rid, room_pass: pass, status: status })
-                });
-                closeModal('roomModal');
-                init();
-            } catch(e) { alert("Error"); }
+            const mid = document.getElementById('room_match_id').value; const rid = document.getElementById('room_id').value; const pass = document.getElementById('room_pass').value; const status = document.getElementById('match_status').value;
+            const btn = event.target; btn.innerText = "Saving..."; btn.disabled = true;
+            try { await fetch('/api/official', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'update_stage_room', match_id: mid, room_id: rid, room_pass: pass, status: status }) }); closeModal('roomModal'); init(); } catch(e) { alert("Error"); }
             btn.innerText = "Save Update"; btn.disabled = false;
         }
 
         async function deleteMatch(mid) {
-            if(confirm("Delete Match?")) {
-                await fetch('/api/official', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'delete_stage_match', match_id:mid }) });
-                init();
-            }
+            if(confirm("Delete Match?")) { await fetch('/api/official', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'delete_stage_match', match_id:mid }) }); init(); }
         }
 
         init();
