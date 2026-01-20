@@ -340,7 +340,28 @@
             document.getElementById('submit_btn').innerText="Publish Match"; document.getElementById('cancel_btn').classList.add('hidden');
         }
         
-        async function deleteMatch(id) { if(confirm("Delete?")) { await fetch('/api/admin', {method:'POST', body:JSON.stringify({type:'delete_match', id:id})}); loadMatches(); } }
+        async function deleteMatch(id) {
+            if (!confirm("⚠️ Are you sure you want to DELETE this match?\nThis cannot be undone!")) return;
+
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }, // 🔥 এই লাইনটি আগে মিসিং ছিল
+                    body: JSON.stringify({ type: 'delete_match', id: id })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    loadMatches();
+                } else {
+                    alert("Delete Failed: " + (data.error || "Unknown Server Error"));
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Network Error: Could not delete match.");
+            }
+        }
         async function updateStatus(id, newStatus) { await fetch('/api/admin', {method:'POST', body:JSON.stringify({type:'update_match_status', match_id:id, new_status:newStatus})}); }
         
         async function viewPlayersAdmin(id, matchType) {
