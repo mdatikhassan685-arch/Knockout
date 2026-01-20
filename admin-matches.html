@@ -16,7 +16,7 @@
         <div><h1 class="font-bold text-lg leading-tight truncate w-64" id="cat_title">Manage Matches</h1><p class="text-[10px] text-gray-400">Match Operations</p></div>
     </header>
 
-    <!-- Create Match Form -->
+    <!-- Create Match Form (No Changes Here) -->
     <div class="p-4 bg-gray-800 m-4 rounded-xl border border-gray-700 shadow-lg">
         <h3 class="font-bold text-md mb-3 border-b border-gray-600 pb-2 flex justify-between items-center text-white">
             <span id="form_title">Create New Match</span>
@@ -69,10 +69,9 @@
         <div id="match_list" class="space-y-4 pb-10"><p class="text-center text-gray-500 mt-10 animate-pulse">Loading matches...</p></div>
     </div>
 
-    <!-- 🔥 RESULT MODAL (ADVANCED) 🔥 -->
+    <!-- Result Modal -->
     <div id="resultModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[90] p-4 backdrop-blur-sm">
         <div class="bg-gray-800 p-5 rounded-2xl w-full max-w-md h-[85vh] flex flex-col relative shadow-2xl border border-gray-700">
-            <!-- Header -->
             <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
                 <div>
                     <h3 class="font-bold text-lg text-green-400">Result Maker</h3>
@@ -83,32 +82,25 @@
                 <button onclick="document.getElementById('resultModal').style.display='none'" class="text-gray-400 text-2xl hover:text-white">&times;</button>
             </div>
             
-            <!-- Hidden Data -->
             <input type="hidden" id="res_match_id">
             <input type="hidden" id="res_pool_val">
             <input type="hidden" id="res_kill_val">
             <input type="hidden" id="res_dist_type">
 
-            <!-- Controls -->
             <div class="flex gap-2 mb-3">
                 <button onclick="calculatePrizes()" class="flex-1 bg-blue-600/20 text-blue-400 border border-blue-500/30 py-2 rounded text-xs font-bold uppercase hover:bg-blue-600 hover:text-white transition"><i class="fa-solid fa-calculator"></i> Auto Calculate</button>
                 <button onclick="clearInputs()" class="w-20 bg-gray-700 text-gray-300 border border-gray-600 py-2 rounded text-xs font-bold hover:text-white">Reset</button>
             </div>
 
-            <!-- Table Header -->
             <div class="grid grid-cols-12 gap-1 text-[9px] font-bold uppercase text-gray-500 px-2 mb-2">
-                <div class="col-span-4">Player / Team</div>
+                <div class="col-span-4">Name / Team</div>
                 <div class="col-span-2 text-center">Rank #</div>
                 <div class="col-span-2 text-center">Kills</div>
                 <div class="col-span-4 text-right">Total Win (৳)</div>
             </div>
             
-            <!-- Player List -->
-            <div id="result_player_list" class="flex-1 overflow-y-auto pr-1 custom-scroll text-sm space-y-1">
-                <!-- Dynamic Rows -->
-            </div>
+            <div id="result_player_list" class="flex-1 overflow-y-auto pr-1 custom-scroll text-sm space-y-1"></div>
 
-            <!-- Footer -->
             <div class="pt-3 border-t border-gray-700 mt-2">
                 <div class="flex justify-between items-center mb-2 px-1">
                     <span class="text-xs text-gray-400">Total Distributing:</span>
@@ -116,6 +108,19 @@
                 </div>
                 <button onclick="saveResults()" id="save_res_btn" class="w-full bg-green-600 py-3 rounded-lg font-bold text-white shadow-lg uppercase tracking-wide transition hover:bg-green-500">Publish & Send Money</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Players Modal (Existing) -->
+    <div id="playersModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[80] p-4 backdrop-blur-sm">
+        <!-- ... (Same as before) ... -->
+        <div class="bg-gray-800 p-5 rounded-2xl w-full max-w-sm h-[70vh] flex flex-col relative shadow-2xl border border-gray-700 animate-zoom">
+            <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
+                <h3 class="font-bold text-lg text-blue-400">Participants</h3>
+                <button onclick="document.getElementById('playersModal').style.display='none'" class="text-gray-400 text-2xl hover:text-white">&times;</button>
+            </div>
+            <p id="player_limit_info" class="text-center text-[10px] text-gray-500 font-bold mb-2 uppercase"></p>
+            <div id="modal_player_list" class="flex-1 overflow-y-auto pr-1 custom-scroll text-sm">Loading...</div>
         </div>
     </div>
 
@@ -127,8 +132,8 @@
         const urlCatName = urlParams.get('name');
         if(urlCatName) document.getElementById('cat_title').innerText = decodeURIComponent(urlCatName);
 
-        // --- LOAD MATCHES ---
         async function loadCatsAndMatches() {
+            /* ... Same previous loadCatsAndMatches code ... */
             try {
                 const res = await fetch('/api/admin', { method: 'POST', body: JSON.stringify({ type: 'get_categories' }) });
                 const data = await res.json();
@@ -151,7 +156,6 @@
                 if (matches && matches.length > 0) {
                     list.innerHTML = matches.map(m => {
                          const hasRoom = m.room_id ? `<span class="text-green-500 text-[10px] font-bold"><i class="fa-solid fa-check-circle"></i> Room Set</span>` : `<span class="text-yellow-500 text-[10px] font-bold">No Room</span>`;
-                         // Fallback for prize_type if not in DB yet
                          const pType = m.prize_type || 'Top1'; 
                          
                          return `
@@ -161,7 +165,10 @@
                             <div class="mb-2 bg-black/20 p-1.5 rounded border border-gray-700/50 flex justify-between items-center">${hasRoom}</div>
                             <div class="grid grid-cols-3 gap-2">
                                 <select onchange="updateStatus(${m.id}, this.value)" class="col-span-1 bg-black/20 text-xs p-1 rounded border border-gray-600 text-white uppercase font-bold outline-none"><option value="upcoming" ${m.status==='upcoming'?'selected':''}>Upcoming</option><option value="open" ${m.status==='open'?'selected':''}>Open</option><option value="live" ${m.status==='live'?'selected':''}>Live</option><option value="completed" ${m.status==='completed'?'selected':''}>Done</option></select>
-                                <button onclick="openResultModal(${m.id}, ${m.prize_pool}, ${m.per_kill}, '${pType}')" class="bg-green-600/20 text-green-400 rounded text-xs font-bold border border-green-500/30 hover:bg-green-600 hover:text-white transition">Result</button>
+                                
+                                <!-- Result Button Updated with Match Type -->
+                                <button onclick="openResultModal(${m.id}, ${m.prize_pool}, ${m.per_kill}, '${pType}', '${m.match_type}')" class="bg-green-600/20 text-green-400 rounded text-xs font-bold border border-green-500/30 hover:bg-green-600 hover:text-white transition">Result</button>
+                                
                                 <button onclick="viewPlayersAdmin(${m.id}, '${m.match_type}')" class="bg-gray-700 text-gray-300 rounded text-xs font-bold border border-gray-600 hover:bg-gray-600 transition">Kick/View</button>
                             </div>
                         </div>`;
@@ -170,8 +177,8 @@
             } catch(e) { console.error(e); }
         }
 
-        // --- 🔥 RESULT LOGIC START 🔥 ---
-        async function openResultModal(mid, pool, killRate, type) {
+        // --- 🔥 FIXED: TEAM GROUPING LOGIC 🔥 ---
+        async function openResultModal(mid, pool, killRate, type, matchType) {
             document.getElementById('resultModal').style.display = 'flex';
             document.getElementById('res_match_id').value = mid;
             document.getElementById('res_pool_val').value = pool;
@@ -183,38 +190,57 @@
             document.getElementById('res_type_display').innerText = type;
             
             const container = document.getElementById('result_player_list');
-            container.innerHTML = '<p class="text-center py-4 text-gray-500">Loading players...</p>';
+            container.innerHTML = '<p class="text-center py-4 text-gray-500">Loading...</p>';
             
             try {
                 const res = await fetch('/api/tournament', {method:'POST', body:JSON.stringify({type:'get_daily_participants', match_id:mid})});
                 const players = await res.json();
                 
-                if(players.length === 0) { container.innerHTML = '<p class="text-center py-4 text-red-400">No participants found.</p>'; return; }
+                if(players.length === 0) { container.innerHTML = '<p class="text-center py-4 text-red-400">No participants.</p>'; return; }
 
-                container.innerHTML = players.map(p => `
+                let displayList = [];
+
+                // 🔥 LOGIC: Squad হলে টিম অনুযায়ী গ্রুপ করো
+                if (matchType !== 'Solo') {
+                    const groups = {};
+                    players.forEach(p => {
+                        const tName = p.team_name || p.game_name;
+                        if (!groups[tName]) {
+                            // প্রথম প্লেয়ারকেই লিডার ধরে তার user_id নিচ্ছি
+                            groups[tName] = { name: tName, user_id: p.user_id, isTeam: true };
+                        }
+                    });
+                    displayList = Object.values(groups);
+                } else {
+                    // Solo হলে যা আছে তাই
+                    displayList = players.map(p => ({ name: p.game_name, user_id: p.user_id, isTeam: false }));
+                }
+
+                container.innerHTML = displayList.map(p => `
                     <div class="grid grid-cols-12 gap-1 items-center bg-gray-900 p-2 rounded border border-gray-700 player-res-row" data-uid="${p.user_id}">
-                        <div class="col-span-4 truncate text-xs font-bold text-white" title="${p.game_name}">${p.game_name}</div>
+                        <div class="col-span-4 truncate text-xs font-bold ${p.isTeam ? 'text-yellow-400' : 'text-white'}" title="${p.name}">
+                            ${p.isTeam ? '<i class="fa-solid fa-users mr-1"></i>' : ''}${p.name}
+                        </div>
                         <div class="col-span-2"><input type="number" placeholder="#" class="w-full bg-black border border-gray-600 rounded p-1 text-center text-white text-xs outline-none focus:border-yellow-500 res-rank"></div>
                         <div class="col-span-2"><input type="number" placeholder="0" class="w-full bg-black border border-gray-600 rounded p-1 text-center text-white text-xs outline-none focus:border-blue-500 res-kills" oninput="updateRowTotal(this)"></div>
                         <div class="col-span-4"><input type="number" placeholder="0" class="w-full bg-black border border-gray-600 rounded p-1 text-right text-green-400 text-xs font-bold outline-none focus:border-green-500 res-total" oninput="calculateTotalDist()"></div>
                     </div>
                 `).join('');
                 calculateTotalDist();
+
             } catch(e) { container.innerHTML = '<p class="text-center text-red-500">Error loading</p>'; }
         }
 
+        // ... (বাকি ক্যালকুলেশন লজিক এবং হ্যান্ডেলার আগের মতোই থাকবে) ...
         function calculatePrizes() {
             const pool = parseFloat(document.getElementById('res_pool_val').value) || 0;
             const killRate = parseFloat(document.getElementById('res_kill_val').value) || 0;
             const type = document.getElementById('res_dist_type').value || 'Top1';
             const rows = document.querySelectorAll('.player-res-row');
 
-            // 1. Reset all totals
             rows.forEach(r => { r.querySelector('.res-total').value = 0; });
 
-            // 2. Find Winners based on Rank Input
             let rank1Row = null, rank2Row = null, rank3Row = null;
-
             rows.forEach(r => {
                 const rank = parseInt(r.querySelector('.res-rank').value);
                 if (rank === 1) rank1Row = r;
@@ -222,7 +248,6 @@
                 if (rank === 3) rank3Row = r;
             });
 
-            // 3. Distribute Prize Pool
             if (rank1Row) {
                 let p1 = 0, p2 = 0, p3 = 0;
                 if (type === 'Top1') { p1 = pool; }
@@ -234,15 +259,13 @@
                 if (rank3Row) addPrize(rank3Row, p3);
             }
 
-            // 4. Add Kill Bonus for Everyone
             rows.forEach(r => {
                 const kills = parseInt(r.querySelector('.res-kills').value) || 0;
                 if (kills > 0) {
                     const currentTotal = parseFloat(r.querySelector('.res-total').value) || 0;
-                    r.querySelector('.res-total').value = (currentTotal + (kills * killRate)).toFixed(0); // No decimals
+                    r.querySelector('.res-total').value = (currentTotal + (kills * killRate)).toFixed(0);
                 }
             });
-
             calculateTotalDist();
         }
 
@@ -251,18 +274,12 @@
             const current = parseFloat(input.value) || 0;
             input.value = (current + amount).toFixed(0);
         }
-
-        function updateRowTotal(input) {
-            // If admin changes kills manually, update just that row (Optional feature, for now keeping simple)
-            // Ideally 'Calculate' button should be pressed.
-        }
-
+        function updateRowTotal() {} 
         function calculateTotalDist() {
             let sum = 0;
             document.querySelectorAll('.res-total').forEach(i => sum += parseFloat(i.value) || 0);
             document.getElementById('total_dist_amount').innerText = sum;
         }
-
         function clearInputs() {
             document.querySelectorAll('input[type="number"]').forEach(i => i.value = '');
             calculateTotalDist();
@@ -270,7 +287,6 @@
 
         async function saveResults() {
             if(!confirm("⚠️ Confirm Publish?\n- Money will be sent to wallets.\n- This cannot be undone.")) return;
-            
             const mid = document.getElementById('res_match_id').value;
             const rows = document.querySelectorAll('.player-res-row');
             let results = [];
@@ -279,7 +295,6 @@
                  const uid = r.getAttribute('data-uid');
                  const k = r.querySelector('.res-kills').value || 0;
                  const p = r.querySelector('.res-total').value || 0;
-                 // Only send data if prize > 0 OR kills > 0
                  if(uid && (parseFloat(p) > 0 || parseInt(k) > 0)) {
                      results.push({ user_id: uid, kills: k, prize: p });
                  }
@@ -295,34 +310,18 @@
             } catch(e) { alert("Network Error"); }
             btn.innerText = "Publish & Send Money"; btn.disabled = false;
         }
-        // --- 🔥 RESULT LOGIC END 🔥 ---
 
-
-        // ... (Standard Admin Functions - Reduced for brevity but must be kept) ...
+        // ... (Handle Match Create & Edit Logic) ...
         async function handleMatch() {
             const id=document.getElementById('match_id').value, title=document.getElementById('m_title').value;
-            const prizeType = document.getElementById('m_prize_type').value; // New Field
+            const prizeType = document.getElementById('m_prize_type').value; 
             const kill = document.getElementById('m_kill').value;
-            
             let timeVal=document.getElementById('m_time').value; 
             const cat=document.getElementById('cat_id').value||urlCatId;
             if(timeVal) timeVal=new Date(timeVal).toISOString().slice(0,19).replace('T',' ');
             if(!cat||!title||!timeVal) return alert("Fill Inputs");
             
-            const body={ 
-                type:id?'edit_match':'create_daily_match', 
-                match_id:id, category_id:cat, title, 
-                entry_fee:document.getElementById('m_fee').value, 
-                prize_pool:document.getElementById('m_prize').value, 
-                per_kill:kill, 
-                prize_type: prizeType, // Pass this to API (Backend needs update if you want to save it)
-                map:document.getElementById('m_map').value, 
-                match_time:timeVal, match_type:document.getElementById('m_type').value, 
-                total_spots:document.getElementById('m_spots').value, 
-                room_id:document.getElementById('room_id').value, 
-                room_pass:document.getElementById('room_pass').value 
-            };
-            
+            const body={ type:id?'edit_match':'create_daily_match', match_id:id, category_id:cat, title, entry_fee:document.getElementById('m_fee').value, prize_pool:document.getElementById('m_prize').value, per_kill:kill, prize_type: prizeType, map:document.getElementById('m_map').value, match_time:timeVal, match_type:document.getElementById('m_type').value, total_spots:document.getElementById('m_spots').value, room_id:document.getElementById('room_id').value, room_pass:document.getElementById('room_pass').value };
             document.getElementById('submit_btn').disabled=true;
             try { await fetch('/api/admin', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}); resetForm(); loadMatches(); } catch(e){ alert("Error"); }
             document.getElementById('submit_btn').disabled=false;
@@ -341,10 +340,37 @@
             document.getElementById('submit_btn').innerText="Publish Match"; document.getElementById('cancel_btn').classList.add('hidden');
         }
         
-        // Short functions
         async function deleteMatch(id) { if(confirm("Delete?")) { await fetch('/api/admin', {method:'POST', body:JSON.stringify({type:'delete_match', id:id})}); loadMatches(); } }
         async function updateStatus(id, newStatus) { await fetch('/api/admin', {method:'POST', body:JSON.stringify({type:'update_match_status', match_id:id, new_status:newStatus})}); }
         
+        async function viewPlayersAdmin(id, matchType) {
+            document.getElementById('playersModal').style.display = 'flex';
+            document.getElementById('player_limit_info').innerText = `Viewing as Admin (${matchType})`;
+            const con = document.getElementById('modal_player_list');
+            con.innerHTML = '<div class="text-center p-10 animate-pulse text-gray-500">Loading list...</div>';
+            try {
+                const res = await fetch('/api/tournament', {method:'POST', body:JSON.stringify({type:'get_daily_participants', match_id:id})});
+                const d = await res.json();
+                if (d.length === 0) { con.innerHTML = '<div class="text-center p-10 opacity-50">Empty List</div>'; return; }
+                let html = '';
+                if (matchType !== 'Solo') {
+                    const groups = {}; d.forEach(p => { let t = p.team_name || "Unknown"; if(!groups[t]) groups[t] = []; groups[t].push(p); });
+                    Object.keys(groups).forEach((tName, idx) => {
+                        let members = groups[tName].map(p => `<div class="flex justify-between text-xs py-2 border-b border-gray-700/50 items-center last:border-none"><div><span class="text-gray-300 font-bold block">${p.game_name}</span></div><div class="text-yellow-500 text-[10px] font-bold">Lvl: ${p.game_level || '?'}</div></div>`).join('');
+                        html += `<div class="bg-gray-800 border border-gray-700 rounded-lg mb-2 overflow-hidden"><div onclick="this.nextElementSibling.classList.toggle('hidden')" class="p-3 flex justify-between items-center bg-gray-750 cursor-pointer"><div class="flex items-center gap-3"><span class="bg-blue-600 text-[10px] px-2 py-0.5 rounded shadow text-white">#${idx+1}</span><span class="text-sm font-bold uppercase">${tName}</span></div><button onclick="event.stopPropagation(); kickUser('${tName}', ${id}, 'Team')" class="text-red-500 text-[10px] font-bold border border-red-500/30 px-2 py-1 rounded">Kick</button></div><div class="hidden bg-black/20 p-3 border-t border-gray-700">${members}</div></div>`;
+                    });
+                } else {
+                    d.forEach((p, idx) => { html += `<div class="flex justify-between items-center bg-gray-800 p-3 rounded-lg mb-2 border border-gray-700"><div class="flex items-center gap-3"><span class="text-xs font-bold text-gray-500">#${idx+1}</span><div><span class="text-xs font-bold text-white block">${p.game_name}</span></div></div><button onclick="kickUser('${p.game_name}', ${id}, 'Player')" class="text-red-500 text-[10px] font-bold border border-red-500/30 px-2 py-1 rounded">Kick</button></div>`; });
+                }
+                con.innerHTML = html;
+            } catch(e) { con.innerHTML = '<div class="text-center p-5 text-red-400 text-sm">Failed to Load</div>'; }
+        }
+
+        async function kickUser(name, mid, typeText) {
+             if(!confirm(`Kick ${typeText} "${name}"? Entry fee will be refunded.`)) return;
+             try { await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'kick_participant', match_id:mid, team_name:name }) }); alert("Kicked!"); document.getElementById('playersModal').style.display='none'; loadMatches(); } catch(e) { alert("Failed"); }
+        }
+
         loadCatsAndMatches();
     </script>
 </body>
