@@ -11,9 +11,6 @@ module.exports = async (req, res) => {
     const { type, category_id, id, match_id, user_id } = body;
 
     try {
-        // ... (Categories, Matches, Users, Balance logic remains SAME) ...
-        // (আমি উপরের কোডগুলো স্কিপ করলাম যাতে ফাইল বড় না হয়, শুধু নিচের অংশটুকু আপডেট করুন)
-
         /* ============================ 
            CATEGORIES 
         ============================ */
@@ -87,8 +84,56 @@ module.exports = async (req, res) => {
              return res.status(200).json({ success: true });
         }
 
+        // 🔥 FIX: NORMAL MATCH RESULT UPDATE ADDED HERE
+        if (type === 'update_normal_match_result') {
+            const { match_id, results } = body; 
+            // results = [{ user_id: 1, kills: 2, prize: 50 }, ...]
+
+            const connection = await db.getConnection();
+            try {
+                await connection.beginTransaction();
+
+                for (let r of results) {
+                    const prize = parseFloat(r.prize) || 0;
+                    const kills = parseInt(r.kills) || 0;
+
+                    // 1. Update Participant
+                    await connection.execute(
+                        'UPDATE match_participants SET kills = ?, prize_won = ? WHERE match_id = ? AND user_id = ?',
+                        [kills, prize, match_id, r.user_id]
+                    );
+
+                    // 2. Add Money to Wallet
+                    if (prize > 0) {
+                        await connection.execute(
+                            'UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?',
+                            [prize, r.user_id]
+                        );
+                        
+                        // 3. Log Transaction
+                        await connection.execute(
+                            'INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Match Winnings", ?, "completed", NOW())',
+                            [r.user_id, prize, `Won in Match #${match_id}`]
+                        );
+                    }
+                }
+                
+                // 4. Mark Match Completed
+                await connection.execute('UPDATE matches SET status = "completed" WHERE id = ?', [match_id]);
+
+                await connection.commit();
+                connection.release();
+                return res.status(200).json({ success: true, message: "Results Updated & Money Sent!" });
+
+            } catch (err) {
+                await connection.rollback();
+                connection.release();
+                return res.status(500).json({ error: err.message });
+            }
+        }
+
         /* ============================ 
-           USERS & FINANCE (Updated with Messages)
+           USERS & FINANCE
         ============================ */
         if (type === 'list_users') { 
             const [users] = await db.execute('SELECT id, username, email, wallet_balance, status FROM users ORDER BY id DESC LIMIT 100'); 
@@ -115,7 +160,6 @@ module.exports = async (req, res) => {
             return res.status(200).json(rows);
         }
         
-        // ✅ FIX: Added 'message' property
         if (type === 'handle_deposit') {
             if (body.action === 'approve') {
                 const [dep] = await db.execute('SELECT user_id, amount FROM deposits WHERE id=?', [body.deposit_id]);
@@ -136,7 +180,6 @@ module.exports = async (req, res) => {
             return res.status(200).json(rows);
         }
 
-        // ✅ FIX: Added 'message' property
         if (type === 'handle_withdrawal') {
             if (body.action === 'approve') {
                 await db.execute("UPDATE withdrawals SET status='approved' WHERE id=?", [body.withdraw_id]);
@@ -145,7 +188,6 @@ module.exports = async (req, res) => {
                 const [wd] = await db.execute('SELECT user_id, amount FROM withdrawals WHERE id=?', [body.withdraw_id]);
                 if (wd.length > 0) {
                     await db.execute("UPDATE withdrawals SET status='rejected' WHERE id=?", [body.withdraw_id]);
-                    // Refund
                     await db.execute("UPDATE users SET wallet_balance = wallet_balance + ? WHERE id=?", [wd[0].amount, wd[0].user_id]);
                     await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Refund", "Withdraw Rejected", "completed", NOW())', [wd[0].user_id, wd[0].amount]);
                     return res.status(200).json({ success: true, message: "Rejected & Refunded!" });
@@ -153,7 +195,7 @@ module.exports = async (req, res) => {
             }
         }
 
-        // ... (Stats & Settings logic remains same) ...
+        // ... (Stats & Settings logic) ...
         if (type === 'dashboard_stats') {
              try {
                 const [u] = await db.execute('SELECT COUNT(*) as c FROM users');
