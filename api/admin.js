@@ -1,6 +1,7 @@
 const db = require('../db');
 
 module.exports = async (req, res) => {
+    // 1. Setup CORS & Headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -12,7 +13,7 @@ module.exports = async (req, res) => {
 
     try {
         /* ============================ 
-           CATEGORIES 
+           CATEGORIES MANAGEMENT
         ============================ */
         if (type === 'get_categories') {
             const [rows] = await db.execute('SELECT * FROM categories ORDER BY id ASC');
@@ -34,7 +35,7 @@ module.exports = async (req, res) => {
         }
 
         /* ============================ 
-           MATCHES 
+           MATCHES MANAGEMENT (UPDATED)
         ============================ */
         if (type === 'get_admin_matches') {
             let sql = `SELECT * FROM matches ORDER BY match_time DESC LIMIT 50`;
@@ -46,29 +47,63 @@ module.exports = async (req, res) => {
             const [matches] = await db.execute(sql, params);
             return res.status(200).json(matches);
         }
+
+        // ✅ NEW: Added 'prize_type' column in INSERT query
         if (type === 'create_daily_match') {
             await db.execute(
-                `INSERT INTO matches (category_id, title, entry_fee, prize_pool, per_kill, match_type, match_time, map, status, total_spots, room_id, room_pass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'upcoming', ?, ?, ?)`,
-                [category_id, body.title, body.entry_fee||0, body.prize_pool||0, body.per_kill||0, body.match_type, body.match_time, body.map, body.total_spots||48, body.room_id||null, body.room_pass||null]
+                `INSERT INTO matches (category_id, title, entry_fee, prize_pool, per_kill, prize_type, match_type, match_time, map, status, total_spots, room_id, room_pass) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'upcoming', ?, ?, ?)`,
+                [
+                    category_id, 
+                    body.title, 
+                    body.entry_fee || 0, 
+                    body.prize_pool || 0, 
+                    body.per_kill || 0, 
+                    body.prize_type || 'Top1', // Default Value
+                    body.match_type, 
+                    body.match_time, 
+                    body.map, 
+                    body.total_spots || 48, 
+                    body.room_id || null, 
+                    body.room_pass || null
+                ]
             );
             return res.status(200).json({ success: true });
         }
+
+        // ✅ NEW: Added 'prize_type' column in UPDATE query
         if (type === 'edit_match') {
             await db.execute(
-                `UPDATE matches SET title=?, entry_fee=?, prize_pool=?, per_kill=?, match_type=?, match_time=?, map=?, total_spots=?, room_id=?, room_pass=? WHERE id=?`, 
-                [body.title, body.entry_fee||0, body.prize_pool||0, body.per_kill||0, body.match_type, body.match_time, body.map||'', body.total_spots||48, body.room_id||null, body.room_pass||null, match_id]
+                `UPDATE matches SET title=?, entry_fee=?, prize_pool=?, per_kill=?, prize_type=?, match_type=?, match_time=?, map=?, total_spots=?, room_id=?, room_pass=? WHERE id=?`, 
+                [
+                    body.title, 
+                    body.entry_fee || 0, 
+                    body.prize_pool || 0, 
+                    body.per_kill || 0, 
+                    body.prize_type || 'Top1',
+                    body.match_type, 
+                    body.match_time, 
+                    body.map || '', 
+                    body.total_spots || 48, 
+                    body.room_id || null, 
+                    body.room_pass || null, 
+                    match_id
+                ]
             );
             return res.status(200).json({ success: true });
         }
+
         if (type === 'delete_match') {
             await db.execute('DELETE FROM match_participants WHERE match_id = ?', [id]);
             await db.execute('DELETE FROM matches WHERE id = ?', [id]);
             return res.status(200).json({ success: true });
         }
+
         if (type === 'update_match_status') { 
             await db.execute('UPDATE matches SET status = ? WHERE id = ?', [body.new_status, match_id]); 
             return res.status(200).json({ success: true }); 
         }
+
         if (type === 'kick_participant') {
              const [match] = await db.execute('SELECT entry_fee FROM matches WHERE id = ?', [body.match_id]);
              const [players] = await db.execute('SELECT user_id FROM match_participants WHERE match_id=? AND (team_name=? OR game_name=?)', [body.match_id, body.team_name, body.team_name]);
@@ -84,7 +119,7 @@ module.exports = async (req, res) => {
              return res.status(200).json({ success: true });
         }
 
-        // 🔥 FIX: NORMAL MATCH RESULT UPDATE ADDED HERE
+        // ✅ RESULT UPDATE LOGIC (Critical Feature)
         if (type === 'update_normal_match_result') {
             const { match_id, results } = body; 
             // results = [{ user_id: 1, kills: 2, prize: 50 }, ...]
@@ -97,13 +132,13 @@ module.exports = async (req, res) => {
                     const prize = parseFloat(r.prize) || 0;
                     const kills = parseInt(r.kills) || 0;
 
-                    // 1. Update Participant
+                    // 1. Update Participant Stats
                     await connection.execute(
                         'UPDATE match_participants SET kills = ?, prize_won = ? WHERE match_id = ? AND user_id = ?',
                         [kills, prize, match_id, r.user_id]
                     );
 
-                    // 2. Add Money to Wallet
+                    // 2. Add Money if Prize > 0
                     if (prize > 0) {
                         await connection.execute(
                             'UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?',
@@ -123,12 +158,13 @@ module.exports = async (req, res) => {
 
                 await connection.commit();
                 connection.release();
-                return res.status(200).json({ success: true, message: "Results Updated & Money Sent!" });
+                return res.status(200).json({ success: true, message: "Results Published Successfully!" });
 
             } catch (err) {
                 await connection.rollback();
                 connection.release();
-                return res.status(500).json({ error: err.message });
+                console.error("Result Update Failed:", err);
+                return res.status(500).json({ error: "Failed to update results: " + err.message });
             }
         }
 
@@ -195,7 +231,9 @@ module.exports = async (req, res) => {
             }
         }
 
-        // ... (Stats & Settings logic) ...
+        /* ============================ 
+           STATS & SETTINGS
+        ============================ */
         if (type === 'dashboard_stats') {
              try {
                 const [u] = await db.execute('SELECT COUNT(*) as c FROM users');
@@ -229,7 +267,7 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Unknown Type' });
 
     } catch (e) {
-        console.error("ADMIN ERROR:", e);
+        console.error("ADMIN API ERROR:", e);
         return res.status(500).json({ error: e.message });
     }
 };
