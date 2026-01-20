@@ -98,9 +98,10 @@ module.exports = async (req, res) => {
             return res.json({});
         }
 
-        // --- 4. GET PARTICIPANTS LIST ---
+        // --- 4. GET PARTICIPANTS LIST (Updated with user_id) ---
         if (type === 'get_daily_participants') {
-            const [rows] = await db.execute(`SELECT game_name, team_name, game_uid, game_level, kills, prize_won, joined_at FROM match_participants WHERE match_id = ? ORDER BY team_name DESC, joined_at ASC`, [match_id]);
+            // 🔥 FIX: Added user_id to select query for Admin Result Logic
+            const [rows] = await db.execute(`SELECT user_id, game_name, team_name, game_uid, game_level, kills, prize_won, joined_at FROM match_participants WHERE match_id = ? ORDER BY team_name DESC, joined_at ASC`, [match_id]);
             return res.status(200).json(rows);
         }
 
