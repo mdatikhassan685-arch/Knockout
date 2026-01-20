@@ -9,7 +9,6 @@
     <style>
         .transaction-card { transition: all 0.2s ease; }
         .transaction-card:active { transform: scale(0.98); }
-        /* Toast Animation */
         @keyframes slideIn { from { transform: translateX(-50%) translateY(100%); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
         @keyframes fadeOut { to { opacity: 0; } }
         .toast { animation: slideIn 0.3s ease-out forwards; }
@@ -61,7 +60,7 @@
         </div>
     </div>
 
-    <!-- DEPOSIT MODAL (Updated with Payment Method) -->
+    <!-- DEPOSIT MODAL -->
     <div id="depositModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[60] p-4 backdrop-blur-sm">
         <div class="bg-gray-800 w-full max-w-sm rounded-2xl p-6 border border-gray-600 shadow-2xl">
             <h3 class="text-xl font-bold mb-4 text-white">Add Money</h3>
@@ -73,7 +72,6 @@
             </div>
 
             <form onsubmit="submitDeposit(event)">
-                <!-- Payment Method Select -->
                 <div class="mb-3 relative">
                     <i class="fa-solid fa-credit-card absolute left-3 top-3.5 text-gray-500"></i>
                     <select id="dep_method" class="w-full bg-gray-900 p-3 pl-10 rounded-lg border border-gray-600 outline-none text-white focus:border-blue-500 transition appearance-none">
@@ -115,7 +113,7 @@
         </div>
     </div>
 
-    <!-- ✅ CUSTOM TOAST (No more boring alerts) -->
+    <!-- TOAST -->
     <div id="toastBox" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 bg-gray-800 px-5 py-3 rounded-full border border-gray-600 shadow-2xl hidden min-w-[200px] justify-center toast">
         <i id="toastIcon" class="fa-solid text-lg"></i>
         <span id="toastMsg" class="text-sm font-bold tracking-wide">Message</span>
@@ -137,7 +135,6 @@
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        // 🔥 Custom Toast Function
         function showToast(msg, type) {
             const box = document.getElementById('toastBox');
             const icon = document.getElementById('toastIcon');
@@ -183,13 +180,21 @@
                             const iconClass = isIncome ? 'fa-arrow-down' : 'fa-arrow-up';
                             const bgClass = isIncome ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500';
                             
+                            // 🔥 DATE FIX: DD/MM/YYYY + BD Timezone
+                            const dateObj = new Date(t.created_at);
+                            const dateStr = dateObj.toLocaleString("en-GB", {
+                                day: '2-digit', month: '2-digit', year: 'numeric',
+                                hour: '2-digit', minute: '2-digit', hour12: true,
+                                timeZone: "Asia/Dhaka" // ✅ BANGLADESH TIME
+                            });
+
                             return `
                             <div class="flex justify-between items-center bg-gray-800 p-3 rounded-xl border border-gray-700 transaction-card">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 ${bgClass} rounded-full flex items-center justify-center"><i class="fa-solid ${iconClass}"></i></div>
                                     <div>
                                         <p class="font-bold text-sm text-gray-200">${t.type}</p>
-                                        <p class="text-[10px] text-gray-500">${new Date(t.created_at).toLocaleString()}</p>
+                                        <p class="text-[10px] text-gray-500">${dateStr}</p>
                                     </div>
                                 </div>
                                 <span class="font-bold ${colorClass} text-base">${isIncome?'+':'-'}৳${t.amount}</span>
@@ -210,7 +215,7 @@
             const body = {
                 type: 'deposit',
                 user_id: user.id,
-                method: document.getElementById('dep_method').value, // ✅ New Field
+                method: document.getElementById('dep_method').value,
                 amount: document.getElementById('dep_amount').value,
                 sender_number: document.getElementById('dep_sender').value,
                 trx_id: document.getElementById('dep_trx').value
@@ -219,12 +224,8 @@
             try {
                 const res = await fetch('/api/user', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
                 const data = await res.json();
-                if(data.success) { 
-                    showToast("Deposit Request Sent!", "success"); // ✅ Custom Toast
-                    closeModal('depositModal'); loadWallet(); 
-                } else { 
-                    showToast(data.error, "error"); 
-                }
+                if(data.success) { showToast("Deposit Request Sent!", "success"); closeModal('depositModal'); loadWallet(); } 
+                else { showToast(data.error, "error"); }
             } catch(e) { showToast("Network Error", "error"); }
             btn.innerText = "Submit Request"; btn.disabled = false;
         }
@@ -237,12 +238,8 @@
             try {
                 const res = await fetch('/api/user', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'withdraw', user_id: user.id, amount: document.getElementById('wd_amount').value, method: document.getElementById('wd_method').value, account_number: document.getElementById('wd_account').value }) });
                 const data = await res.json();
-                if(data.success) { 
-                    showToast("Withdraw Request Sent!", "success"); // ✅ Custom Toast
-                    closeModal('withdrawModal'); loadWallet(); 
-                } else { 
-                    showToast(data.error, "error"); 
-                }
+                if(data.success) { showToast("Withdraw Request Sent!", "success"); closeModal('withdrawModal'); loadWallet(); } 
+                else { showToast(data.error, "error"); }
             } catch(e) { showToast("Network Error", "error"); }
             btn.innerText = "Withdraw"; btn.disabled = false;
         }
