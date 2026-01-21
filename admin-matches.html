@@ -16,7 +16,7 @@
         <div><h1 class="font-bold text-lg leading-tight truncate w-64" id="cat_title">Manage Matches</h1><p class="text-[10px] text-gray-400">Match Operations</p></div>
     </header>
 
-    <!-- Create Match Form (No Changes Here) -->
+    <!-- Create Match Form -->
     <div class="p-4 bg-gray-800 m-4 rounded-xl border border-gray-700 shadow-lg">
         <h3 class="font-bold text-md mb-3 border-b border-gray-600 pb-2 flex justify-between items-center text-white">
             <span id="form_title">Create New Match</span>
@@ -95,8 +95,8 @@
             <div class="grid grid-cols-12 gap-1 text-[9px] font-bold uppercase text-gray-500 px-2 mb-2">
                 <div class="col-span-4">Name / Team</div>
                 <div class="col-span-2 text-center">Rank #</div>
-                <div class="col-span-2 text-center">Kills</div>
-                <div class="col-span-4 text-right">Total Win (৳)</div>
+                <div class="col-span-2 text-center">T. Kills</div>
+                <div class="col-span-4 text-right">Team Win (৳)</div>
             </div>
             
             <div id="result_player_list" class="flex-1 overflow-y-auto pr-1 custom-scroll text-sm space-y-1"></div>
@@ -111,9 +111,8 @@
         </div>
     </div>
 
-    <!-- Players Modal (Existing) -->
+    <!-- Players Modal -->
     <div id="playersModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[80] p-4 backdrop-blur-sm">
-        <!-- ... (Same as before) ... -->
         <div class="bg-gray-800 p-5 rounded-2xl w-full max-w-sm h-[70vh] flex flex-col relative shadow-2xl border border-gray-700 animate-zoom">
             <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
                 <h3 class="font-bold text-lg text-blue-400">Participants</h3>
@@ -133,7 +132,6 @@
         if(urlCatName) document.getElementById('cat_title').innerText = decodeURIComponent(urlCatName);
 
         async function loadCatsAndMatches() {
-            /* ... Same previous loadCatsAndMatches code ... */
             try {
                 const res = await fetch('/api/admin', { method: 'POST', body: JSON.stringify({ type: 'get_categories' }) });
                 const data = await res.json();
@@ -158,17 +156,22 @@
                          const hasRoom = m.room_id ? `<span class="text-green-500 text-[10px] font-bold"><i class="fa-solid fa-check-circle"></i> Room Set</span>` : `<span class="text-yellow-500 text-[10px] font-bold">No Room</span>`;
                          const pType = m.prize_type || 'Top1'; 
                          
+                         // 🔥 TIMEZONE FIX FOR LIST 🔥
+                         const d = new Date(m.match_time);
+                         const dateStr = d.toLocaleString('en-GB', { 
+                             day: '2-digit', month: '2-digit', year: 'numeric',
+                             hour: '2-digit', minute: '2-digit', hour12: true,
+                             timeZone: "Asia/Dhaka" 
+                         });
+
                          return `
                         <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 relative shadow-md mb-3 group">
-                            <div class="flex justify-between items-start mb-2"><div><h4 class="font-bold text-white text-md tracking-wide">#${m.id} ${m.title}</h4><p class="text-xs text-blue-300 mt-1 font-mono">${new Date(m.match_time).toLocaleString()}</p></div><div class="flex gap-2"><button onclick='editMatch(${JSON.stringify(m).replace(/'/g, "&#39;")})' class="bg-yellow-600/20 text-yellow-500 p-1.5 rounded hover:bg-yellow-600 hover:text-black transition"><i class="fa-solid fa-pen"></i></button><button onclick="deleteMatch(${m.id})" class="bg-red-600/20 text-red-500 p-1.5 rounded hover:bg-red-600 hover:text-white transition"><i class="fa-solid fa-trash"></i></button></div></div>
+                            <div class="flex justify-between items-start mb-2"><div><h4 class="font-bold text-white text-md tracking-wide">#${m.id} ${m.title}</h4><p class="text-xs text-blue-300 mt-1 font-mono">${dateStr}</p></div><div class="flex gap-2"><button onclick='editMatch(${JSON.stringify(m).replace(/'/g, "&#39;")})' class="bg-yellow-600/20 text-yellow-500 p-1.5 rounded hover:bg-yellow-600 hover:text-black transition"><i class="fa-solid fa-pen"></i></button><button onclick="deleteMatch(${m.id})" class="bg-red-600/20 text-red-500 p-1.5 rounded hover:bg-red-600 hover:text-white transition"><i class="fa-solid fa-trash"></i></button></div></div>
                             <div class="flex justify-between text-[10px] font-bold uppercase mb-2 text-gray-400"><span>Pool: ${m.prize_pool}</span><span>Kill: ${m.per_kill}</span><span class="text-blue-400">${pType}</span></div>
                             <div class="mb-2 bg-black/20 p-1.5 rounded border border-gray-700/50 flex justify-between items-center">${hasRoom}</div>
                             <div class="grid grid-cols-3 gap-2">
                                 <select onchange="updateStatus(${m.id}, this.value)" class="col-span-1 bg-black/20 text-xs p-1 rounded border border-gray-600 text-white uppercase font-bold outline-none"><option value="upcoming" ${m.status==='upcoming'?'selected':''}>Upcoming</option><option value="open" ${m.status==='open'?'selected':''}>Open</option><option value="live" ${m.status==='live'?'selected':''}>Live</option><option value="completed" ${m.status==='completed'?'selected':''}>Done</option></select>
-                                
-                                <!-- Result Button Updated with Match Type -->
                                 <button onclick="openResultModal(${m.id}, ${m.prize_pool}, ${m.per_kill}, '${pType}', '${m.match_type}')" class="bg-green-600/20 text-green-400 rounded text-xs font-bold border border-green-500/30 hover:bg-green-600 hover:text-white transition">Result</button>
-                                
                                 <button onclick="viewPlayersAdmin(${m.id}, '${m.match_type}')" class="bg-gray-700 text-gray-300 rounded text-xs font-bold border border-gray-600 hover:bg-gray-600 transition">Kick/View</button>
                             </div>
                         </div>`;
@@ -205,8 +208,9 @@
                     const groups = {};
                     players.forEach(p => {
                         const tName = p.team_name || p.game_name;
+                        // টিম নেম দিয়ে গ্রুপ করছি। 
+                        // user_id যার দিয়ে রেজিস্ট্রেশন হয়েছে, তারটাই সেইভ থাকবে কারণ একই user_id ৪ বার থাকে।
                         if (!groups[tName]) {
-                            // প্রথম প্লেয়ারকেই লিডার ধরে তার user_id নিচ্ছি
                             groups[tName] = { name: tName, user_id: p.user_id, isTeam: true };
                         }
                     });
@@ -231,7 +235,6 @@
             } catch(e) { container.innerHTML = '<p class="text-center text-red-500">Error loading</p>'; }
         }
 
-        // ... (বাকি ক্যালকুলেশন লজিক এবং হ্যান্ডেলার আগের মতোই থাকবে) ...
         function calculatePrizes() {
             const pool = parseFloat(document.getElementById('res_pool_val').value) || 0;
             const killRate = parseFloat(document.getElementById('res_kill_val').value) || 0;
@@ -286,7 +289,7 @@
         }
 
         async function saveResults() {
-            if(!confirm("⚠️ Confirm Publish?\n- Money will be sent to wallets.\n- This cannot be undone.")) return;
+            if(!confirm("⚠️ Confirm Publish?\n- Money will be sent to LEADER'S wallet.\n- This cannot be undone.")) return;
             const mid = document.getElementById('res_match_id').value;
             const rows = document.querySelectorAll('.player-res-row');
             let results = [];
@@ -295,6 +298,7 @@
                  const uid = r.getAttribute('data-uid');
                  const k = r.querySelector('.res-kills').value || 0;
                  const p = r.querySelector('.res-total').value || 0;
+                 // Send unique user ID (Leader)
                  if(uid && (parseFloat(p) > 0 || parseInt(k) > 0)) {
                      results.push({ user_id: uid, kills: k, prize: p });
                  }
@@ -306,7 +310,7 @@
             try {
                 const res = await fetch('/api/admin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'update_normal_match_result', match_id: mid, results: results }) });
                 const d = await res.json();
-                if(d.success) { alert("✅ Success! Money Distributed."); document.getElementById('resultModal').style.display='none'; loadMatches(); } else { alert("Error: " + d.error); }
+                if(d.success) { alert("✅ Success! Money Distributed to Leaders."); document.getElementById('resultModal').style.display='none'; loadMatches(); } else { alert("Error: " + d.error); }
             } catch(e) { alert("Network Error"); }
             btn.innerText = "Publish & Send Money"; btn.disabled = false;
         }
@@ -340,27 +344,15 @@
             document.getElementById('submit_btn').innerText="Publish Match"; document.getElementById('cancel_btn').classList.add('hidden');
         }
         
-        async function deleteMatch(id) {
-            if (!confirm("⚠️ Are you sure you want to DELETE this match?\nThis cannot be undone!")) return;
-
-            try {
-                const res = await fetch('/api/admin', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }, // 🔥 এই লাইনটি আগে মিসিং ছিল
-                    body: JSON.stringify({ type: 'delete_match', id: id })
-                });
-
-                const data = await res.json();
-
-                if (data.success) {
-                    loadMatches();
-                } else {
-                    alert("Delete Failed: " + (data.error || "Unknown Server Error"));
-                }
-            } catch (e) {
-                console.error(e);
-                alert("Network Error: Could not delete match.");
-            }
+        async function deleteMatch(id) { 
+            if(confirm("Delete?")) { 
+                await fetch('/api/admin', {
+                    method:'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body:JSON.stringify({type:'delete_match', id:id})
+                }); 
+                loadMatches(); 
+            } 
         }
         async function updateStatus(id, newStatus) { await fetch('/api/admin', {method:'POST', body:JSON.stringify({type:'update_match_status', match_id:id, new_status:newStatus})}); }
         
