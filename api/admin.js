@@ -1,7 +1,7 @@
 const db = require('../db');
 
 module.exports = async (req, res) => {
-    // 1. Setup CORS & Headers
+    // 1. Basic Config & CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -20,14 +20,17 @@ module.exports = async (req, res) => {
             return res.status(200).json(rows);
         }
         if (type === 'add_category') {
-            await db.execute('INSERT INTO categories (title, image, type, status) VALUES (?, ?, ?, ?)', [body.title, body.image, body.cat_type || 'normal', 'open']);
+            await db.execute('INSERT INTO categories (title, image, type, status) VALUES (?, ?, ?, ?)', 
+                [body.title, body.image, body.cat_type || 'normal', 'open']);
             return res.status(200).json({ success: true });
         }
         if (type === 'edit_category') {
-            await db.execute('UPDATE categories SET title=?, image=?, type=? WHERE id=?', [body.title, body.image, body.cat_type, body.id]);
+            await db.execute('UPDATE categories SET title=?, image=?, type=? WHERE id=?', 
+                [body.title, body.image, body.cat_type, body.id]);
             return res.status(200).json({ success: true });
         }
         if (type === 'delete_category') {
+            // Delete matches and participants inside category first
             await db.execute('DELETE FROM match_participants WHERE match_id IN (SELECT id FROM matches WHERE category_id = ?)', [id]);
             await db.execute('DELETE FROM matches WHERE category_id = ?', [id]);
             await db.execute('DELETE FROM categories WHERE id = ?', [id]);
@@ -35,7 +38,7 @@ module.exports = async (req, res) => {
         }
 
         /* ============================ 
-           MATCHES MANAGEMENT (UPDATED)
+           MATCHES MANAGEMENT 
         ============================ */
         if (type === 'get_admin_matches') {
             let sql = `SELECT * FROM matches ORDER BY match_time DESC LIMIT 50`;
@@ -48,55 +51,37 @@ module.exports = async (req, res) => {
             return res.status(200).json(matches);
         }
 
-        // ✅ NEW: Added 'prize_type' column in INSERT query
         if (type === 'create_daily_match') {
             await db.execute(
-                `INSERT INTO matches (category_id, title, entry_fee, prize_pool, per_kill, prize_type, match_type, match_time, map, status, total_spots, room_id, room_pass) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'upcoming', ?, ?, ?)`,
-                [
-                    category_id, 
-                    body.title, 
-                    body.entry_fee || 0, 
-                    body.prize_pool || 0, 
-                    body.per_kill || 0, 
-                    body.prize_type || 'Top1', // Default Value
-                    body.match_type, 
-                    body.match_time, 
-                    body.map, 
-                    body.total_spots || 48, 
-                    body.room_id || null, 
-                    body.room_pass || null
-                ]
+                `INSERT INTO matches (category_id, title, entry_fee, prize_pool, per_kill, match_type, match_time, map, status, total_spots, room_id, room_pass, prize_type) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'upcoming', ?, ?, ?, ?)`,
+                [category_id, body.title, body.entry_fee||0, body.prize_pool||0, body.per_kill||0, body.match_type, body.match_time, body.map, body.total_spots||48, body.room_id||null, body.room_pass||null, body.prize_type||'Top1']
             );
             return res.status(200).json({ success: true });
         }
 
-        // ✅ NEW: Added 'prize_type' column in UPDATE query
         if (type === 'edit_match') {
             await db.execute(
-                `UPDATE matches SET title=?, entry_fee=?, prize_pool=?, per_kill=?, prize_type=?, match_type=?, match_time=?, map=?, total_spots=?, room_id=?, room_pass=? WHERE id=?`, 
-                [
-                    body.title, 
-                    body.entry_fee || 0, 
-                    body.prize_pool || 0, 
-                    body.per_kill || 0, 
-                    body.prize_type || 'Top1',
-                    body.match_type, 
-                    body.match_time, 
-                    body.map || '', 
-                    body.total_spots || 48, 
-                    body.room_id || null, 
-                    body.room_pass || null, 
-                    match_id
-                ]
+                `UPDATE matches SET title=?, entry_fee=?, prize_pool=?, per_kill=?, match_type=?, match_time=?, map=?, total_spots=?, room_id=?, room_pass=?, prize_type=? WHERE id=?`, 
+                [body.title, body.entry_fee||0, body.prize_pool||0, body.per_kill||0, body.match_type, body.match_time, body.map||'', body.total_spots||48, body.room_id||null, body.room_pass||null, body.prize_type||'Top1', match_id]
             );
             return res.status(200).json({ success: true });
         }
 
+        // 🔥 FIX: MATCH DELETE PROBLEM SOLVED
         if (type === 'delete_match') {
-            await db.execute('DELETE FROM match_participants WHERE match_id = ?', [id]);
-            await db.execute('DELETE FROM matches WHERE id = ?', [id]);
-            return res.status(200).json({ success: true });
+            const connection = await db.getConnection();
+            try {
+                // Delete Participants First
+                await connection.execute('DELETE FROM match_participants WHERE match_id = ?', [id]);
+                // Then Delete Match
+                await connection.execute('DELETE FROM matches WHERE id = ?', [id]);
+                return res.status(200).json({ success: true });
+            } catch (err) {
+                return res.status(500).json({ error: "Delete failed: " + err.message });
+            } finally {
+                connection.release();
+            }
         }
 
         if (type === 'update_match_status') { 
@@ -104,25 +89,34 @@ module.exports = async (req, res) => {
             return res.status(200).json({ success: true }); 
         }
 
+        // 🔥 KICK LOGIC (Auto Refund)
         if (type === 'kick_participant') {
              const [match] = await db.execute('SELECT entry_fee FROM matches WHERE id = ?', [body.match_id]);
+             // Find all players in that team
              const [players] = await db.execute('SELECT user_id FROM match_participants WHERE match_id=? AND (team_name=? OR game_name=?)', [body.match_id, body.team_name, body.team_name]);
              
              const refund = parseFloat(match[0]?.entry_fee || 0);
+             
              if(refund > 0) {
+                 // Refund Logic: Assuming Leader paid, but here we refund every user found in that group to be safe
+                 // Or if your system deducts from Leader only, this loop refunds the Leader.
                  for(let p of players) {
                      await db.execute('UPDATE users SET wallet_balance=wallet_balance+? WHERE id=?', [refund, p.user_id]);
                      await db.execute('INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Refund", "Kicked by Admin", "completed", NOW())', [p.user_id, refund]);
                  }
              }
+             // Delete them
              await db.execute('DELETE FROM match_participants WHERE match_id=? AND (team_name=? OR game_name=?)', [body.match_id, body.team_name, body.team_name]);
              return res.status(200).json({ success: true });
         }
 
-        // ✅ RESULT UPDATE LOGIC (CRITICAL FIX FOR SQUAD)
+        /* ============================ 
+           🔥 UPDATE RESULT & SEND MONEY 
+           (Squad/Duo Logic Included)
+        ============================ */
         if (type === 'update_normal_match_result') {
             const { match_id, results } = body; 
-            // results = [{ user_id: 101 (Leader), kills: 5, prize: 500 }, ...]
+            // results = [{ user_id: '101', kills: 5, prize: 500 }, ...]
 
             const connection = await db.getConnection();
             try {
@@ -131,62 +125,42 @@ module.exports = async (req, res) => {
                 for (let r of results) {
                     const prize = parseFloat(r.prize) || 0;
                     const kills = parseInt(r.kills) || 0;
+                    const userId = r.user_id;
 
-                    // 1. Update Participant Stats
-                    // 🔥 FIX: `LIMIT 1` ensures we update stats primarily on one record per user per match
-                    // This prevents double counting in profile stats if multiple rows exist
+                    // 1. Update Kills/Stats for this User/Team
+                    // Squad এর ক্ষেত্রে Leader এর নামে কিল/প্রাইজ জমা হবে (LIMIT 1)
                     await connection.execute(
                         'UPDATE match_participants SET kills = ?, prize_won = ? WHERE match_id = ? AND user_id = ? LIMIT 1',
-                        [kills, prize, match_id, r.user_id]
+                        [kills, prize, match_id, userId]
                     );
-                    
-                    // Note: If you want all team members to show kills, remove LIMIT 1.
-                    // But prize_won MUST be LIMIT 1 to avoid inflation in profile SUM().
-                    // For now, attributing to Leader is safest.
 
-                    // 2. Add Money to Leader's Wallet
+                    // 2. Add Money to Wallet (Only if Prize > 0)
                     if (prize > 0) {
+                        // Update User Balance
                         await connection.execute(
                             'UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?',
-                            [prize, r.user_id]
+                            [prize, userId]
                         );
                         
-                        // 3. Log Transaction
+                        // Transaction History
                         await connection.execute(
                             'INSERT INTO transactions (user_id, amount, type, details, status, created_at) VALUES (?, ?, "Match Winnings", ?, "completed", NOW())',
-                            [r.user_id, prize, `Won in Match #${match_id}`]
+                            [userId, prize, `Won in Match #${match_id}`]
                         );
                     }
                 }
                 
-                // 4. Mark Match Completed
+                // 3. Mark Match as Completed
                 await connection.execute('UPDATE matches SET status = "completed" WHERE id = ?', [match_id]);
 
                 await connection.commit();
                 connection.release();
-                return res.status(200).json({ success: true, message: "Results Published Successfully!" });
+                return res.status(200).json({ success: true, message: "Results Published & Money Sent!" });
 
             } catch (err) {
                 await connection.rollback();
                 connection.release();
-                console.error("Result Update Failed:", err);
-                return res.status(500).json({ error: "Failed to update results: " + err.message });
-            }
-        }
-                    
-                
-                // 4. Mark Match Completed
-                await connection.execute('UPDATE matches SET status = "completed" WHERE id = ?', [match_id]);
-
-                await connection.commit();
-                connection.release();
-                return res.status(200).json({ success: true, message: "Results Published Successfully!" });
-
-            } catch (err) {
-                await connection.rollback();
-                connection.release();
-                console.error("Result Update Failed:", err);
-                return res.status(500).json({ error: "Failed to update results: " + err.message });
+                return res.status(500).json({ error: "Update Failed: " + err.message });
             }
         }
 
@@ -254,7 +228,7 @@ module.exports = async (req, res) => {
         }
 
         /* ============================ 
-           STATS & SETTINGS
+           SYSTEM SETTINGS
         ============================ */
         if (type === 'dashboard_stats') {
              try {
@@ -289,7 +263,7 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Unknown Type' });
 
     } catch (e) {
-        console.error("ADMIN API ERROR:", e);
+        console.error("ADMIN ERROR:", e);
         return res.status(500).json({ error: e.message });
     }
 };
