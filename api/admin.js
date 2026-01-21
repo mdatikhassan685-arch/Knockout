@@ -119,10 +119,10 @@ module.exports = async (req, res) => {
              return res.status(200).json({ success: true });
         }
 
-        // ✅ RESULT UPDATE LOGIC (Critical Feature)
+        // ✅ RESULT UPDATE LOGIC (CRITICAL FIX FOR SQUAD)
         if (type === 'update_normal_match_result') {
             const { match_id, results } = body; 
-            // results = [{ user_id: 1, kills: 2, prize: 50 }, ...]
+            // results = [{ user_id: 101 (Leader), kills: 5, prize: 500 }, ...]
 
             const connection = await db.getConnection();
             try {
@@ -133,12 +133,18 @@ module.exports = async (req, res) => {
                     const kills = parseInt(r.kills) || 0;
 
                     // 1. Update Participant Stats
+                    // 🔥 FIX: `LIMIT 1` ensures we update stats primarily on one record per user per match
+                    // This prevents double counting in profile stats if multiple rows exist
                     await connection.execute(
-                        'UPDATE match_participants SET kills = ?, prize_won = ? WHERE match_id = ? AND user_id = ?',
+                        'UPDATE match_participants SET kills = ?, prize_won = ? WHERE match_id = ? AND user_id = ? LIMIT 1',
                         [kills, prize, match_id, r.user_id]
                     );
+                    
+                    // Note: If you want all team members to show kills, remove LIMIT 1.
+                    // But prize_won MUST be LIMIT 1 to avoid inflation in profile SUM().
+                    // For now, attributing to Leader is safest.
 
-                    // 2. Add Money if Prize > 0
+                    // 2. Add Money to Leader's Wallet
                     if (prize > 0) {
                         await connection.execute(
                             'UPDATE users SET wallet_balance = wallet_balance + ? WHERE id = ?',
@@ -152,6 +158,22 @@ module.exports = async (req, res) => {
                         );
                     }
                 }
+                
+                // 4. Mark Match Completed
+                await connection.execute('UPDATE matches SET status = "completed" WHERE id = ?', [match_id]);
+
+                await connection.commit();
+                connection.release();
+                return res.status(200).json({ success: true, message: "Results Published Successfully!" });
+
+            } catch (err) {
+                await connection.rollback();
+                connection.release();
+                console.error("Result Update Failed:", err);
+                return res.status(500).json({ error: "Failed to update results: " + err.message });
+            }
+        }
+                    
                 
                 // 4. Mark Match Completed
                 await connection.execute('UPDATE matches SET status = "completed" WHERE id = ?', [match_id]);
