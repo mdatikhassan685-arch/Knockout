@@ -53,40 +53,47 @@
         <div id="match_list" class="space-y-4 pb-10"><p class="text-center text-gray-500 mt-10 animate-pulse">Loading matches...</p></div>
     </div>
 
-    <!-- ADMIN PLAYERS MANAGEMENT MODAL (Result Maker included) -->
+    <!-- MODAL 1: PLAYERS & KICK (PARTICIPANTS) -->
     <div id="playersModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[80] p-4 backdrop-blur-sm">
-        <div class="bg-gray-800 p-5 rounded-2xl w-full max-w-sm h-[85vh] flex flex-col relative shadow-2xl border border-gray-700 animate-zoom">
+        <div class="bg-gray-800 p-5 rounded-2xl w-full max-w-sm h-[70vh] flex flex-col relative shadow-2xl border border-gray-700 animate-zoom">
             <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
-                <div>
-                    <h3 class="font-bold text-lg text-green-400">Result Maker</h3>
-                    <p class="text-[10px] text-gray-400">POOL: ৳<span id="rm_pool">0</span> | KILL: ৳<span id="rm_kill">0</span></p>
-                </div>
+                <h3 class="font-bold text-lg text-blue-400">Participants & Kick</h3>
                 <button onclick="document.getElementById('playersModal').style.display='none'" class="text-gray-400 text-2xl hover:text-white">&times;</button>
             </div>
             
-            <input type="hidden" id="rm_match_id">
-            <input type="hidden" id="rm_is_solo"> <!-- 1 for Solo, 0 for Team -->
+            <p id="player_limit_info" class="text-center text-[10px] text-gray-500 font-bold mb-2 uppercase"></p>
+            <div id="modal_player_list" class="flex-1 overflow-y-auto pr-1 custom-scroll text-sm">Loading...</div>
+        </div>
+    </div>
 
-            <!-- Auto Calculate & Reset -->
+    <!-- MODAL 2: RESULT MAKER (PRIZE) -->
+    <div id="resultModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[90] p-4 backdrop-blur-sm">
+        <div class="bg-gray-800 p-5 rounded-2xl w-full max-w-sm h-[85vh] flex flex-col relative shadow-2xl border border-gray-700 animate-zoom">
+            <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
+                <div>
+                    <h3 class="font-bold text-lg text-green-400">Result & Prize</h3>
+                    <p class="text-[10px] text-gray-400">POOL: ৳<span id="rm_pool">0</span> | KILL: ৳<span id="rm_kill">0</span></p>
+                </div>
+                <button onclick="document.getElementById('resultModal').style.display='none'" class="text-gray-400 text-2xl hover:text-white">&times;</button>
+            </div>
+            
+            <input type="hidden" id="rm_match_id">
+            <input type="hidden" id="rm_is_solo">
+
             <div class="grid grid-cols-2 gap-2 mb-3">
                 <button onclick="autoCalculate()" class="bg-blue-600 text-white py-2 rounded font-bold text-xs shadow"><i class="fa-solid fa-calculator"></i> AUTO CALCULATE</button>
                 <button onclick="resetInputs()" class="bg-gray-700 text-gray-300 py-2 rounded font-bold text-xs">Reset</button>
             </div>
 
-            <!-- Header Row -->
             <div class="flex justify-between text-[9px] font-bold text-gray-500 uppercase px-2 mb-1">
                 <span class="w-1/2">Player / Team</span>
                 <span class="w-1/6 text-center">Rank #</span>
                 <span class="w-1/6 text-center">Kills</span>
-                <span class="w-1/6 text-center">Total Win</span>
+                <span class="w-1/6 text-center">Win (৳)</span>
             </div>
 
-            <!-- Dynamic List -->
-            <div id="modal_player_list" class="flex-1 overflow-y-auto pr-1 custom-scroll text-sm space-y-2">
-                Loading...
-            </div>
+            <div id="modal_result_list" class="flex-1 overflow-y-auto pr-1 custom-scroll text-sm space-y-2">Loading...</div>
 
-            <!-- Footer Action -->
             <div class="mt-3 pt-3 border-t border-gray-700">
                 <div class="flex justify-between text-xs font-bold text-gray-400 mb-2">
                     <span>Total Distributing:</span>
@@ -129,25 +136,97 @@
                 if (matches && matches.length > 0) {
                     list.innerHTML = matches.map(m => {
                          const hasRoom = m.room_id ? `<span class="text-green-500 text-[10px] font-bold"><i class="fa-solid fa-check-circle"></i> Room ID Set: ${m.room_id}</span>` : `<span class="text-yellow-500 text-[10px] font-bold"><i class="fa-solid fa-triangle-exclamation"></i> No Room ID</span>`;
-                         // Pass prize and per_kill to modal
                          return `
                         <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 relative shadow-md mb-3 group">
                             <div class="flex justify-between items-start mb-2"><div><h4 class="font-bold text-white text-md tracking-wide">#${m.id} ${m.title}</h4><p class="text-xs text-blue-300 mt-1 font-mono">${new Date(m.match_time).toLocaleString()}</p></div><div class="flex gap-2"><button onclick='editMatch(${JSON.stringify(m).replace(/'/g, "&#39;")})' class="bg-yellow-600/20 text-yellow-500 p-1.5 rounded hover:bg-yellow-600 hover:text-black transition"><i class="fa-solid fa-pen"></i></button><button onclick="deleteMatch(${m.id})" class="bg-red-600/20 text-red-500 p-1.5 rounded hover:bg-red-600 hover:text-white transition"><i class="fa-solid fa-trash"></i></button></div></div>
                             <div class="flex justify-between text-[10px] font-bold uppercase mb-2 text-gray-400"><span>Fee: ${m.entry_fee}</span><span>Prize: ${m.prize_pool}</span><span>Type: ${m.match_type}</span></div>
                             <div class="mb-2 bg-black/20 p-1.5 rounded border border-gray-700/50 flex justify-between items-center">${hasRoom}</div>
-                            <div class="grid grid-cols-2 gap-2"><select onchange="updateStatus(${m.id}, this.value)" class="w-full bg-black/20 text-xs p-1 rounded border border-gray-600 text-white uppercase font-bold outline-none"><option value="upcoming" ${m.status==='upcoming'?'selected':''}>🔵 Upcoming</option><option value="open" ${m.status==='open'?'selected':''}>🟢 Open</option><option value="live" ${m.status==='live'?'selected':''}>🔴 Live</option><option value="completed" ${m.status==='completed'?'selected':''}>🏁 Done</option></select>
-                            <button onclick="openResultMaker(${m.id}, '${m.match_type}', ${m.prize_pool}, ${m.per_kill})" class="bg-green-700 text-white rounded text-xs font-bold border border-green-600 hover:bg-green-600">Result Maker</button></div></div>`;
+                            <div class="grid grid-cols-2 gap-2 mb-2"><select onchange="updateStatus(${m.id}, this.value)" class="w-full bg-black/20 text-xs p-1 rounded border border-gray-600 text-white uppercase font-bold outline-none"><option value="upcoming" ${m.status==='upcoming'?'selected':''}>🔵 Upcoming</option><option value="open" ${m.status==='open'?'selected':''}>🟢 Open</option><option value="live" ${m.status==='live'?'selected':''}>🔴 Live</option><option value="completed" ${m.status==='completed'?'selected':''}>🏁 Done</option></select>
+                            <button onclick="viewPlayersAdmin(${m.id}, '${m.match_type}')" class="bg-blue-600/20 text-blue-400 border border-blue-600/50 rounded text-xs font-bold hover:bg-blue-600 hover:text-white">Participants & Kick</button></div>
+                            <button onclick="openResultMaker(${m.id}, '${m.match_type}', ${m.prize_pool}, ${m.per_kill})" class="w-full bg-green-700 text-white py-2 rounded text-xs font-bold border border-green-600 hover:bg-green-600 uppercase tracking-wide">🏆 Result Maker & Prize</button>
+                        </div>`;
                     }).join('');
                 } else { list.innerHTML = `<div class="text-center py-10 opacity-50"><p>No matches.</p></div>`; }
             } catch(e) { console.error(e); }
         }
 
-        // 🔥 RESULT MAKER LOGIC 🔥
+        // ==========================================
+        // 1. PARTICIPANTS & KICK MODAL
+        // ==========================================
+        async function viewPlayersAdmin(id, matchType) {
+            document.getElementById('playersModal').style.display = 'flex';
+            document.getElementById('player_limit_info').innerText = `Viewing as Admin (${matchType})`;
+            const con = document.getElementById('modal_player_list');
+            con.innerHTML = '<div class="text-center p-10 animate-pulse text-gray-500">Loading list...</div>';
+
+            try {
+                // এখানে আমরা পুরনো tournament.js API ব্যবহার করছি কারণ এখানে সব প্লেয়ারের ডিটেইলস দরকার
+                const res = await fetch('/api/tournament', {method:'POST', body:JSON.stringify({type:'get_daily_participants', match_id:id})});
+                const d = await res.json();
+                
+                if (d.length === 0) {
+                    con.innerHTML = '<div class="text-center p-10 opacity-50">Empty List</div>';
+                    return;
+                }
+
+                let html = '';
+                if (matchType !== 'Solo') {
+                    // Group by Team
+                    const groups = {};
+                    d.forEach(p => { 
+                        let t = p.team_name || "Unknown"; 
+                        if(!groups[t]) groups[t] = [];
+                        groups[t].push(p);
+                    });
+
+                    Object.keys(groups).forEach((tName, idx) => {
+                        let members = groups[tName].map(p => `<div class="flex justify-between text-[10px] text-gray-400 py-1 pl-2 border-l border-gray-600 ml-2"><span>${p.game_name} (L:${p.game_level})</span></div>`).join('');
+                        
+                        html += `
+                        <div class="bg-gray-800 border border-gray-700 rounded-lg mb-2 overflow-hidden shadow-sm">
+                            <div class="p-3 flex justify-between items-center bg-gray-750">
+                                <div><span class="text-sm font-bold text-white uppercase">${tName}</span><span class="text-[9px] text-gray-400 ml-2">(${groups[tName].length} Players)</span></div>
+                                <button onclick="kickUser('${tName}', ${id}, false)" class="bg-red-600/10 text-red-500 border border-red-500/30 px-2 py-1 rounded text-[10px] font-bold hover:bg-red-600 hover:text-white transition uppercase">Kick Team</button>
+                            </div>
+                            <div class="bg-black/20 p-2 border-t border-gray-700">${members}</div>
+                        </div>`;
+                    });
+                } else {
+                    // Solo List
+                    d.forEach((p, idx) => {
+                        html += `
+                        <div class="flex justify-between items-center bg-gray-800 p-3 rounded-lg mb-2 border border-gray-700 shadow-sm">
+                            <div><span class="text-xs font-bold text-white block">${p.game_name}</span><span class="text-[9px] text-gray-400">UID: ${p.game_uid} | Lvl: ${p.game_level}</span></div>
+                            <button onclick="kickUser('${p.game_name}', ${id}, true)" class="text-red-500 bg-red-500/10 border border-red-500/30 px-3 py-1 rounded text-[10px] font-bold hover:bg-red-600 hover:text-white transition uppercase">Kick</button>
+                        </div>`;
+                    });
+                }
+                con.innerHTML = html;
+            } catch(e) { con.innerHTML = '<div class="text-center p-5 text-red-400 text-sm">Failed to Load</div>'; }
+        }
+
+        async function kickUser(name, mid, isSolo) {
+             if(!confirm(`Kick "${name}"? Entry fee will be refunded.`)) return;
+             try {
+                await fetch('/api/admin', { 
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({ type:'kick_participant', match_id:mid, target_name:name, is_solo: isSolo }) 
+                });
+                alert(`Kicked!`);
+                // Reload the modal list
+                const mType = isSolo ? 'Solo' : 'Squad'; 
+                viewPlayersAdmin(mid, mType); 
+             } catch(e) { alert("Failed"); }
+        }
+
+        // ==========================================
+        // 2. RESULT MAKER MODAL
+        // ==========================================
         let currentPerKill = 0;
         let currentPrizePool = 0;
 
         async function openResultMaker(id, matchType, pool, pKill) {
-            document.getElementById('playersModal').style.display = 'flex';
+            document.getElementById('resultModal').style.display = 'flex';
             document.getElementById('rm_match_id').value = id;
             document.getElementById('rm_pool').innerText = pool;
             document.getElementById('rm_kill').innerText = pKill;
@@ -155,16 +234,14 @@
             currentPerKill = parseFloat(pKill);
             currentPrizePool = parseFloat(pool);
 
-            // Determine Solo vs Team
-            // Solo = Solo, Team = Duo, Squad, Clash Squad etc.
             const isSolo = (matchType === 'Solo');
             document.getElementById('rm_is_solo').value = isSolo ? '1' : '0';
 
-            const con = document.getElementById('modal_player_list');
+            const con = document.getElementById('modal_result_list');
             con.innerHTML = '<div class="text-center p-10 animate-pulse text-gray-500">Loading list...</div>';
 
             try {
-                // Call API: get_match_participants_for_result
+                // Call API: get_match_participants_for_result (Admin API for simple list)
                 const res = await fetch('/api/admin', {
                     method:'POST', 
                     headers:{'Content-Type':'application/json'},
@@ -177,12 +254,10 @@
                     return;
                 }
 
-                // Render List
                 con.innerHTML = d.data.map(p => `
                     <div class="bg-gray-900 border border-gray-700 p-2 rounded flex items-center justify-between result-row" data-name="${p.name}">
                         <div class="w-1/2">
                             <p class="font-bold text-xs text-white truncate">${p.name}</p>
-                            <button onclick="kickParticipant('${p.name}', ${id}, ${isSolo})" class="text-[9px] text-red-500 hover:underline">KICK</button>
                         </div>
                         <input type="number" placeholder="#" class="w-1/6 bg-black text-white text-xs p-1 text-center border border-gray-600 rounded input-rank">
                         <input type="number" placeholder="0" value="${p.kills || 0}" class="w-1/6 bg-black text-white text-xs p-1 text-center border border-gray-600 rounded input-kill" oninput="calcTotal()">
@@ -191,24 +266,17 @@
                 `).join('');
                 
                 calcTotal();
-
             } catch(e) { con.innerHTML = '<div class="text-center p-5 text-red-400 text-sm">Failed to Load</div>'; }
         }
 
         function autoCalculate() {
             const rows = document.querySelectorAll('.result-row');
             let rank1Found = false;
-
             rows.forEach(row => {
                 const rank = row.querySelector('.input-rank').value;
                 const kills = parseFloat(row.querySelector('.input-kill').value) || 0;
                 let win = kills * currentPerKill;
-
-                if (rank == '1' && !rank1Found) {
-                    win += currentPrizePool;
-                    rank1Found = true;
-                }
-                
+                if (rank == '1' && !rank1Found) { win += currentPrizePool; rank1Found = true; }
                 row.querySelector('.input-win').value = win;
             });
             calcTotal();
@@ -225,69 +293,32 @@
             calcTotal();
         }
 
-        async function kickParticipant(name, mid, isSolo) {
-            if(!confirm(`Kick ${name}? Refund will be sent.`)) return;
-            try {
-                await fetch('/api/admin', { 
-                    method:'POST', headers:{'Content-Type':'application/json'},
-                    body:JSON.stringify({ type:'kick_participant', match_id:mid, target_name:name, is_solo: isSolo }) 
-                });
-                // Reload list
-                const rm_pool = document.getElementById('rm_pool').innerText;
-                const rm_kill = document.getElementById('rm_kill').innerText;
-                const mType = isSolo ? 'Solo' : 'Team'; // Rough logic for reload
-                openResultMaker(mid, mType, rm_pool, rm_kill);
-            } catch(e) { alert("Failed"); }
-        }
-
         async function publishResult() {
             if(!confirm("Are you sure? Money will be sent to wallets.")) return;
-            
-            const btn = document.getElementById('pub_btn');
-            btn.innerText = "Processing..."; btn.disabled = true;
-
+            const btn = document.getElementById('pub_btn'); btn.innerText = "Processing..."; btn.disabled = true;
             const mid = document.getElementById('rm_match_id').value;
             const isSolo = document.getElementById('rm_is_solo').value === '1';
             
-            let stats = [];
-            let prizes = [];
-
+            let stats = []; let prizes = [];
             document.querySelectorAll('.result-row').forEach(row => {
                 const name = row.getAttribute('data-name');
                 const kills = row.querySelector('.input-kill').value || 0;
                 const win = row.querySelector('.input-win').value || 0;
-
                 stats.push({ name: name, kills: kills });
                 if(parseFloat(win) > 0) prizes.push({ name: name, amount: win });
             });
 
             try {
-                // 1. Update Kills
-                await fetch('/api/admin', {
-                    method: 'POST', headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({ type: 'update_normal_match_stats', match_id: mid, stats: stats, is_solo: isSolo })
-                });
-
-                // 2. Distribute Prizes
-                const res = await fetch('/api/admin', {
-                    method: 'POST', headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({ type: 'distribute_normal_prizes', match_id: mid, prizes: prizes, is_solo: isSolo })
-                });
-
+                await fetch('/api/admin', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ type: 'update_normal_match_stats', match_id: mid, stats: stats, is_solo: isSolo }) });
+                const res = await fetch('/api/admin', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ type: 'distribute_normal_prizes', match_id: mid, prizes: prizes, is_solo: isSolo }) });
                 const d = await res.json();
-                if(d.success) {
-                    alert("Success! Prizes Sent.");
-                    document.getElementById('playersModal').style.display = 'none';
-                    loadMatches();
-                } else { alert("Error: " + d.error); }
-
+                if(d.success) { alert("Success! Prizes Sent."); document.getElementById('resultModal').style.display = 'none'; loadMatches(); } else { alert("Error: " + d.error); }
             } catch(e) { alert("Network Error"); }
-
             btn.innerText = "PUBLISH & SEND MONEY"; btn.disabled = false;
         }
 
-        // --- Other Create/Edit Logic Same as Previous ---
-        async function handleMatch() {
+        // --- Other Create/Edit Logic ---
+        async function handleMatch() { /* Same as before */ 
             const id=document.getElementById('match_id').value, title=document.getElementById('m_title').value;
             let timeVal=document.getElementById('m_time').value; 
             const cat=document.getElementById('cat_id').value||urlCatId;
@@ -298,19 +329,12 @@
             try { await fetch('/api/admin', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}); resetForm(); loadMatches(); } catch(e){ alert("Error"); }
             document.getElementById('submit_btn').disabled=false;
         }
-
-        function editMatch(m) { 
+        function editMatch(m) { /* Same as before */
             document.getElementById('match_id').value=m.id; document.getElementById('m_title').value=m.title; document.getElementById('m_fee').value=m.entry_fee; document.getElementById('m_prize').value=m.prize_pool; document.getElementById('m_kill').value=m.per_kill; document.getElementById('m_map').value=m.map; document.getElementById('m_type').value=m.match_type; document.getElementById('m_spots').value=m.total_spots; document.getElementById('room_id').value=m.room_id||''; document.getElementById('room_pass').value=m.room_pass||'';
             if(m.match_time){ const d=new Date(m.match_time); const o=d.getTimezoneOffset()*60000; document.getElementById('m_time').value=new Date(d-o).toISOString().slice(0,16); }
             document.getElementById('submit_btn').innerText="Update Match"; document.getElementById('cancel_btn').classList.remove('hidden'); document.getElementById('form_title').innerText="Edit Mode"; scrollTo(0,0);
         }
-
-        function resetForm() {
-            document.getElementById('match_id').value=''; document.getElementById('m_title').value=''; document.getElementById('m_time').value=''; document.getElementById('room_id').value=''; document.getElementById('room_pass').value='';
-            if(!urlCatId) document.getElementById('cat_id').value='';
-            document.getElementById('submit_btn').innerText="Publish Match"; document.getElementById('cancel_btn').classList.add('hidden');
-        }
-
+        function resetForm() { document.getElementById('match_id').value=''; document.getElementById('m_title').value=''; document.getElementById('m_time').value=''; document.getElementById('room_id').value=''; document.getElementById('room_pass').value=''; if(!urlCatId) document.getElementById('cat_id').value=''; document.getElementById('submit_btn').innerText="Publish Match"; document.getElementById('cancel_btn').classList.add('hidden'); }
         async function deleteMatch(id) { if(confirm("Delete?")) { await fetch('/api/admin', {method:'POST', body:JSON.stringify({type:'delete_match', id:id})}); loadMatches(); } }
         async function updateStatus(id, newStatus) { await fetch('/api/admin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ type: 'update_match_status', match_id: id, new_status: newStatus }) }); }
 
