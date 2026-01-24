@@ -3,143 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Match Score & Payout</title>
+    <title>Match Scoring & Payout</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         .custom-scroll::-webkit-scrollbar { width: 3px; background: #1f2937; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #eab308; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #3b82f6; }
+        .input-dark { background: #111827; border: 1px solid #374151; color: white; border-radius: 8px; outline: none; }
+        .input-dark:focus { border-color: #3b82f6; }
     </style>
 </head>
-<body class="bg-gray-900 text-white pb-32">
+<body class="bg-gray-900 text-white pb-20 select-none">
 
+    <!-- Header -->
     <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50 border-b border-gray-700">
         <a href="javascript:history.back()" class="mr-4 text-gray-400 active:scale-90"><i class="fa-solid fa-arrow-left text-xl"></i></a>
-        <div><h1 class="font-bold text-lg text-yellow-500">Update Match Result</h1><p class="text-[10px] text-gray-400">Step 1: Save Score | Step 2: Pay Winners</p></div>
+        <div>
+            <h1 class="font-bold text-lg text-yellow-500">Update Match Result</h1>
+            <p class="text-[10px] text-gray-400 uppercase tracking-widest" id="match_id_display">Loading Match...</p>
+        </div>
     </header>
 
     <div class="p-4 max-w-lg mx-auto">
-        <!-- 1. Score Entry Section -->
+        
+        <!-- STEP 1: SCORE INPUT -->
         <div class="mb-6">
-            <h3 class="text-xs font-bold text-gray-500 uppercase mb-3 ml-1">Step 1: Enter Rank & Kills</h3>
-            <div id="input_list" class="space-y-2">
-                <p class="text-center text-gray-700 py-10 animate-pulse">Loading participants...</p>
+            <h3 class="text-xs font-bold text-blue-400 mb-3 uppercase tracking-wider pl-2 border-l-2 border-blue-500">Step 1: Enter Rank & Kills</h3>
+            <div id="participant_list" class="space-y-2">
+                <p class="text-center py-10 animate-pulse text-gray-500">Loading Participants...</p>
             </div>
-            <button onclick="saveScoresOnly()" id="score_btn" class="w-full mt-4 bg-blue-600 py-3 rounded-xl font-bold shadow-lg uppercase text-sm">Save Scores Only</button>
         </div>
 
-        <hr class="border-gray-800 my-8">
+        <!-- 🛠️ TWO ACTION BUTTONS -->
+        <div class="grid grid-cols-1 gap-3">
+            <button onclick="saveScoresOnly()" id="save_btn" class="w-full bg-blue-600 hover:bg-blue-500 py-3.5 rounded-xl font-black shadow-lg uppercase tracking-widest transition active:scale-95">
+                <i class="fa-solid fa-floppy-disk mr-2"></i> Save Scores Only
+            </button>
+            
+            <button onclick="openPayoutPreview()" id="pay_btn" class="w-full bg-green-600 hover:bg-green-500 py-3.5 rounded-xl font-black shadow-lg uppercase tracking-widest transition active:scale-95 border-b-4 border-green-800">
+                <i class="fa-solid fa-money-bill-wave mr-2"></i> Calculate & Pay Winners
+            </button>
+        </div>
 
-        <!-- 2. Payout Section -->
-        <div id="payout_section" class="hidden">
-            <h3 class="text-xs font-bold text-green-500 uppercase mb-3 ml-1">Step 2: Review & Edit Prizes</h3>
-            <div id="payout_summary" class="space-y-3 mb-6"></div>
-            <button onclick="confirmPayout()" id="confirm_btn" class="w-full bg-green-600 py-4 rounded-xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition">Distribute Money & Complete Match</button>
+    </div>
+
+    <!-- 💰 PAYOUT PREVIEW MODAL (Editable) -->
+    <div id="payoutModal" class="fixed inset-0 bg-black/95 hidden items-center justify-center z-[100] p-4 backdrop-blur-sm">
+        <div class="bg-gray-800 w-full max-w-sm rounded-2xl border border-gray-700 shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h3 class="font-bold text-green-400">Step 2: Payout Preview</h3>
+                <button onclick="document.getElementById('payoutModal').style.display='none'" class="text-gray-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <div class="p-4 overflow-y-auto custom-scroll flex-1 space-y-3" id="payout_list">
+                <!-- Editable prize list will load here -->
+            </div>
+
+            <div class="p-4 bg-gray-900 rounded-b-2xl border-t border-gray-700">
+                <p class="text-[10px] text-gray-500 text-center mb-3">Check everything! Payouts are irreversible.</p>
+                <button onclick="finalizePayout()" id="final_pay_btn" class="w-full bg-green-600 py-3.5 rounded-xl font-black uppercase tracking-widest shadow-xl">
+                    Final Send Money ৳
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
-        const mid = new URLSearchParams(window.location.search).get('match_id');
-        let players = [], isSolo = true;
+        const params = new URLSearchParams(window.location.search);
+        const matchId = params.get('match_id');
+        let isSolo = false;
 
-        async function loadData() {
-            const res = await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'get_match_participants_for_result', match_id:mid }) });
-            const d = await res.json();
-            players = d.data; isSolo = (d.type === 'Solo');
-            
-            document.getElementById('input_list').innerHTML = players.map(p => `
-                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center p-row" data-name="${p.name}">
-                    <div class="w-1/3 pr-2">
-                        <p class="font-bold text-sm truncate">${p.name}</p>
-                        <p class="text-[9px] text-gray-500 uppercase">${isSolo?'Player':'Team Leader'}</p>
-                    </div>
-                    <div class="flex gap-2 w-2/3">
-                        <input type="number" value="${p.rank || ''}" placeholder="Rank #" class="w-1/2 bg-gray-900 p-2 rounded border border-gray-600 text-center text-sm rank-val focus:border-yellow-500 outline-none">
-                        <input type="number" value="${p.kills || ''}" placeholder="Kills" class="w-1/2 bg-gray-900 p-2 rounded border border-gray-600 text-center text-sm kill-val focus:border-red-500 outline-none">
-                    </div>
-                </div>`).join('');
-        }
+        if(!matchId) { alert("Invalid Match ID!"); window.location.href = '/admin-matches'; }
+        document.getElementById('match_id_display').innerText = "Match ID: #" + matchId;
 
-        // --- ৩. শুধু স্কোর সেভ করা ---
-        async function saveScoresOnly() {
-            const btn = document.getElementById('score_btn'); btn.disabled = true; btn.innerText = "Saving...";
-            let stats = [];
-            document.querySelectorAll('.p-row').forEach(row => {
-                stats.push({ name: row.getAttribute('data-name'), rank: parseInt(row.querySelector('.rank-val').value) || 0, kills: parseInt(row.querySelector('.kill-val').value) || 0 });
-            });
-
+        async function loadParticipants() {
             try {
-                const res = await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'update_match_results_only', match_id:mid, stats, is_solo: isSolo }) });
+                const res = await fetch('/api/admin', { 
+                    method: 'POST', headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ type: 'get_match_participants_for_result', match_id: matchId }) 
+                });
                 const d = await res.json();
-                if(d.success) { 
-                    alert("Scores Saved! Now review the prizes below."); 
-                    loadPayoutPreview(); 
-                }
-            } catch(e) { alert("Error saving scores"); }
-            btn.disabled = false; btn.innerText = "Save Scores Only";
-        }
-
-        // --- ৪. প্রাইজ রিভিউ এবং এডিট করার ব্যবস্থা ---
-        async function loadPayoutPreview() {
-            const res = await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'get_prize_distribution_data', match_id:mid }) });
-            const d = await res.json();
-            
-            const list = document.getElementById('payout_summary');
-            document.getElementById('payout_section').classList.remove('hidden');
-
-            list.innerHTML = d.data.map((p, i) => {
-                // অটো ক্যালকুলেটেড টাকা
-                const autoAmount = (parseFloat(p.kill_money) + parseFloat(p.rank_prize)).toFixed(2);
+                isSolo = (d.type === 'Solo');
                 
-                return `
-                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 payout-row" data-name="${p.name}">
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <p class="font-bold text-white text-sm">${p.name}</p>
-                            <p class="text-[9px] text-gray-500 uppercase">Rank: ${p.rank} | Kills: ${p.kills} (Auto: ৳${autoAmount})</p>
+                const con = document.getElementById('participant_list');
+                if (d.data.length === 0) { con.innerHTML = "<p class='text-center py-10 opacity-50'>No participants found.</p>"; return; }
+
+                con.innerHTML = d.data.map(p => `
+                    <div class="bg-gray-800 p-3 rounded-xl border border-gray-700 flex items-center justify-between gap-3 player-row" data-name="${p.name}">
+                        <div class="w-1/3">
+                            <p class="font-bold text-xs truncate text-white uppercase">${p.name}</p>
+                            <p class="text-[9px] text-gray-500 font-bold">${isSolo ? 'PLAYER' : 'TEAM LEADER'}</p>
                         </div>
-                        <span class="text-[10px] bg-black/40 px-2 py-1 rounded text-yellow-500 font-bold border border-yellow-500/20">WINNER</span>
+                        <div class="flex gap-2 w-2/3">
+                            <div class="flex-1">
+                                <label class="text-[8px] text-gray-500 uppercase font-black ml-1">Rank</label>
+                                <input type="number" value="${p.rank || 0}" class="w-full input-dark p-2 text-center text-xs font-bold rank-input" placeholder="#">
+                            </div>
+                            <div class="flex-1">
+                                <label class="text-[8px] text-gray-500 uppercase font-black ml-1">Kills</label>
+                                <input type="number" value="${p.kills || 0}" class="w-full input-dark p-2 text-center text-xs font-bold kills-input" placeholder="0">
+                            </div>
+                        </div>
                     </div>
-                    <div class="relative">
-                        <span class="absolute left-3 top-2.5 text-gray-500 text-sm font-bold">৳</span>
-                        <input type="number" value="${autoAmount}" class="w-full bg-gray-900 p-2.5 pl-8 rounded-lg border border-green-500/30 text-green-400 font-black outline-none focus:border-green-500 final-prize-val">
-                    </div>
-                    <p class="text-[8px] text-gray-600 mt-1">* You can manually change the amount above</p>
-                </div>`;
-            }).join('');
-            
-            // নিচে স্ক্রল করবে যাতে এডমিন বুঝতে পারে পরের ধাপ এসেছে
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                `).join('');
+            } catch(e) { console.error(e); }
         }
 
-        // --- ৫. ফাইনাল টাকা পাঠানো ---
-        async function confirmPayout() {
-            let finalPrizes = [];
+        // --- BUTTON 1: SAVE SCORES ---
+        async function saveScoresOnly() {
+            const btn = document.getElementById('save_btn');
+            btn.disabled = true; btn.innerText = "SAVING...";
+
+            const stats = [];
+            document.querySelectorAll('.player-row').forEach(row => {
+                stats.push({
+                    name: row.getAttribute('data-name'),
+                    rank: parseInt(row.querySelector('.rank-input').value) || 0,
+                    kills: parseInt(row.querySelector('.kills-input').value) || 0
+                });
+            });
+
+            try {
+                const res = await fetch('/api/admin', { 
+                    method: 'POST', headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ type: 'update_match_results_only', match_id: matchId, stats, is_solo: isSolo }) 
+                });
+                const d = await res.json();
+                if(d.success) alert("✅ Scores Saved Successfully!");
+                else alert("Error: " + d.error);
+            } catch(e) { alert("Network Error"); }
+            btn.disabled = false; btn.innerText = "SAVE SCORES ONLY";
+        }
+
+        // --- BUTTON 2: OPEN PAYOUT PREVIEW ---
+        async function openPayoutPreview() {
+            // First auto-save current scores
+            await saveScoresOnly();
+
+            const con = document.getElementById('payout_list');
+            con.innerHTML = "<p class='text-center py-10 animate-bounce'>Calculating Prizes...</p>";
+            document.getElementById('payoutModal').style.display = 'flex';
+
+            try {
+                const res = await fetch('/api/admin', { 
+                    method: 'POST', headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ type: 'get_prize_distribution_data', match_id: matchId }) 
+                });
+                const d = await res.json();
+                
+                // d.data = [{name, rank, kills, kill_money, rank_prize}, ...]
+                con.innerHTML = d.data.map(p => {
+                    const total = p.rank_prize + p.kill_money;
+                    return `
+                    <div class="bg-gray-900 p-3 rounded-xl border border-gray-700 flex justify-between items-center payout-row" data-name="${p.name}">
+                        <div>
+                            <p class="text-xs font-bold text-white uppercase">${p.name}</p>
+                            <p class="text-[9px] text-blue-400 font-bold">Rank #${p.rank} | ${p.kills} Kills</p>
+                        </div>
+                        <div class="w-24 relative">
+                            <span class="absolute left-2 top-2 text-[10px] text-green-500 font-bold">৳</span>
+                            <input type="number" value="${total}" class="w-full bg-black border border-gray-600 rounded-lg p-2 pl-5 text-right text-green-400 font-black text-sm amount-final">
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch(e) { alert("Load Failed"); }
+        }
+
+        // --- FINAL SUBMIT: SEND MONEY ---
+        async function finalizePayout() {
+            if(!confirm("Are you sure? This will send REAL MONEY to user wallets!")) return;
+
+            const btn = document.getElementById('final_pay_btn');
+            btn.disabled = true; btn.innerText = "PROCESSING...";
+
+            const prizes = [];
             document.querySelectorAll('.payout-row').forEach(row => {
-                const amt = parseFloat(row.querySelector('.final-prize-val').value) || 0;
-                if(amt > 0) {
-                    finalPrizes.push({ name: row.getAttribute('data-name'), amount: amt });
+                const amount = parseFloat(row.querySelector('.amount-final').value) || 0;
+                if(amount > 0) {
+                    prizes.push({ name: row.getAttribute('data-name'), amount: amount });
                 }
             });
 
-            if(finalPrizes.length === 0) return alert("No prize amounts entered!");
-            if(!confirm(`Send money to ${finalPrizes.length} winners? This cannot be undone.`)) return;
-
-            const btn = document.getElementById('confirm_btn'); btn.disabled = true; btn.innerText = "Processing Payout...";
+            if(prizes.length === 0) { alert("No prizes to distribute!"); btn.disabled = false; return; }
 
             try {
-                const res = await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'distribute_prizes_final', match_id:mid, prizes: finalPrizes, is_solo: isSolo }) });
+                const res = await fetch('/api/admin', { 
+                    method: 'POST', headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ type: 'distribute_prizes_final', match_id: matchId, prizes, is_solo: isSolo }) 
+                });
                 const d = await res.json();
-                if(d.success) { 
-                    alert("✅ Money Sent Successfully! Match is now COMPLETED."); 
-                    window.location.href = '/admin-matches'; 
-                } else { alert("Error: " + d.error); }
-            } catch(e) { alert("Network Error"); }
-            
-            btn.disabled = false; btn.innerText = "Distribute Money & Complete Match";
+                if(d.success) {
+                    alert("🏆 Prizes Distributed & Match Completed!");
+                    window.location.href = '/admin-matches';
+                } else {
+                    alert("Error: " + d.error);
+                }
+            } catch(e) { alert("Fatal Error"); }
+            btn.disabled = false; btn.innerText = "FINAL SEND MONEY ৳";
         }
 
-        loadData();
+        loadParticipants();
     </script>
 </body>
 </html>
