@@ -3,284 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Match Manager</title>
+    <title>Match Manager - Knockout</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>.custom-scroll::-webkit-scrollbar { width: 4px; background: #374151; } .custom-scroll::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 4px; }</style>
 </head>
 <body class="bg-gray-900 text-white pb-24 select-none">
 
     <!-- Header -->
     <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50 border-b border-gray-700">
-        <a href="/admin-dashboard.html" class="mr-4 text-gray-400 active:scale-90"><i class="fa-solid fa-arrow-left text-xl"></i></a>
-        <div><h1 class="font-bold text-lg leading-tight truncate w-64" id="cat_title">Manage Matches</h1><p class="text-[10px] text-gray-400">Match Operations</p></div>
+        <a href="/admin" class="mr-4 text-gray-400 active:scale-90"><i class="fa-solid fa-arrow-left text-xl"></i></a>
+        <div><h1 class="font-bold text-lg" id="cat_title_display">Manage Matches</h1><p class="text-[10px] text-gray-400">Match Operations</p></div>
     </header>
 
-    <!-- Create Match Form -->
+    <!-- Create/Edit Form -->
     <div class="p-4 bg-gray-800 m-4 rounded-xl border border-gray-700 shadow-lg">
-        <h3 class="font-bold text-md mb-3 border-b border-gray-600 pb-2 flex justify-between items-center text-white">
+        <h3 class="font-bold text-md mb-3 border-b border-gray-600 pb-2 flex justify-between items-center">
             <span id="form_title">Create New Match</span>
-            <button onclick="resetForm()" id="cancel_btn" class="hidden text-[10px] bg-red-900 text-red-300 px-2 py-1 rounded border border-red-700">Cancel</button>
+            <button onclick="resetForm()" id="cancel_btn" class="hidden text-[10px] bg-red-900 text-red-300 px-2 py-1 rounded">Cancel</button>
         </h3>
+        
         <input type="hidden" id="match_id">
-        <select id="cat_id" class="w-full bg-gray-900 p-3 mb-2 rounded-lg border border-gray-600 outline-none text-white focus:border-blue-500"><option value="">Loading Games...</option></select>
-        <input type="text" id="m_title" placeholder="Match Title" class="w-full bg-gray-900 p-3 rounded-lg mb-2 text-sm border border-gray-600 outline-none text-white focus:border-blue-500 transition">
+        <select id="cat_id" class="w-full bg-gray-900 p-3 mb-2 rounded-lg border border-gray-600 outline-none text-sm focus:border-blue-500">
+            <option value="">Select Game...</option>
+        </select>
+        
+        <input type="text" id="m_title" placeholder="Match Title (e.g. Solo Rush #101)" class="w-full bg-gray-900 p-3 rounded-lg mb-2 text-sm border border-gray-600 outline-none focus:border-blue-500">
+        
         <div class="grid grid-cols-2 gap-2 mb-2">
-            <input type="number" id="m_fee" placeholder="Entry Fee" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm">
-            <input type="number" id="m_prize" placeholder="Winning Prize" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm">
+            <input type="number" id="m_fee" placeholder="Entry Fee (৳)" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-sm">
+            <input type="number" id="m_prize" placeholder="Winning Prize (৳)" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-sm">
         </div>
+
         <div class="grid grid-cols-2 gap-2 mb-2">
-            <select id="m_type" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm">
-                <option value="Solo">Solo</option><option value="Duo">Duo</option><option value="Squad">Squad</option><option value="Clash Squad">Clash Squad</option>
+            <select id="m_type" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-sm">
+                <option value="Solo">Solo</option>
+                <option value="Duo">Duo</option>
+                <option value="Squad">Squad</option>
+                <option value="Clash Squad">Clash Squad</option>
             </select>
-            <input type="number" id="m_spots" placeholder="Total Spots" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm">
+            <input type="number" id="m_spots" placeholder="Total Spots" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-sm">
         </div>
+
         <div class="grid grid-cols-2 gap-2 mb-2">
-            <input type="number" id="m_kill" placeholder="Per Kill" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm">
-            <input type="text" id="m_map" placeholder="Map" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-white text-sm">
+            <input type="number" id="m_kill" placeholder="Per Kill (৳)" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-sm">
+            <input type="text" id="m_map" placeholder="Map Name" class="bg-gray-900 p-3 rounded-lg border border-gray-600 outline-none text-sm">
         </div>
+
+        <div class="mb-3">
+            <label class="text-[10px] text-gray-500 font-bold uppercase ml-1">Winners Count (Ranking Prize)</label>
+            <select id="m_winners" class="w-full bg-gray-900 p-3 rounded-lg border border-gray-600 text-white text-sm outline-none focus:border-yellow-500">
+                <option value="1">1 Winner (100%)</option>
+                <option value="2">Top 2 (70% - 30%)</option>
+                <option value="3">Top 3 (50% - 30% - 20%)</option>
+                <option value="5">Top 5 (Equal/Official Split)</option>
+            </select>
+        </div>
+
         <input type="datetime-local" id="m_time" class="w-full bg-gray-900 p-3 rounded-lg mb-4 border border-gray-600 outline-none text-gray-400 text-sm">
+        
         <div class="grid grid-cols-2 gap-2 mb-4 bg-black/20 p-2 rounded border border-gray-600/50">
             <input type="text" id="room_id" placeholder="Room ID" class="bg-transparent border-b border-gray-500 text-white text-xs p-1 outline-none">
             <input type="text" id="room_pass" placeholder="Password" class="bg-transparent border-b border-gray-500 text-white text-xs p-1 outline-none">
         </div>
+
         <button onclick="handleMatch()" id="submit_btn" class="w-full bg-blue-600 py-3 rounded-lg font-bold shadow-lg text-white">Publish Match</button>
     </div>
 
     <!-- Match List -->
     <div class="px-4">
         <h3 class="font-bold text-lg mb-3 border-l-4 border-blue-500 pl-2">Active Matches</h3>
-        <div id="match_list" class="space-y-4 pb-10"><p class="text-center text-gray-500 mt-10 animate-pulse">Loading matches...</p></div>
-    </div>
-
-    <!-- ADMIN PLAYERS MANAGEMENT MODAL -->
-    <div id="playersModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[80] p-4 backdrop-blur-sm">
-        <div class="bg-gray-800 p-5 rounded-2xl w-full max-w-sm h-[70vh] flex flex-col relative shadow-2xl border border-gray-700 animate-zoom">
-            <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
-                <h3 class="font-bold text-lg text-blue-400">Participants</h3>
-                <button onclick="document.getElementById('playersModal').style.display='none'" class="text-gray-400 text-2xl hover:text-white">&times;</button>
-            </div>
-            
-            <p id="player_limit_info" class="text-center text-[10px] text-gray-500 font-bold mb-2 uppercase"></p>
-            <div id="modal_player_list" class="flex-1 overflow-y-auto pr-1 custom-scroll text-sm">Loading...</div>
-        </div>
+        <div id="match_list" class="space-y-4 pb-10"><p class="text-center text-gray-500 mt-10">Loading...</p></div>
     </div>
 
     <script>
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (!user || user.role !== 'admin') window.location.href = 'index.html';
         const urlParams = new URLSearchParams(window.location.search);
-        const urlCatId = urlParams.get('cat_id');
-        const urlCatName = urlParams.get('name');
-        if(urlCatName) document.getElementById('cat_title').innerText = decodeURIComponent(urlCatName);
+        const catIdFromUrl = urlParams.get('cat_id');
 
-        async function loadCatsAndMatches() {
-            try {
-                const res = await fetch('/api/admin', { method: 'POST', body: JSON.stringify({ type: 'get_categories' }) });
-                const data = await res.json();
-                const sel = document.getElementById('cat_id');
-                sel.innerHTML = '<option value="">Select Game...</option>';
-                let foundSelected = false;
-                if(Array.isArray(data)) { data.forEach(c => { if (c.type !== 'official') { const isSel=(urlCatId && c.id == urlCatId); if(isSel) foundSelected=true; sel.innerHTML += `<option value="${c.id}" ${isSel?'selected':''}>${c.title}</option>`; } }); }
-                if(urlCatId && foundSelected) { sel.value = urlCatId; sel.disabled = true; sel.classList.add("bg-gray-800", "text-gray-500"); }
-                loadMatches();
-            } catch(e) { console.error(e); }
+        async function init() {
+            await loadCategories();
+            await loadMatches();
+        }
+
+        async function loadCategories() {
+            const res = await fetch('/api/admin', { method: 'POST', body: JSON.stringify({ type: 'get_categories' }) });
+            const data = await res.json();
+            const sel = document.getElementById('cat_id');
+            data.forEach(c => {
+                if(c.type !== 'official') sel.innerHTML += `<option value="${c.id}">${c.title}</option>`;
+            });
+            if(catIdFromUrl) { sel.value = catIdFromUrl; sel.disabled = true; }
         }
 
         async function loadMatches() {
             const list = document.getElementById('match_list');
-            try {
-                const activeCatId = urlCatId || document.getElementById('cat_id').value;
-                const res = await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'get_admin_matches', category_id:activeCatId||null }) });
-                const matches = await res.json();
-                list.innerHTML = "";
-                if (matches && matches.length > 0) {
-                    list.innerHTML = matches.map(m => {
-                         const hasRoom = m.room_id ? `<span class="text-green-500 text-[10px] font-bold"><i class="fa-solid fa-check-circle"></i> Room ID Set: ${m.room_id}</span>` : `<span class="text-yellow-500 text-[10px] font-bold"><i class="fa-solid fa-triangle-exclamation"></i> No Room ID</span>`;
-                         return `
-                        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 relative shadow-md mb-3 group">
-                            <div class="flex justify-between items-start mb-2"><div><h4 class="font-bold text-white text-md tracking-wide">#${m.id} ${m.title}</h4><p class="text-xs text-blue-300 mt-1 font-mono">${new Date(m.match_time).toLocaleString()}</p></div><div class="flex gap-2"><button onclick='editMatch(${JSON.stringify(m).replace(/'/g, "&#39;")})' class="bg-yellow-600/20 text-yellow-500 p-1.5 rounded hover:bg-yellow-600 hover:text-black transition"><i class="fa-solid fa-pen"></i></button><button onclick="deleteMatch(${m.id})" class="bg-red-600/20 text-red-500 p-1.5 rounded hover:bg-red-600 hover:text-white transition"><i class="fa-solid fa-trash"></i></button></div></div>
-                            <div class="flex justify-between text-[10px] font-bold uppercase mb-2 text-gray-400"><span>Fee: ${m.entry_fee}</span><span>Prize: ${m.prize_pool}</span><span>Type: ${m.match_type}</span></div>
-                            <div class="mb-2 bg-black/20 p-1.5 rounded border border-gray-700/50 flex justify-between items-center">${hasRoom}</div>
-                            <div class="grid grid-cols-2 gap-2"><select onchange="updateStatus(${m.id}, this.value)" class="w-full bg-black/20 text-xs p-1 rounded border border-gray-600 text-white uppercase font-bold outline-none"><option value="upcoming" ${m.status==='upcoming'?'selected':''}>🔵 Upcoming</option><option value="open" ${m.status==='open'?'selected':''}>🟢 Open</option><option value="live" ${m.status==='live'?'selected':''}>🔴 Live</option><option value="completed" ${m.status==='completed'?'selected':''}>🏁 Done</option></select><button onclick="viewPlayersAdmin(${m.id}, '${m.match_type}')" class="bg-gray-700 text-gray-300 rounded text-xs font-bold border border-gray-600 hover:bg-gray-600">Details</button></div></div>`;
-                    }).join('');
-                } else { list.innerHTML = `<div class="text-center py-10 opacity-50"><p>No matches.</p></div>`; }
-            } catch(e) { console.error(e); }
+            const res = await fetch('/api/admin', { 
+                method: 'POST', 
+                body: JSON.stringify({ type: 'get_admin_matches', category_id: catIdFromUrl }) 
+            });
+            const matches = await res.json();
+            list.innerHTML = matches.map(m => `
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 mb-3 shadow-md">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h4 class="font-bold text-white">#${m.id} ${m.title}</h4>
+                            <p class="text-[10px] text-blue-400 font-mono">${new Date(m.match_time).toLocaleString()}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick='editMatch(${JSON.stringify(m)})' class="text-yellow-500 p-1.5 bg-yellow-500/10 rounded"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteMatch(${m.id})" class="text-red-500 p-1.5 bg-red-500/10 rounded"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-gray-400 font-bold uppercase mb-3">
+                        <span>Fee: ${m.entry_fee}</span><span>Prize: ${m.prize_pool}</span><span>Type: ${m.match_type}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <select onchange="updateStatus(${m.id}, this.value)" class="flex-1 bg-gray-900 border border-gray-600 rounded text-xs p-2">
+                            <option value="upcoming" ${m.status==='upcoming'?'selected':''}>Upcoming</option>
+                            <option value="open" ${m.status==='open'?'selected':''}>Open</option>
+                            <option value="live" ${m.status==='live'?'selected':''}>Live</option>
+                            <option value="completed" ${m.status==='completed'?'selected':''}>Completed</option>
+                        </select>
+                        <button onclick="window.location.href='/admin-daily-results?match_id=${m.id}'" class="flex-1 bg-green-600/20 text-green-400 border border-green-600/30 rounded text-xs font-bold px-3">
+                            <i class="fa-solid fa-trophy mr-1"></i> Result
+                        </button>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        // 🔥 ADMIN VIEW (TEAM & SOLO LOGIC FIXED) 🔥
-        async function viewPlayersAdmin(id, matchType) {
-            document.getElementById('playersModal').style.display = 'flex';
-            document.getElementById('player_limit_info').innerText = `Viewing as Admin (${matchType})`;
-            const con = document.getElementById('modal_player_list');
-            con.innerHTML = '<div class="text-center p-10 animate-pulse text-gray-500">Loading list...</div>';
+        async function handleMatch() {
+            const id = document.getElementById('match_id').value;
+            const body = {
+                type: id ? 'edit_match' : 'create_daily_match',
+                match_id: id,
+                category_id: document.getElementById('cat_id').value,
+                title: document.getElementById('m_title').value,
+                entry_fee: document.getElementById('m_fee').value,
+                prize_pool: document.getElementById('m_prize').value,
+                per_kill: document.getElementById('m_kill').value,
+                match_type: document.getElementById('m_type').value,
+                total_spots: document.getElementById('m_spots').value,
+                winners_count: document.getElementById('m_winners').value,
+                map: document.getElementById('m_map').value,
+                match_time: document.getElementById('m_time').value,
+                room_id: document.getElementById('room_id').value,
+                room_pass: document.getElementById('room_pass').value
+            };
 
-            try {
-                const res = await fetch('/api/tournament', {method:'POST', body:JSON.stringify({type:'get_daily_participants', match_id:id})});
-                const d = await res.json();
-                
-                if (d.length === 0) {
-                    con.innerHTML = '<div class="text-center p-10 opacity-50">Empty List</div>';
-                    return;
-                }
-
-                let html = '';
-
-                // --- SQUAD / DUO VIEW (Collapsible Logic) ---
-                if (matchType !== 'Solo') {
-                    const groups = {};
-                    d.forEach(p => { 
-                        let t = p.team_name || "Unknown"; 
-                        if(!groups[t]) groups[t] = [];
-                        groups[t].push(p);
-                    });
-
-                    Object.keys(groups).forEach((tName, idx) => {
-                        // Generate Players List (Hidden initially)
-                        let members = groups[tName].map(p => `
-                            <div class="flex justify-between text-xs py-2 border-b border-gray-700/50 items-center last:border-none">
-                                <div>
-                                    <span class="text-gray-300 font-bold block">${p.game_name}</span>
-                                    <span class="text-[9px] text-gray-500 font-mono">UID: ${p.game_uid || '--'}</span>
-                                </div>
-                                <div class="text-yellow-500 text-[10px] font-bold bg-black/30 px-2 py-0.5 rounded border border-yellow-500/20">
-                                    Lvl: ${p.game_level || '?'}
-                                </div>
-                            </div>
-                        `).join('');
-                        
-                        html += `
-                        <div class="bg-gray-800 border border-gray-700 rounded-lg mb-2 overflow-hidden shadow-sm transition hover:border-blue-500/50">
-                            <!-- Header (Click to Toggle) -->
-                            <div onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.arrow').classList.toggle('rotate-180')" class="p-3 flex justify-between items-center bg-gray-750 cursor-pointer select-none">
-                                <div class="flex items-center gap-3">
-                                    <span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">#${idx+1}</span>
-                                    <div>
-                                        <span class="text-sm font-bold text-white uppercase tracking-wide">${tName}</span>
-                                        <p class="text-[9px] text-gray-400 mt-0.5">${groups[tName].length} Players</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <button onclick="event.stopPropagation(); kickUser('${tName}', ${id}, 'Team')" class="bg-red-600/10 text-red-500 border border-red-500/30 px-2 py-1 rounded text-[10px] font-bold hover:bg-red-600 hover:text-white transition uppercase">Kick</button>
-                                    <i class="fa-solid fa-chevron-down text-gray-500 text-xs transition transform arrow"></i>
-                                </div>
-                            </div>
-                            
-                            <!-- Player List (Hidden by Default) -->
-                            <div class="bg-black/20 p-3 border-t border-gray-700 hidden transition-all duration-300 ease-in-out">
-                                ${members}
-                            </div>
-                        </div>`;
-                    });
-
-                } else {
-                    // --- SOLO VIEW (No Collapse needed) ---
-                    d.forEach((p, idx) => {
-                        html += `
-                        <div class="flex justify-between items-center bg-gray-800 p-3 rounded-lg mb-2 border border-gray-700 shadow-sm">
-                            <div class="flex items-center gap-3">
-                                <span class="text-xs font-bold text-gray-500">#${idx+1}</span>
-                                <div>
-                                    <span class="text-xs font-bold text-white block">${p.game_name}</span>
-                                    <span class="text-[9px] text-gray-400 block">UID: ${p.game_uid} <span class="mx-1">•</span> <b class="text-yellow-500">Lvl: ${p.game_level || '?'}</b></span>
-                                </div>
-                            </div>
-                            <button onclick="kickUser('${p.game_name}', ${id}, 'Player')" class="text-red-500 bg-red-500/10 border border-red-500/30 px-3 py-1 rounded text-[10px] font-bold hover:bg-red-600 hover:text-white transition uppercase">Kick</button>
-                        </div>`;
-                    });
-                }
-                
-                con.innerHTML = html;
-
-            } catch(e) { con.innerHTML = '<div class="text-center p-5 text-red-400 text-sm">Failed to Load</div>'; }
+            await fetch('/api/admin', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+            alert("Match Updated!");
+            resetForm();
+            loadMatches();
         }
-        async function kickUser(name, mid, typeText) {
-             if(!confirm(`⚠️ WARNING: Kick ${typeText} "${name}"?\n- User(s) will be removed.\n- Entry fee will be refunded automatically.`)) return;
-             
-             try {
-                // Kick Logic in Admin API
-                await fetch('/api/admin', { 
-                    method:'POST', headers:{'Content-Type':'application/json'},
-                    body:JSON.stringify({ type:'kick_participant', match_id:mid, team_name:name }) 
-                });
-                alert(`${typeText} Kicked!`);
-                // Reload the modal list instantly
-                const matchData = document.getElementById('m_type').value; // or parse match object
-                // Reload list to see changes (Passing generic 'Squad' or whatever match type if lost scope, better recall logic)
-                // Short Fix: Reloading entire page matches list then reopen (Tricky)
-                // Best Fix: Just reload the list. I need matchType variable here.
-                // Simple Fix: Close Modal and Reload Main List
-                document.getElementById('playersModal').style.display='none';
+
+        function editMatch(m) {
+            document.getElementById('match_id').value = m.id;
+            document.getElementById('m_title').value = m.title;
+            document.getElementById('m_fee').value = m.entry_fee;
+            document.getElementById('m_prize').value = m.prize_pool;
+            document.getElementById('m_kill').value = m.per_kill;
+            document.getElementById('m_type').value = m.match_type;
+            document.getElementById('m_spots').value = m.total_spots;
+            document.getElementById('m_winners').value = m.winners_count || 1;
+            document.getElementById('m_map').value = m.map;
+            document.getElementById('room_id').value = m.room_id || '';
+            document.getElementById('room_pass').value = m.room_pass || '';
+            document.getElementById('submit_btn').innerText = "Update Match";
+            document.getElementById('cancel_btn').classList.remove('hidden');
+            window.scrollTo(0,0);
+        }
+
+        function resetForm() {
+            document.getElementById('match_id').value = '';
+            document.getElementById('submit_btn').innerText = "Publish Match";
+            document.getElementById('cancel_btn').classList.add('hidden');
+        }
+
+        async function updateStatus(id, status) {
+            await fetch('/api/admin', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ type: 'update_match_status', match_id: id, new_status: status }) });
+        }
+
+        async function deleteMatch(id) {
+            if(confirm("Delete Match?")) {
+                await fetch('/api/admin', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ type: 'delete_match', id: id }) });
                 loadMatches();
-             } catch(e) { alert("Failed"); }
-        }
-
-        // --- Other Create/Edit Logic Same as Previous ---
-        // (Just ensure these are present below, pasting shorthand version for completion)
-        
-        async function handleMatch() { /* ... Same handleMatch logic ... */ 
-            const id=document.getElementById('match_id').value, title=document.getElementById('m_title').value;
-            let timeVal=document.getElementById('m_time').value; 
-            const cat=document.getElementById('cat_id').value||urlCatId;
-            if(timeVal) timeVal=new Date(timeVal).toISOString().slice(0,19).replace('T',' ');
-            if(!cat||!title||!timeVal) return alert("Fill Inputs");
-            const body={ type:id?'edit_match':'create_daily_match', match_id:id, category_id:cat, title, entry_fee:document.getElementById('m_fee').value, prize_pool:document.getElementById('m_prize').value, per_kill:document.getElementById('m_kill').value, map:document.getElementById('m_map').value, match_time:timeVal, match_type:document.getElementById('m_type').value, total_spots:document.getElementById('m_spots').value, room_id:document.getElementById('room_id').value, room_pass:document.getElementById('room_pass').value };
-            document.getElementById('submit_btn').disabled=true;
-            try { await fetch('/api/admin', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}); resetForm(); loadMatches(); } catch(e){ alert("Error"); }
-            document.getElementById('submit_btn').disabled=false;
-        }
-
-        function editMatch(m) { /* ... Same editMatch logic ... */ 
-            document.getElementById('match_id').value=m.id; document.getElementById('m_title').value=m.title; document.getElementById('m_fee').value=m.entry_fee; document.getElementById('m_prize').value=m.prize_pool; document.getElementById('m_kill').value=m.per_kill; document.getElementById('m_map').value=m.map; document.getElementById('m_type').value=m.match_type; document.getElementById('m_spots').value=m.total_spots; document.getElementById('room_id').value=m.room_id||''; document.getElementById('room_pass').value=m.room_pass||'';
-            if(m.match_time){ const d=new Date(m.match_time); const o=d.getTimezoneOffset()*60000; document.getElementById('m_time').value=new Date(d-o).toISOString().slice(0,16); }
-            document.getElementById('submit_btn').innerText="Update Match"; document.getElementById('cancel_btn').classList.remove('hidden'); document.getElementById('form_title').innerText="Edit Mode"; scrollTo(0,0);
-        }
-
-        function resetForm() { /* ... Same resetForm logic ... */
-            document.getElementById('match_id').value=''; document.getElementById('m_title').value=''; document.getElementById('m_time').value=''; document.getElementById('room_id').value=''; document.getElementById('room_pass').value='';
-            if(!urlCatId) document.getElementById('cat_id').value='';
-            document.getElementById('submit_btn').innerText="Publish Match"; document.getElementById('cancel_btn').classList.add('hidden');
-        }
-
-        async function deleteMatch(id) { if(confirm("Delete?")) { await fetch('/api/admin', {method:'POST', body:JSON.stringify({type:'delete_match', id:id})}); loadMatches(); } }
-                // --- 5. Status Update Fix ---
-        async function updateStatus(id, newStatus) {
-            // শো "Updating..." temporary
-            const selectEl = event.target;
-            const originalVal = selectEl.value;
-            selectEl.disabled = true;
-
-            try {
-                const res = await fetch('/api/admin', { 
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ 
-                        type: 'update_match_status', 
-                        match_id: id, 
-                        new_status: newStatus 
-                    }) 
-                });
-                
-                const d = await res.json();
-
-                if (d.success) {
-
-
-                    selectEl.disabled = false;
- 
- 
-                } else {
-                    alert("Update Failed: " + d.error);
-                    selectEl.value = originalVal; // Revert
-                    selectEl.disabled = false;
-                }
-            } catch (e) {
-                alert("Network Error");
-                selectEl.value = originalVal;
-                selectEl.disabled = false;
             }
         }
-        loadCatsAndMatches();
+
+        init();
     </script>
 </body>
 </html>
