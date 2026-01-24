@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Match Results</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-gray-900 text-white pb-20">
+
+    <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50">
+        <a href="/admin-matches" class="mr-4 text-gray-400"><i class="fa-solid fa-arrow-left text-xl"></i></a>
+        <div>
+            <h1 class="font-bold text-lg text-blue-400">Match Scoring</h1>
+            <p class="text-[10px] text-gray-400" id="match_title_display">Loading Match...</p>
+        </div>
+    </header>
+
+    <div class="p-4 max-w-lg mx-auto">
+        <div id="scoring_container" class="space-y-3">
+            <!-- Rows injected here -->
+        </div>
+
+        <div class="mt-8 space-y-3">
+            <button onclick="calculatePrizes()" class="w-full bg-indigo-600 py-3 rounded-xl font-bold uppercase shadow-lg">
+                1. Calculate & Preview
+            </button>
+            <div id="preview_box" class="hidden bg-gray-800 p-4 rounded-xl border border-gray-700">
+                <h3 class="text-sm font-bold mb-3 text-yellow-500 uppercase">Payout Preview</h3>
+                <div id="preview_list" class="space-y-2 text-xs"></div>
+                <button onclick="publishFinalResult()" id="final_btn" class="w-full mt-4 bg-green-600 py-3 rounded-xl font-bold uppercase shadow-lg hover:bg-green-500">
+                    2. Send Money & Close Match
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const matchId = params.get('match_id');
+        let participants = [];
+        let isSolo = true;
+
+        async function loadData() {
+            const res = await fetch('/api/admin', { 
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ type: 'get_match_participants_for_result', match_id: matchId })
+            });
+            const d = await res.json();
+            isSolo = d.type === 'Solo';
+            participants = d.data;
+            document.getElementById('match_title_display').innerText = `Match #${matchId} (${d.type} Mode)`;
+            renderRows();
+        }
+
+        function renderRows() {
+            const con = document.getElementById('scoring_container');
+            con.innerHTML = participants.map((p, i) => `
+                <div class="bg-gray-800 p-3 rounded-xl border border-gray-700 flex justify-between items-center score-row" data-name="${p.name}">
+                    <div class="w-1/3">
+                        <p class="font-bold text-sm truncate">${p.name}</p>
+                        <p class="text-[10px] text-gray-500 uppercase">${isSolo ? 'Player' : 'Team'}</p>
+                    </div>
+                    <div class="flex gap-2 w-2/3">
+                        <input type="number" placeholder="Rank" class="rank-input w-full bg-gray-900 p-2 rounded border border-gray-600 text-center text-white text-sm outline-none focus:border-blue-500">
+                        <input type="number" placeholder="Kills" class="kills-input w-full bg-gray-900 p-2 rounded border border-gray-600 text-center text-white text-sm outline-none focus:border-red-500">
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function calculatePrizes() {
+            const rows = document.querySelectorAll('.score-row');
+            let stats = [];
+            rows.forEach(row => {
+                stats.push({
+                    name: row.getAttribute('data-name'),
+                    rank: parseInt(row.querySelector('.rank-input').value) || 0,
+                    kills: parseInt(row.querySelector('.kills-input').value) || 0
+                });
+            });
+
+            const res = await fetch('/api/admin', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ type: 'get_prize_distribution_data', match_id: matchId, stats: stats })
+            });
+            const d = await res.json();
+            
+            const preview = document.getElementById('preview_box');
+            const list = document.getElementById('preview_list');
+            preview.classList.remove('hidden');
+            
+            list.innerHTML = d.data.map(w => `
+                <div class="flex justify-between border-b border-gray-700 pb-1">
+                    <span>${w.name} (Rank ${w.rank}, Kills ${w.kills})</span>
+                    <span class="font-bold text-green-400">৳${w.total.toFixed(2)}</span>
+                </div>
+            `).join('');
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+
+        async function publishFinalResult() {
+            if(!confirm("CONFIRM: This will send real money to user wallets. Continue?")) return;
+            const btn = document.getElementById('final_btn');
+            btn.disabled = true; btn.innerText = "Processing Payouts...";
+
+            const rows = document.querySelectorAll('.score-row');
+            let prizes = [];
+            rows.forEach(row => {
+                prizes.push({
+                    name: row.getAttribute('data-name'),
+                    rank: parseInt(row.querySelector('.rank-input').value) || 0,
+                    kills: parseInt(row.querySelector('.kills-input').value) || 0
+                });
+            });
+
+            try {
+                const res = await fetch('/api/admin', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ type: 'distribute_prizes_final', match_id: matchId, prizes, is_solo: isSolo })
+                });
+                const d = await res.json();
+                if(d.success) {
+                    alert("✅ Result Published & Prizes Distributed!");
+                    window.location.href = '/admin-matches';
+                }
+            } catch(e) { alert("Error"); btn.disabled = false; }
+        }
+
+        loadData();
+    </script>
+</body>
+  </html>
