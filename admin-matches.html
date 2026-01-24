@@ -6,7 +6,11 @@
     <title>Match Manager - Knockout</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>.custom-scroll::-webkit-scrollbar { width: 4px; background: #1f2937; } .custom-scroll::-webkit-scrollbar-thumb { background: #3b82f6; }</style>
+    <style>
+        .custom-scroll::-webkit-scrollbar { width: 4px; background: #1f2937; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+        .rotate-180 { transform: rotate(180deg); }
+    </style>
 </head>
 <body class="bg-gray-900 text-white pb-24 select-none">
 
@@ -55,8 +59,8 @@
         <input type="datetime-local" id="m_time" class="w-full bg-gray-900 p-3 rounded-lg mb-4 border border-gray-600 text-gray-400 text-sm">
         
         <div class="grid grid-cols-2 gap-2 mb-4 bg-black/20 p-2 rounded border border-gray-600">
-            <input type="text" id="room_id" placeholder="Room ID" class="bg-transparent border-b border-gray-600 text-white text-xs p-1 outline-none">
-            <input type="text" id="room_pass" placeholder="Password" class="bg-transparent border-b border-gray-600 text-white text-xs p-1 outline-none">
+            <input type="text" id="room_id" placeholder="Room ID" class="bg-transparent border-b border-gray-500 text-white text-xs p-1 outline-none">
+            <input type="text" id="room_pass" placeholder="Password" class="bg-transparent border-b border-gray-500 text-white text-xs p-1 outline-none">
         </div>
 
         <button onclick="handleMatch()" id="submit_btn" class="w-full bg-blue-600 py-3 rounded-lg font-bold shadow-lg">Publish Match</button>
@@ -67,14 +71,14 @@
         <div id="match_list" class="space-y-4"></div>
     </div>
 
-    <!-- PARTICIPANTS MODAL -->
-    <div id="playersModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[100] p-4 backdrop-blur-sm">
-        <div class="bg-gray-800 p-5 rounded-2xl w-full max-w-sm h-[70vh] flex flex-col relative border border-gray-700">
+    <!-- PLAYERS MANAGEMENT MODAL -->
+    <div id="playersModal" class="fixed inset-0 bg-black/95 hidden items-center justify-center z-[100] p-4 backdrop-blur-sm">
+        <div class="bg-gray-800 p-5 rounded-2xl w-full max-w-sm h-[70vh] flex flex-col relative border border-gray-700 shadow-2xl">
             <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
-                <h3 class="font-bold text-lg text-blue-400">Joined Players</h3>
-                <button onclick="document.getElementById('playersModal').style.display='none'" class="text-gray-400 text-2xl">&times;</button>
+                <h3 class="font-bold text-lg text-blue-400">Participants</h3>
+                <button onclick="document.getElementById('playersModal').style.display='none'" class="text-gray-400 text-2xl hover:text-white">&times;</button>
             </div>
-            <div id="modal_player_list" class="flex-1 overflow-y-auto custom-scroll text-sm"></div>
+            <div id="modal_player_list" class="flex-1 overflow-y-auto custom-scroll space-y-2"></div>
         </div>
     </div>
 
@@ -118,37 +122,55 @@
                             <option value="live" ${m.status==='live'?'selected':''}>Live</option>
                             <option value="completed" ${m.status==='completed'?'selected':''}>Completed</option>
                         </select>
-                        <button onclick="viewParticipants(${m.id})" class="bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded text-xs font-bold py-2">Details / Kick</button>
+                        <button onclick="viewParticipants(${m.id}, '${m.match_type}')" class="bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded text-xs font-bold py-2">Details / Kick</button>
                     </div>
                     <button onclick="window.location.href='/admin-daily-results?match_id=${m.id}'" class="w-full mt-2 bg-green-600/20 text-green-400 border border-green-600/30 rounded text-xs font-bold py-2"><i class="fa-solid fa-trophy mr-1"></i> Update Score & Payout</button>
                 </div>`).join('');
         }
 
-        async function viewParticipants(mid) {
+        async function viewParticipants(mid, matchType) {
             document.getElementById('playersModal').style.display = 'flex';
             const con = document.getElementById('modal_player_list');
             con.innerHTML = "Loading...";
             
-            const res = await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'get_match_participants_for_result', match_id:mid }) });
+            const res = await fetch('/api/tournament', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'get_daily_participants', match_id:mid }) });
             const d = await res.json();
             
-            if(d.data.length === 0) return con.innerHTML = "No players joined.";
+            if(d.length === 0) return con.innerHTML = "<p class='text-center py-10 opacity-50'>No players joined yet.</p>";
             
-            con.innerHTML = d.data.map(p => `
-                <div class="flex justify-between items-center bg-gray-900 p-3 rounded-lg mb-2 border border-gray-700">
-                    <div>
-                        <p class="font-bold text-white">${p.name}</p>
-                        <p class="text-[9px] text-gray-500 uppercase">${d.type === 'Solo' ? 'Player' : 'Team Leader'}</p>
-                    </div>
-                    <button onclick="kickUser(${mid}, '${p.name}', ${d.type === 'Solo'})" class="bg-red-600/20 text-red-500 border border-red-500/30 px-3 py-1 rounded text-[10px] font-bold">KICK</button>
-                </div>`).join('');
+            if(matchType === 'Solo') {
+                con.innerHTML = d.map(p => `
+                    <div class="flex justify-between items-center bg-gray-900 p-3 rounded-lg border border-gray-700">
+                        <div><p class="font-bold text-white text-sm">${p.game_name}</p><p class="text-[9px] text-gray-500">Lvl: ${p.game_level} | UID: ${p.game_uid}</p></div>
+                        <button onclick="kickUser(${mid}, '${p.game_name}', true)" class="bg-red-600/20 text-red-500 px-3 py-1 rounded text-[10px] font-bold">KICK</button>
+                    </div>`).join('');
+            } else {
+                // Duo/Squad/CS Grp Logic
+                const groups = {};
+                d.forEach(p => { const t = p.team_name || "Unknown"; if(!groups[t]) groups[t] = []; groups[t].push(p); });
+                
+                con.innerHTML = Object.keys(groups).map(tName => {
+                    const members = groups[tName].map(m => `<p class='text-[10px] text-gray-400 py-1 border-b border-gray-800 last:border-none'>${m.game_name} (L:${m.game_level} ID:${m.game_uid})</p>`).join('');
+                    return `
+                    <div class="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
+                        <div onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('i').classList.toggle('rotate-180')" class="p-3 flex justify-between items-center cursor-pointer bg-gray-750">
+                            <span class="font-bold text-sm text-blue-300 uppercase">${tName}</span>
+                            <div class="flex items-center gap-3">
+                                <button onclick="event.stopPropagation(); kickUser(${mid}, '${tName}', false)" class="bg-red-600/20 text-red-500 px-2 py-0.5 rounded text-[10px] font-bold">KICK</button>
+                                <i class="fa-solid fa-chevron-down text-gray-600 transition"></i>
+                            </div>
+                        </div>
+                        <div class="hidden p-3 bg-black/20">${members}</div>
+                    </div>`;
+                }).join('');
+            }
         }
 
         async function kickUser(mid, name, isSolo) {
             if(!confirm(`Kick "${name}" and refund entry fee?`)) return;
             const res = await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'kick_participant', match_id:mid, target_name:name, is_solo:isSolo }) });
             const d = await res.json();
-            if(d.success) { alert("Kicked & Refunded!"); viewParticipants(mid); loadMatches(); }
+            if(d.success) { alert("Kicked & Refunded!"); document.getElementById('playersModal').style.display='none'; loadMatches(); }
         }
 
         async function handleMatch() {
@@ -171,7 +193,7 @@
             };
             const res = await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
             const d = await res.json();
-            if(d.success) { alert("Success!"); resetForm(); loadMatches(); }
+            if(d.success) { alert("Match Updated!"); resetForm(); loadMatches(); }
         }
 
         function editMatch(m) {
