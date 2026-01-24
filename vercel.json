@@ -24,6 +24,7 @@
     { "source": "/admin-stages", "destination": "/admin-stages.html" },
     { "source": "/admin-groups", "destination": "/admin-groups.html" },
     { "source": "/admin-results", "destination": "/admin-results.html" },
+    { "source": "/admin-daily-results", "destination": "/admin-daily-results.html" }
     
     { "source": "/home", "destination": "/home.html" },
     { "source": "/signup", "destination": "/signup.html" },
