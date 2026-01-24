@@ -3,77 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Match Results</title>
+    <title>Match Result & Payout</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
-<body class="bg-gray-900 text-white pb-20">
+<body class="bg-gray-900 text-white pb-32">
 
-    <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50">
-        <a href="/admin-matches" class="mr-4 text-gray-400"><i class="fa-solid fa-arrow-left text-xl"></i></a>
-        <div>
-            <h1 class="font-bold text-lg text-blue-400">Match Scoring</h1>
-            <p class="text-[10px] text-gray-400" id="match_title_display">Loading Match...</p>
-        </div>
+    <header class="p-4 bg-gray-800 shadow-md flex items-center sticky top-0 z-50 border-b border-gray-700">
+        <a href="javascript:history.back()" class="mr-4 text-gray-400"><i class="fa-solid fa-arrow-left text-xl"></i></a>
+        <div><h1 class="font-bold text-lg text-green-500">Update Match Scores</h1><p class="text-[10px] text-gray-400">Step 1: Enter Stats</p></div>
     </header>
 
     <div class="p-4 max-w-lg mx-auto">
-        <div id="scoring_container" class="space-y-3">
-            <!-- Rows injected here -->
+        <div id="player_list" class="space-y-3">
+            <p class="text-center text-gray-500 animate-pulse py-10">Loading participants...</p>
         </div>
+    </div>
 
-        <div class="mt-8 space-y-3">
-            <button onclick="calculatePrizes()" class="w-full bg-indigo-600 py-3 rounded-xl font-bold uppercase shadow-lg">
-                1. Calculate & Preview
-            </button>
-            <div id="preview_box" class="hidden bg-gray-800 p-4 rounded-xl border border-gray-700">
-                <h3 class="text-sm font-bold mb-3 text-yellow-500 uppercase">Payout Preview</h3>
-                <div id="preview_list" class="space-y-2 text-xs"></div>
-                <button onclick="publishFinalResult()" id="final_btn" class="w-full mt-4 bg-green-600 py-3 rounded-xl font-bold uppercase shadow-lg hover:bg-green-500">
-                    2. Send Money & Close Match
-                </button>
+    <!-- Payout Confirmation Modal -->
+    <div id="payoutModal" class="fixed inset-0 bg-black/95 hidden items-center justify-center z-[100] p-4">
+        <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-md border border-gray-700 shadow-2xl">
+            <h3 class="text-xl font-bold mb-4 text-yellow-500 border-b border-gray-700 pb-2">Step 2: Confirm Payouts</h3>
+            <div id="payout_summary" class="max-h-[50vh] overflow-y-auto space-y-2 mb-6 pr-2"></div>
+            <div class="flex gap-3">
+                <button onclick="document.getElementById('payoutModal').style.display='none'" class="flex-1 bg-gray-700 py-3 rounded-xl font-bold">Back</button>
+                <button onclick="confirmFinalPayout()" id="pay_btn" class="flex-1 bg-green-600 py-3 rounded-xl font-bold">SEND MONEY NOW</button>
             </div>
         </div>
     </div>
 
+    <div class="fixed bottom-0 left-0 right-0 p-4 bg-gray-800 border-t border-gray-700">
+        <button onclick="calculatePrizes()" class="w-full bg-blue-600 py-4 rounded-xl font-bold shadow-lg uppercase tracking-widest">Next: Review Prizes</button>
+    </div>
+
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const matchId = params.get('match_id');
-        let participants = [];
-        let isSolo = true;
+        const mid = new URLSearchParams(window.location.search).get('match_id');
+        let players = [], isSolo = true;
 
-        async function loadData() {
-            const res = await fetch('/api/admin', { 
-                method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ type: 'get_match_participants_for_result', match_id: matchId })
-            });
+        async function loadPlayers() {
+            const res = await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'get_match_participants_for_result', match_id:mid }) });
             const d = await res.json();
-            isSolo = d.type === 'Solo';
-            participants = d.data;
-            document.getElementById('match_title_display').innerText = `Match #${matchId} (${d.type} Mode)`;
-            renderRows();
+            players = d.data; isSolo = (d.type === 'Solo');
+            
+            document.getElementById('player_list').innerHTML = players.map(p => `
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center player-row" data-name="${p.name}">
+                    <div class="w-1/3 pr-2"><p class="font-bold text-sm truncate">${p.name}</p><p class="text-[9px] text-gray-500 uppercase">${isSolo?'Solo Player':'Team Leader'}</p></div>
+                    <div class="flex gap-2 w-2/3">
+                        <input type="number" placeholder="Rank #" class="w-1/2 bg-gray-900 p-2 rounded border border-gray-600 text-center text-sm rank-input">
+                        <input type="number" placeholder="Kills" class="w-1/2 bg-gray-900 p-2 rounded border border-gray-600 text-center text-sm kills-input">
+                    </div>
+                </div>`).join('');
         }
 
-        function renderRows() {
-            const con = document.getElementById('scoring_container');
-            con.innerHTML = participants.map((p, i) => `
-                <div class="bg-gray-800 p-3 rounded-xl border border-gray-700 flex justify-between items-center score-row" data-name="${p.name}">
-                    <div class="w-1/3">
-                        <p class="font-bold text-sm truncate">${p.name}</p>
-                        <p class="text-[10px] text-gray-500 uppercase">${isSolo ? 'Player' : 'Team'}</p>
-                    </div>
-                    <div class="flex gap-2 w-2/3">
-                        <input type="number" placeholder="Rank" class="rank-input w-full bg-gray-900 p-2 rounded border border-gray-600 text-center text-white text-sm outline-none focus:border-blue-500">
-                        <input type="number" placeholder="Kills" class="kills-input w-full bg-gray-900 p-2 rounded border border-gray-600 text-center text-white text-sm outline-none focus:border-red-500">
-                    </div>
-                </div>
-            `).join('');
-        }
+        let calculatedPrizes = [];
 
         async function calculatePrizes() {
-            const rows = document.querySelectorAll('.score-row');
             let stats = [];
-            rows.forEach(row => {
+            document.querySelectorAll('.player-row').forEach(row => {
                 stats.push({
                     name: row.getAttribute('data-name'),
                     rank: parseInt(row.querySelector('.rank-input').value) || 0,
@@ -81,54 +67,29 @@
                 });
             });
 
-            const res = await fetch('/api/admin', {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ type: 'get_prize_distribution_data', match_id: matchId, stats: stats })
-            });
+            const res = await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'get_prize_distribution_data', match_id:mid, stats }) });
             const d = await res.json();
-            
-            const preview = document.getElementById('preview_box');
-            const list = document.getElementById('preview_list');
-            preview.classList.remove('hidden');
-            
-            list.innerHTML = d.data.map(w => `
-                <div class="flex justify-between border-b border-gray-700 pb-1">
-                    <span>${w.name} (Rank ${w.rank}, Kills ${w.kills})</span>
-                    <span class="font-bold text-green-400">৳${w.total.toFixed(2)}</span>
-                </div>
-            `).join('');
-            window.scrollTo(0, document.body.scrollHeight);
+            calculatedPrizes = d.data;
+
+            document.getElementById('payout_summary').innerHTML = calculatedPrizes.map(p => `
+                <div class="flex justify-between items-center bg-gray-900 p-3 rounded-lg border border-gray-700">
+                    <div><p class="text-sm font-bold">${p.name}</p><p class="text-[10px] text-gray-500">Rank: ${p.rank} | Kills: ${p.kills}</p></div>
+                    <p class="font-bold text-green-400">৳${p.total.toFixed(2)}</p>
+                </div>`).join('');
+            document.getElementById('payoutModal').style.display = 'flex';
         }
 
-        async function publishFinalResult() {
-            if(!confirm("CONFIRM: This will send real money to user wallets. Continue?")) return;
-            const btn = document.getElementById('final_btn');
-            btn.disabled = true; btn.innerText = "Processing Payouts...";
+        async function confirmFinalPayout() {
+            if(!confirm("Are you sure? This will add money to user accounts and mark match as COMPLETED.")) return;
+            const btn = document.getElementById('pay_btn'); btn.disabled = true; btn.innerText = "Processing...";
 
-            const rows = document.querySelectorAll('.score-row');
-            let prizes = [];
-            rows.forEach(row => {
-                prizes.push({
-                    name: row.getAttribute('data-name'),
-                    rank: parseInt(row.querySelector('.rank-input').value) || 0,
-                    kills: parseInt(row.querySelector('.kills-input').value) || 0
-                });
-            });
-
-            try {
-                const res = await fetch('/api/admin', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ type: 'distribute_prizes_final', match_id: matchId, prizes, is_solo: isSolo })
-                });
-                const d = await res.json();
-                if(d.success) {
-                    alert("✅ Result Published & Prizes Distributed!");
-                    window.location.href = '/admin-matches';
-                }
-            } catch(e) { alert("Error"); btn.disabled = false; }
+            const res = await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ type:'distribute_prizes_final', match_id:mid, prizes: calculatedPrizes, is_solo: isSolo }) });
+            const d = await res.json();
+            if(d.success) { alert("Winnings Distributed Successfully!"); window.location.href = '/admin-matches'; }
+            else { alert("Error: " + d.error); btn.disabled = false; btn.innerText = "SEND MONEY NOW"; }
         }
 
-        loadData();
+        loadPlayers();
     </script>
 </body>
-  </html>
+</html>
